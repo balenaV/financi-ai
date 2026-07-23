@@ -1,0 +1,223 @@
+@import "@fontsource/instrument-sans/400.css";
+@import "@fontsource/instrument-sans/500.css";
+@import "@fontsource/instrument-sans/600.css";
+@import "@fontsource/instrument-sans/700.css";
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+@import "tailwindcss";
+
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
+@source "../../storage/framework/views/*.php";
+@source "../**/*.blade.php";
+@source "../**/*.js";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+
+    --color-primary-50: #eeedfe;
+    --color-primary-200: #afa9ec;
+    --color-primary-400: #7f77dd;
+    --color-primary-600: #534ab7;
+    --color-primary-800: #3c3489;
+    --color-primary-900: #26215c;
+
+    --color-accent-50: #e1f5ee;
+    --color-accent-400: #1d9e75;
+    --color-accent-600: #0f6e56;
+    --color-accent-800: #085041;
+}
+
+@layer base {
+    html { color-scheme: light; }
+    html.dark { color-scheme: dark; }
+    body { @apply bg-slate-50 font-sans text-slate-800 antialiased; transition: background-color .2s ease, color .2s ease; }
+    .dark body { background-color: #0f172a; color: #e2e8f0; }
+    [x-cloak] { display: none !important; }
+    :focus-visible { @apply outline-2 outline-offset-2 outline-primary-600; }
+}
+
+@layer components {
+    .form-control { @apply mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm shadow-sm transition placeholder:text-slate-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-200; }
+    .form-label { @apply text-sm font-medium text-slate-700; }
+    .surface { @apply rounded-2xl border border-slate-200 bg-white shadow-sm; }
+    .btn { @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60; }
+    .btn-primary { @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-60; }
+    .btn-secondary { @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60; }
+    .btn-danger { @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60; }
+}
+
+#desktop-sidebar {
+    width: 16rem;
+    transition: width .2s ease, background-color .2s ease, border-color .2s ease;
+}
+
+#app-content {
+    transition: padding-left .2s ease;
+}
+
+[data-desktop-sidebar-toggle] i {
+    transition: transform .2s ease;
+}
+
+.dark .surface {
+    border-color: #334155;
+    background-color: #111827;
+}
+
+.dark .form-control,
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark select,
+.dark textarea {
+    border-color: #475569;
+    background-color: #0f172a;
+    color: #f8fafc;
+}
+
+.dark .form-control::placeholder,
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: #64748b;
+}
+
+.dark .form-label {
+    color: #cbd5e1;
+}
+
+.dark .btn-secondary {
+    border-color: #475569;
+    background-color: #111827;
+    color: #e2e8f0;
+}
+
+.dark .btn-secondary:hover {
+    background-color: #1e293b;
+}
+
+.dark #desktop-sidebar,
+.dark #mobile-sidebar > div,
+.dark nav[aria-label="Navegação móvel"] {
+    border-color: #334155;
+    background-color: #111827;
+}
+
+.dark #app-content > header {
+    border-color: #334155;
+    background-color: rgb(17 24 39 / .92);
+}
+
+.dark .bg-white {
+    background-color: #111827;
+}
+
+.dark .bg-slate-50 {
+    background-color: #0f172a;
+}
+
+.dark .bg-slate-100 {
+    background-color: #1e293b;
+}
+
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300,
+.dark .divide-slate-100 > :not(:last-child) {
+    border-color: #334155;
+}
+
+.dark .text-slate-950,
+.dark .text-slate-900,
+.dark .text-slate-800 {
+    color: #f8fafc;
+}
+
+.dark .text-slate-700,
+.dark .text-slate-600 {
+    color: #cbd5e1;
+}
+
+.dark .text-slate-500 {
+    color: #94a3b8;
+}
+
+.dark .bg-primary-50 {
+    background-color: #26215c;
+}
+
+.dark .text-primary-800,
+.dark .text-primary-900 {
+    color: #afa9ec;
+}
+
+.dark .bg-accent-50 {
+    background-color: rgb(8 80 65 / .38);
+}
+
+.dark .text-accent-800 {
+    color: #1d9e75;
+}
+
+.dark .bg-red-50 {
+    background-color: rgb(127 29 29 / .3);
+}
+
+.dark .text-red-700,
+.dark .text-red-800 {
+    color: #fca5a5;
+}
+
+.dark [data-logo-variant="wordmark"] > span {
+    background-image: var(--logo-dark-image) !important;
+    filter: none;
+}
+
+.dark [data-logo-variant="stacked"] > span {
+    filter: brightness(2.65) saturate(1.12);
+}
+
+@media (min-width: 64rem) {
+    #app-content {
+        padding-left: 16rem;
+    }
+
+    .sidebar-collapsed #desktop-sidebar {
+        width: 7rem;
+    }
+
+    .sidebar-collapsed #app-content {
+        padding-left: 7rem;
+    }
+
+    .sidebar-collapsed [data-sidebar-full-brand],
+    .sidebar-collapsed [data-sidebar-label] {
+        display: none;
+    }
+
+    .sidebar-collapsed [data-sidebar-compact-brand] {
+        display: inline-flex;
+    }
+
+    .sidebar-collapsed #desktop-sidebar nav a,
+    .sidebar-collapsed #desktop-sidebar > div:last-child a {
+        justify-content: center;
+    }
+
+    .sidebar-collapsed [data-desktop-sidebar-toggle] i {
+        transform: rotate(180deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+@media print {
+    .no-print, aside, nav { display: none !important; }
+    main { margin: 0 !important; padding: 0 !important; }
+    body { background: white !important; }
+}

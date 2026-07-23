@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ config('app.name') }} — Clareza para suas finanças</title>
+    <meta name="description" content="Gerencie contas, transações, dívidas, investimentos, orçamentos e metas em um só lugar.">
+    <link rel="icon" type="image/png" href="{{ asset('images/brand/financi-ai-symbol.png') }}">
+    <script>
+        try {
+            if (localStorage.getItem('financi-theme') === 'dark') document.documentElement.classList.add('dark');
+        } catch (error) {}
+    </script>
+    @vite(['resources/css/app.css','resources/js/app.js'])
+</head>
+<body class="bg-white">
+    <header class="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8"><x-application-logo /><nav class="flex items-center gap-2">@auth<a href="{{ route('dashboard') }}" class="btn-primary">Abrir painel</a>@else<a href="{{ route('login') }}" class="btn-secondary">Entrar</a>@if(config('features.registration'))<a href="{{ route('register') }}" class="btn-primary">Criar conta</a>@endif @endauth</nav></header>
+    <main>
+        <section class="mx-auto grid max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:py-24">
+            <div><p class="text-sm font-bold uppercase tracking-[.2em] text-primary-600">Finanças sem complicação</p><h1 class="mt-5 text-4xl font-bold leading-tight tracking-tight text-primary-900 sm:text-6xl">Seu dinheiro contado com clareza.</h1><p class="mt-6 max-w-xl text-lg leading-relaxed text-slate-600">Entenda o presente, planeje os próximos meses e acompanhe seu patrimônio em uma experiência segura, direta e feita para o Brasil.</p><div class="mt-8 flex flex-wrap gap-3">@auth<a href="{{ route('dashboard') }}" class="btn-primary">Ir para visão geral →</a>@else<a href="{{ route('login') }}" class="btn-primary">Começar agora →</a>@endif<a href="#recursos" class="btn-secondary">Conhecer recursos</a></div><div class="mt-10 flex flex-wrap gap-5 text-sm text-slate-500"><span>✓ Valores exatos</span><span>✓ Dados isolados</span><span>✓ Exportação CSV</span></div></div>
+            <div class="relative"><div class="absolute -inset-8 rounded-full bg-primary-50 blur-3xl"></div><div class="surface relative overflow-hidden p-5 shadow-xl"><div class="flex items-center justify-between border-b border-slate-100 pb-4"><div><p class="text-xs text-slate-500">Patrimônio líquido</p><p class="text-3xl font-bold text-primary-900">R$ 48.750,00</p></div><span class="rounded-full bg-accent-50 px-3 py-1 text-xs font-bold text-accent-800">+8,4%</span></div><div class="mt-5 grid grid-cols-2 gap-3"><div class="rounded-xl bg-accent-50 p-4"><p class="text-xs text-accent-800">Receitas</p><p class="mt-1 font-bold text-accent-800">R$ 8.200,00</p></div><div class="rounded-xl bg-red-50 p-4"><p class="text-xs text-red-700">Despesas</p><p class="mt-1 font-bold text-red-700">R$ 4.630,00</p></div></div><div class="mt-5 h-40 rounded-xl bg-slate-50 p-4"><div class="flex h-full items-end gap-3">@foreach([35,52,46,68,61,84] as $height)<div class="flex-1 rounded-t-lg bg-primary-200" style="height:{{$height}}%"></div>@endforeach</div></div><div class="mt-5 space-y-3">@foreach(['Aluguel'=>'R$ 1.850,00','Supermercado'=>'R$ 486,30','Salário'=>'R$ 7.200,00'] as $label=>$value)<div class="flex justify-between text-sm"><span class="font-medium">{{ $label }}</span><strong>{{ $value }}</strong></div>@endforeach</div></div></div>
+        </section>
+        <section id="recursos" class="bg-slate-50 py-20"><div class="mx-auto max-w-7xl px-5 sm:px-8"><div class="max-w-2xl"><p class="text-sm font-bold uppercase tracking-[.2em] text-primary-600">Tudo conectado</p><h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-950">Da conta do dia a dia ao seu patrimônio.</h2></div><div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">@foreach([['Contas e transações','Saldos atual e projetado calculados a partir de cada movimentação.'],['Parcelas e recorrências','Organize compromissos futuros sem perder um centavo no arredondamento.'],['Dívidas','Acompanhe parcelas, pagamentos e progresso de quitação.'],['Investimentos','Registre aportes e veja rentabilidade sem duplicar despesas.'],['Orçamentos e metas','Defina limites e transforme objetivos em progresso visual.'],['Relatórios','Filtre períodos, compare categorias e exporte em CSV.']] as [$title,$text])<article class="surface p-6"><span class="grid size-10 place-items-center rounded-xl bg-primary-50 font-bold text-primary-600">→</span><h3 class="mt-5 font-bold text-slate-950">{{ $title }}</h3><p class="mt-2 text-sm leading-relaxed text-slate-600">{{ $text }}</p></article>@endforeach</div></div></section>
+    </main>
+    <footer class="border-t border-slate-200 py-8"><div class="mx-auto flex max-w-7xl flex-col gap-3 px-5 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-8"><x-application-logo /><p>Controle financeiro privado, preciso e preparado para crescer.</p></div></footer>
+</body></html>

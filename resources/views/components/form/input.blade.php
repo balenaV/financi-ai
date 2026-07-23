@@ -1,0 +1,7 @@
+@props(['label', 'name', 'type' => 'text', 'value' => null, 'required' => false])
+<label class="block">
+    <span class="form-label">{{ $label }} @if($required)<span class="text-red-600">*</span>@endif</span>
+    <input type="{{ $type }}" name="{{ $name }}" value="{{ old($name, $value) }}" @required($required)
+        {{ $attributes->merge(['class' => 'form-control'.($errors->has($name) ? ' border-red-500' : '')]) }}>
+    @error($name)<span class="mt-1 block text-sm text-red-600">{{ $message }}</span>@enderror
+</label>

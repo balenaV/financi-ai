@@ -1,0 +1,63 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - vendor-data:/var/www/html/vendor
+      - node-modules:/var/www/html/node_modules
+    environment:
+      PHP_OPCACHE_VALIDATE_TIMESTAMPS: ${PHP_OPCACHE_VALIDATE_TIMESTAMPS:-1}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - financeiro
+
+  web:
+    image: nginx:1.29-alpine
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - ./:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - financeiro
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    ports:
+      - "${DB_FORWARD_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-meu_financeiro}
+      POSTGRES_USER: ${DB_USERNAME:-financeiro}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-financeiro_local}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-finance-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-financeiro} -d ${DB_DATABASE:-meu_financeiro}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - financeiro
+
+networks:
+  financeiro:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  vendor-data:
+  node-modules:
