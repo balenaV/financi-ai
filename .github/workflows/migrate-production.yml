@@ -9,7 +9,6 @@ jobs:
     environment: production
     env:
       APP_ENV: production
-      APP_KEY: ${{ secrets.APP_KEY }}
       DB_CONNECTION: pgsql
       DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       DB_SCHEMA: finance
@@ -21,4 +20,13 @@ jobs:
           php-version: '8.5'
           extensions: bcmath, intl, mbstring, pdo_pgsql
       - run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
-      - run: php artisan migrate --force
+      - name: Prepare Laravel environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Create finance schema
+        run: psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 --command 'CREATE SCHEMA IF NOT EXISTS finance;'
+      - name: Run database migrations
+        run: php artisan migrate --force
