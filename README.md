@@ -174,6 +174,15 @@ A suíte cobre autenticação, autorização entre usuários, validação, saldo
 
 O GitHub Actions também executa cobertura e testes ponta a ponta. Os workflows de migração, deploy e backup usam um environment protegido `production` e os secrets `APP_KEY`, `SUPABASE_DB_URL` e `VERCEL_TOKEN`.
 
+## Branches e ambientes
+
+- `dev` é a branch de desenvolvimento e homologação.
+- `main` é exclusiva para produção.
+- mudanças chegam à produção por Pull Request de `dev` para `main`;
+- tags `v*` na versão aprovada disparam o workflow de produção.
+
+O fluxo completo está documentado em [docs/branching.md](docs/branching.md).
+
 ## Lembretes automáticos
 
 `php artisan finance:send-reminders` cria notificações internas para obrigações dos próximos sete dias. O scheduler está configurado para 08:00; em produção, conecte `php artisan schedule:run` a um cron externo.
