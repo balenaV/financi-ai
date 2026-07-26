@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['account_id', 'destination_account_id', 'credit_card_id', 'credit_card_bill_id', 'category_id', 'type', 'payment_channel', 'description', 'amount', 'competence_date', 'due_date', 'paid_at', 'status', 'notes', 'installment_group_id', 'installment_number', 'installment_total', 'recurrence_group_id', 'source_type', 'source_id'])]
+#[Fillable(['account_id', 'destination_account_id', 'credit_card_id', 'credit_card_bill_id', 'category_id', 'type', 'payment_channel', 'description', 'amount', 'competence_date', 'due_date', 'paid_at', 'status', 'notes', 'installment_group_id', 'installment_number', 'installment_total', 'recurrence_group_id', 'source_type', 'source_id', 'import_hash'])]
 class Transaction extends Model
 {
     use HasFactory, SoftDeletes;

@@ -40,10 +40,10 @@
             <div data-transfer-field class="hidden"><x-form.select label="Conta de destino" name="destination_account_id"><option value="">Selecione</option>@foreach($accounts as $account)<option value="{{ $account->id }}" @selected(old('destination_account_id', $transaction->destination_account_id) == $account->id)>{{ $account->name }}</option>@endforeach</x-form.select></div>
             <div data-category-field><x-form.select label="Categoria" name="category_id"><option value="">Selecione</option>@foreach($categories as $category)<option value="{{ $category->id }}" data-type="{{ $category->type->value }}" @selected(old('category_id', $transaction->category_id) == $category->id)>{{ $category->name }}</option>@endforeach</x-form.select></div>
             <x-form.input label="Valor" name="amount" data-money-input inputmode="decimal" :value="$transaction->amount" placeholder="0,00" required />
-            <x-form.input label="Data de competência" name="competence_date" type="date" :value="old('competence_date', $transaction->competence_date?->format('Y-m-d') ?? today()->format('Y-m-d'))" required />
-            <x-form.input label="Vencimento" name="due_date" type="date" :value="old('due_date', $transaction->due_date?->format('Y-m-d'))" />
+            <x-form.input label="Data de competência" name="competence_date" type="date" :value="old('competence_date', $transaction->competence_date?->format('Y-m-d') ?? request('competence_date', today()->format('Y-m-d')))" required />
+            <x-form.input label="Vencimento" name="due_date" type="date" :value="old('due_date', $transaction->due_date?->format('Y-m-d') ?? request('competence_date'))" />
             <x-form.input label="Data do pagamento" name="paid_at" type="date" :value="old('paid_at', $transaction->paid_at?->format('Y-m-d'))" />
-            <x-form.select label="Status" name="status" required>@foreach($statuses as $status)<option value="{{ $status->value }}" @selected(old('status', $transaction->status?->value ?? 'planned') === $status->value)>{{ $status->label() }}</option>@endforeach</x-form.select>
+            <x-form.select label="Status" name="status" required>@foreach($statuses as $status)<option value="{{ $status->value }}" @selected(old('status', $transaction->status?->value ?? request('status', 'planned')) === $status->value)>{{ $status->label() }}</option>@endforeach</x-form.select>
             @unless($transaction->exists)
                 <x-form.select label="Forma de pagamento" name="payment_mode" id="payment-mode"><option value="single">Pagamento único</option><option value="installment" @selected(old('payment_mode') === 'installment')>Parcelado</option></x-form.select>
                 <div data-installment-fields class="hidden sm:col-span-2">

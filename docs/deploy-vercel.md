@@ -9,7 +9,7 @@ Este guia prepara a aplicação para Vercel com Supabase PostgreSQL. Ele não ex
 3. Preencha um `.env` local temporário com as credenciais do banco.
 4. Mantenha `DB_SCHEMA=finance` e `DB_SSLMODE=require`.
 5. Use `DB_POOL_MODE=transaction` somente com o Transaction Pooler.
-6. Execute `docker compose run --rm --user root app php artisan migrate --force`.
+6. Execute `docker compose run --rm app php artisan migrate --force`.
 
 Nunca use `migrate:fresh` ou o seeder demonstrativo no banco de produção.
 
@@ -44,12 +44,23 @@ Cadastre as variáveis da seção Vercel do `README.md` nos ambientes desejados.
 
 Não use `DB_URL` ao mesmo tempo que variáveis individuais, a menos que queira que a URL tenha precedência.
 
+Configure também um mailer real (SMTP, Postmark ou Resend), porque verificação de e-mail e recuperação de senha não devem usar `MAIL_MAILER=log` em produção.
+
+No GitHub, crie um environment protegido `production` com:
+
+- `APP_KEY`;
+- `SUPABASE_DB_URL` (conexão direta ou Session Pooler com SSL);
+- `VERCEL_TOKEN`;
+- `VERCEL_ORG_ID` e `VERCEL_PROJECT_ID`, copiados das configurações do projeto Vercel.
+
+Os workflows incluídos executam CI, migração manual, deploy por tag `v*` e backup semanal com retenção de sete dias. Se o plano Supabase oferecer backup gerenciado/PITR, habilite-o também.
+
 ## 5. Verificar antes de publicar
 
 ```powershell
-docker compose run --rm --user root app php artisan test
-docker compose run --rm --user root app ./vendor/bin/pint --test
-docker compose run --rm --user root app php artisan view:cache
+docker compose run --rm app php artisan test
+docker compose run --rm app ./vendor/bin/pint --test
+docker compose run --rm app php artisan view:cache
 docker compose run --rm --user root app npm run build
 ```
 

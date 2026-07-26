@@ -25,4 +25,17 @@ class MoneyTest extends TestCase
     {
         $this->assertSame(['0.00', '0.00', '0.01'], Money::split('0.01', 3));
     }
+
+    public function test_percentage_uses_decimal_math_and_handles_zero_total(): void
+    {
+        $this->assertSame('33.33', Money::percentage('1.00', '3.00'));
+        $this->assertSame('0.00', Money::percentage('10.00', '0.00'));
+    }
+
+    public function test_split_rejects_invalid_installment_count(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        Money::split('100.00', 0);
+    }
 }

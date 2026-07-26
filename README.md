@@ -20,6 +20,9 @@ Aplicação web de finanças pessoais construída com Laravel 13, PHP 8.5, Postg
 - Modo noturno persistente, sidebar recolhível e ícones Font Awesome.
 - Interface responsiva em português do Brasil, acessível por teclado e pronta para impressão.
 - Isolamento dos dados por usuário com policies, validações dedicadas, CSRF e consultas sempre escopadas.
+- Verificação de e-mail obrigatória, proteção contra tentativas repetidas e histórico de alterações.
+- Notificações de vencimentos, importação CSV/OFX sem duplicatas e PWA instalável.
+- CI com cobertura PHPUnit e testes Playwright em desktop e mobile.
 
 ## Stack
 
@@ -71,9 +74,9 @@ No PowerShell:
 Copy-Item .env.example .env
 docker compose build app
 docker compose run --rm --user root app composer install --no-interaction --prefer-dist
-docker compose run --rm --user root app php artisan key:generate
+docker compose run --rm app php artisan key:generate
 docker compose run --rm --user root app npm install
-docker compose run --rm --user root app php artisan migrate:fresh --seed --force
+docker compose run --rm app php artisan migrate:fresh --seed --force
 docker compose run --rm --user root app npm run build
 docker compose up -d
 ```
@@ -92,8 +95,8 @@ Comandos úteis:
 ```powershell
 docker compose ps
 docker compose logs -f app web
-docker compose run --rm --user root app php artisan test
-docker compose run --rm --user root app ./vendor/bin/pint --test
+docker compose run --rm app php artisan test
+docker compose run --rm app ./vendor/bin/pint --test
 docker compose run --rm --user root app npm run build
 docker compose down
 ```
@@ -153,7 +156,7 @@ Use exatamente host, porta e usuário apresentados pelo painel do seu projeto. `
 Para criar a estrutura no Supabase, execute de uma estação segura:
 
 ```powershell
-docker compose run --rm --user root app php artisan migrate --force
+docker compose run --rm app php artisan migrate --force
 ```
 
 O comando usa as variáveis do `.env` ativo. Faça backup antes de apontar um ambiente local para um banco com dados reais. Não execute `migrate:fresh` nem o seeder de demonstração em produção.
@@ -161,13 +164,49 @@ O comando usa as variáveis do `.env` ativo. Faça backup antes de apontar um am
 ## Testes e qualidade
 
 ```powershell
-docker compose run --rm --user root app php artisan test
-docker compose run --rm --user root app ./vendor/bin/pint --test
-docker compose run --rm --user root app php artisan view:cache
+docker compose run --rm app php artisan test
+docker compose run --rm app ./vendor/bin/pint --test
+docker compose run --rm app php artisan view:cache
 docker compose run --rm --user root app npm run build
 ```
 
 A suíte cobre autenticação, autorização entre usuários, validação, saldo, transferências, parcelamentos, dívidas, investimentos, orçamentos, metas, dashboard, relatórios e exportações.
+
+O GitHub Actions também executa cobertura e testes ponta a ponta. Os workflows de migração, deploy e backup usam um environment protegido `production` e os secrets `APP_KEY`, `SUPABASE_DB_URL` e `VERCEL_TOKEN`.
+
+## Lembretes automáticos
+
+`php artisan finance:send-reminders` cria notificações internas para obrigações dos próximos sete dias. O scheduler está configurado para 08:00; em produção, conecte `php artisan schedule:run` a um cron externo.
+
+## E-mail e Gmail
+
+O ambiente local usa `MAIL_MAILER=log` por padrão e, portanto, não entrega mensagens. Para Gmail SMTP, configure no `.env`:
+
+```dotenv
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=seu-email@gmail.com
+MAIL_PASSWORD=SENHA_DE_APP
+MAIL_SCHEME=
+MAIL_FROM_ADDRESS=seu-email@gmail.com
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+Ative a verificação em duas etapas na conta Google e gere uma senha de app exclusiva. Depois limpe o cache e teste sem expor a senha:
+
+```powershell
+docker compose exec -T app php artisan optimize:clear
+docker compose exec -T app php artisan mail:diagnose --send=seu-email@gmail.com
+```
+
+Se `storage/logs/laravel.log` tiver sido criado por um comando executado como root:
+
+```powershell
+docker compose exec -T --user root app chown -R www-data:www-data storage bootstrap/cache
+```
+
+Execute comandos Artisan normalmente, sem `--user root`, para preservar as permissões.
 
 ## Vercel
 
@@ -225,7 +264,7 @@ APP_SERVICES_CACHE=/tmp/services.php
 Gere a chave fora da Vercel:
 
 ```powershell
-docker compose run --rm --user root app php artisan key:generate --show
+docker compose run --rm app php artisan key:generate --show
 ```
 
 Copie apenas o valor retornado para `APP_KEY`. Execute as migrations no Supabase antes do primeiro acesso. A documentação operacional detalhada está em [docs/deploy-vercel.md](docs/deploy-vercel.md).
@@ -262,7 +301,7 @@ Em um volume PostgreSQL antigo, crie o schema ou recrie apenas o ambiente local.
 
 ```powershell
 docker compose run --rm --user root app npm run build
-docker compose run --rm --user root app php artisan optimize:clear
+docker compose run --rm app php artisan optimize:clear
 ```
 
 **Erro de escrita no serverless**

@@ -21,6 +21,9 @@
         <x-financial-card label="Saldo projetado" :value="$dashboard['summary']['balance_projected']" hint="Inclui planejadas e vencidas" />
         <x-financial-card label="Receitas no período" :value="$dashboard['summary']['income']" tone="positive" />
         <x-financial-card label="Despesas no período" :value="$dashboard['summary']['expense']" tone="negative" />
+        <x-financial-card label="Receitas previstas" :value="$dashboard['summary']['forecast_income']" tone="positive" hint="Efetivadas + planejadas no período" />
+        <x-financial-card label="Despesas previstas" :value="$dashboard['summary']['forecast_expense']" tone="negative" hint="Efetivadas + planejadas no período" />
+        <x-financial-card label="Resultado previsto" :value="$dashboard['summary']['forecast_result']" :tone="bccomp($dashboard['summary']['forecast_result'], '0', 2) >= 0 ? 'positive' : 'negative'" hint="Receitas menos despesas previstas" />
         <x-financial-card label="Resultado" :value="$dashboard['summary']['result']" :tone="bccomp($dashboard['summary']['result'], '0', 2) >= 0 ? 'positive' : 'negative'" :hint="'Taxa de economia: '.$dashboard['summary']['savings_rate'].'%'" />
         <x-financial-card label="Dívida total consolidada" :value="$dashboard['summary']['debt_total']" tone="negative" hint="Faturas + parcelas de empréstimos" />
         <x-financial-card label="Investimentos" :value="$dashboard['summary']['invested']" tone="positive" />

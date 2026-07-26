@@ -12,6 +12,7 @@ use App\Models\CreditCard;
 use App\Models\User;
 use App\Services\AccountBalanceService;
 use App\Services\CreditCardService;
+use App\Services\DashboardService;
 use App\Services\DebtService;
 use App\Services\TransactionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -122,6 +123,72 @@ class FinancialIntegrityTest extends TestCase
 
         $this->actingAs($user)->delete(route('transactions.destroy', $transaction))->assertRedirect();
         $this->assertSame('0.00', $transaction->creditCardBill->refresh()->total_amount);
+    }
+
+    public function test_editing_card_purchase_moves_value_between_the_correct_bills(): void
+    {
+        $user = User::factory()->create();
+        $card = CreditCard::factory()->for($user)->create([
+            'closing_day' => 10,
+            'due_day' => 20,
+        ]);
+        $category = Category::factory()->for($user)->create(['type' => CategoryType::Expense]);
+        $transaction = app(TransactionService::class)
+            ->create($user, [
+                ...$this->cardPurchase($card, '120.00', '2026-07-10'),
+                'category_id' => $category->id,
+            ])
+            ->sole();
+        $originalBill = $transaction->creditCardBill;
+
+        $this->actingAs($user)->put(route('transactions.update', $transaction), [
+            ...$this->cardPurchase($card, '150.00', '2026-07-11'),
+            'category_id' => $category->id,
+        ])->assertRedirect(route('transactions.index'));
+
+        $transaction->refresh();
+        $this->assertSame('0.00', $originalBill->refresh()->total_amount);
+        $this->assertSame('2026-08-01', $transaction->creditCardBill->reference_month->format('Y-m-d'));
+        $this->assertSame('150.00', $transaction->creditCardBill->total_amount);
+        $this->assertSame('150.00', app(CreditCardService::class)->debtSummary($user)['cards']);
+    }
+
+    public function test_cancelling_card_purchase_reduces_bill_only_once(): void
+    {
+        $user = User::factory()->create();
+        $card = CreditCard::factory()->for($user)->create();
+        $transaction = app(TransactionService::class)
+            ->create($user, $this->cardPurchase($card, '44.90', '2026-08-01'))
+            ->sole();
+        $bill = $transaction->creditCardBill;
+
+        $this->actingAs($user)->patch(route('transactions.cancel', $transaction))->assertRedirect();
+        $this->assertSame('0.00', $bill->refresh()->total_amount);
+
+        $this->actingAs($user)->patch(route('transactions.cancel', $transaction))->assertRedirect();
+        $this->assertSame('0.00', $bill->refresh()->total_amount);
+    }
+
+    public function test_paying_card_bill_changes_balance_without_duplicating_dashboard_expense(): void
+    {
+        $this->travelTo('2026-07-01');
+        $user = User::factory()->create();
+        $account = Account::factory()->for($user)->create(['initial_balance' => '1000.00']);
+        $card = CreditCard::factory()->for($user)->create([
+            'closing_day' => 10,
+            'due_day' => 20,
+        ]);
+        $purchase = app(TransactionService::class)
+            ->create($user, $this->cardPurchase($card, '100.00', '2026-07-01'))
+            ->sole();
+
+        app(CreditCardService::class)->pay($user, $purchase->creditCardBill, $account, '2026-07-20');
+        $dashboard = app(DashboardService::class)->build($user, ['month' => 7, 'year' => 2026]);
+
+        $this->assertSame('900.00', app(AccountBalanceService::class)->current($account));
+        $this->assertSame('100.00', bcadd('0', (string) $dashboard['summary']['expense'], 2));
+        $this->assertSame('0.00', app(CreditCardService::class)->debtSummary($user)['cards']);
+        $this->assertDatabaseCount('transactions', 2);
     }
 
     public function test_only_an_open_bill_can_be_edited(): void

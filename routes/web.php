@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CreditCardBillController;
@@ -8,21 +9,30 @@ use App\Http\Controllers\CreditCardController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DebtController;
 use App\Http\Controllers\FinancialGoalController;
+use App\Http\Controllers\ForecastController;
 use App\Http\Controllers\InvestmentController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TransactionImportController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified', 'audit'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/forecast', [ForecastController::class, 'index'])->name('forecast.index');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
 
     Route::resource('accounts', AccountController::class);
     Route::resource('categories', CategoryController::class)->except(['create', 'show']);
     Route::get('transactions/export/csv', [TransactionController::class, 'export'])->name('transactions.export');
+    Route::get('transactions/import', [TransactionImportController::class, 'create'])->name('transactions.import.create');
+    Route::post('transactions/import', [TransactionImportController::class, 'store'])->name('transactions.import.store');
     Route::post('transactions/{transaction}/duplicate', [TransactionController::class, 'duplicate'])->name('transactions.duplicate');
     Route::patch('transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])->name('transactions.cancel');
     Route::resource('transactions', TransactionController::class)->except('show');
@@ -48,6 +58,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile/security-history', [AuditLogController::class, 'index'])->name('profile.audit-log');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');

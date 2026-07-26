@@ -47,6 +47,15 @@ class DashboardService
             ->where(fn ($query) => $query->whereNull('source_type')->orWhere('source_type', '!=', 'credit_card_bill'))
             ->sum('amount');
         $result = bcsub($income, $expense, 2);
+        $plannedIncome = Money::normalize((string) (clone $periodTransactions)
+            ->where('type', TransactionType::Income->value)
+            ->whereIn('status', [TransactionStatus::Planned->value, TransactionStatus::Overdue->value])
+            ->sum('amount'));
+        $plannedExpense = Money::normalize((string) (clone $periodTransactions)
+            ->where('type', TransactionType::Expense->value)
+            ->whereIn('status', [TransactionStatus::Planned->value, TransactionStatus::Overdue->value])
+            ->where(fn ($query) => $query->whereNull('source_type')->orWhere('source_type', '!=', 'credit_card_bill'))
+            ->sum('amount'));
 
         $debtSummary = $this->creditCards->debtSummary($user);
         $debtTotal = $debtSummary['total'];
@@ -74,6 +83,11 @@ class DashboardService
                 'income' => $income,
                 'expense' => $expense,
                 'result' => $result,
+                'planned_income' => $plannedIncome,
+                'planned_expense' => $plannedExpense,
+                'forecast_income' => bcadd($income, $plannedIncome, 2),
+                'forecast_expense' => bcadd($expense, $plannedExpense, 2),
+                'forecast_result' => bcsub(bcadd($income, $plannedIncome, 2), bcadd($expense, $plannedExpense, 2), 2),
                 'debt_total' => $debtTotal,
                 'overdue_bill_count' => $debtSummary['overdue_bills'],
                 'invested' => $invested,

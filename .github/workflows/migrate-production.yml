@@ -1,0 +1,24 @@
+name: Migrate Supabase
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      APP_ENV: production
+      APP_KEY: ${{ secrets.APP_KEY }}
+      DB_CONNECTION: pgsql
+      DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      DB_SCHEMA: finance
+      DB_SSLMODE: require
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: bcmath, intl, mbstring, pdo_pgsql
+      - run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+      - run: php artisan migrate --force

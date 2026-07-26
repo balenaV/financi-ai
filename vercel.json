@@ -18,6 +18,14 @@
             "dest": "/public/robots.txt"
         },
         {
+            "src": "/manifest.webmanifest",
+            "dest": "/public/manifest.webmanifest"
+        },
+        {
+            "src": "/service-worker.js",
+            "dest": "/public/service-worker.js"
+        },
+        {
             "src": "/images/(.*)",
             "dest": "/public/images/$1"
         },

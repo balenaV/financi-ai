@@ -3,6 +3,7 @@
     $nav = [
         ['route' => 'dashboard', 'match' => 'dashboard', 'label' => 'Visão geral', 'icon' => 'fa-chart-pie'],
         ['route' => 'transactions.index', 'match' => 'transactions.*', 'label' => 'Transações', 'icon' => 'fa-arrow-right-arrow-left'],
+        ['route' => 'forecast.index', 'match' => 'forecast.*', 'label' => 'Planejamento', 'icon' => 'fa-calendar-days'],
         ['route' => 'accounts.index', 'match' => 'accounts.*', 'label' => 'Contas', 'icon' => 'fa-wallet'],
         ['route' => 'categories.index', 'match' => 'categories.*', 'label' => 'Categorias', 'icon' => 'fa-tags'],
         ['route' => 'credit-cards.index', 'match' => 'credit-cards.*', 'label' => 'Cartões', 'icon' => 'fa-credit-card'],
@@ -19,8 +20,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#0f1f3d">
+    <meta name="application-name" content="financi.ai">
     <title>{{ isset($title) ? $title.' — ' : '' }}{{ config('app.name') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/brand/financi-ai-symbol.png') }}">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
     <script>
         try {
             localStorage.setItem('financi-theme', @json($userSettings->theme));
@@ -66,6 +70,10 @@
             </button>
             <div class="lg:hidden"><x-application-logo compact /></div>
             <div class="ml-auto flex items-center gap-2">
+                <a href="{{ route('notifications.index') }}" class="btn-secondary relative !px-3" aria-label="Notificações" data-tooltip="Notificações">
+                    <i class="fa-solid fa-bell" aria-hidden="true"></i>
+                    @if(auth()->user()->unreadNotifications()->exists())<span class="absolute right-1 top-1 size-2 rounded-full bg-red-500" aria-label="Há notificações não lidas"></span>@endif
+                </a>
                 <button type="button" id="toggle-theme" data-url="{{ route('settings.toggle-theme') }}" class="btn-secondary !px-3 cursor-pointer" aria-label="{{ $userSettings->theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo noturno' }}" data-tooltip="{{ $userSettings->theme === 'dark' ? 'Modo claro' : 'Modo noturno' }}">
                     <i class="fa-solid {{ $userSettings->theme === 'dark' ? 'fa-sun' : 'fa-moon' }}" aria-hidden="true"></i>
                 </button>
@@ -73,6 +81,9 @@
                     <i class="fa-solid {{ $userSettings->hide_values ? 'fa-eye-slash' : 'fa-eye' }}" aria-hidden="true"></i>
                 </button>
                 <a href="{{ route('transactions.create') }}" class="btn-primary"><i class="fa-solid fa-plus" aria-hidden="true"></i><span class="hidden sm:inline">Nova transação</span></a>
+                <form method="POST" action="{{ route('logout') }}">@csrf
+                    <button class="btn-secondary !px-3" aria-label="Sair" data-tooltip="Sair"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></button>
+                </form>
             </div>
         </header>
 
@@ -121,5 +132,10 @@
     <p id="confirm-message" class="text-sm text-slate-600">Deseja continuar?</p>
     <div class="mt-6 flex justify-end gap-2"><x-button variant="secondary" data-modal-close>Cancelar</x-button><x-button variant="danger" id="confirm-submit">Confirmar</x-button></div>
 </x-modal>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('/service-worker.js').catch(() => {}));
+    }
+</script>
 </body>
 </html>

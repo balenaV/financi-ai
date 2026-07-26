@@ -1,6 +1,7 @@
 <x-app-layout>
     <x-slot name="title">Transações</x-slot>
     <x-page-header title="Transações" description="Consulte, filtre e organize todas as movimentações.">
+        <a href="{{ route('transactions.import.create') }}" class="btn-secondary"><i class="fa-solid fa-file-import" aria-hidden="true"></i> Importar</a>
         <a href="{{ route('transactions.export', request()->query()) }}" class="btn-secondary">Exportar CSV</a>
         <a href="{{ route('transactions.create') }}" class="btn-primary">＋ Nova transação</a>
     </x-page-header>

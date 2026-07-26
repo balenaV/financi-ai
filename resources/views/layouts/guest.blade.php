@@ -4,8 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#0f1f3d">
     <title>{{ config('app.name') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/brand/financi-ai-symbol.png') }}">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
     <script>
         try {
             if (localStorage.getItem('financi-theme') === 'dark') document.documentElement.classList.add('dark');

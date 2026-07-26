@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Account;
+use App\Models\Category;
+use App\Models\CreditCard;
 use App\Models\FinancialGoal;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,5 +63,31 @@ class SecurityIsolationTest extends TestCase
         ])->assertSessionHasErrors('category_id');
 
         $this->assertDatabaseMissing('transactions', ['user_id' => $user->id, 'description' => 'Tentativa']);
+    }
+
+    public function test_foreign_credit_card_cannot_be_used_in_transaction(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $category = Category::factory()->for($user)->create(['type' => 'expense']);
+        $foreignCard = CreditCard::factory()->for($other)->create();
+
+        $this->actingAs($user)->post(route('transactions.store'), [
+            'payment_channel' => 'credit_card',
+            'credit_card_id' => $foreignCard->id,
+            'category_id' => $category->id,
+            'type' => 'expense',
+            'description' => 'Compra indevida',
+            'amount' => '99.90',
+            'competence_date' => today()->toDateString(),
+            'status' => 'completed',
+            'payment_mode' => 'single',
+            'recurrence_count' => 1,
+        ])->assertSessionHasErrors('credit_card_id');
+
+        $this->assertDatabaseMissing('transactions', [
+            'user_id' => $user->id,
+            'description' => 'Compra indevida',
+        ]);
     }
 }
