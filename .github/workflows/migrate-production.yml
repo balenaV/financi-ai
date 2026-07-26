@@ -26,7 +26,13 @@ jobs:
           php artisan key:generate
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Validate database configuration
+        run: |
+          if [ -z "${DB_URL:-}" ]; then
+            echo "::error::SUPABASE_DB_URL is not configured in the production environment."
+            exit 1
+          fi
       - name: Create finance schema
-        run: psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 --command 'CREATE SCHEMA IF NOT EXISTS finance;'
+        run: psql "$DB_URL" --set ON_ERROR_STOP=1 --command 'CREATE SCHEMA IF NOT EXISTS finance;'
       - name: Run database migrations
         run: php artisan migrate --force
