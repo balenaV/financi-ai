@@ -24,6 +24,17 @@ class ProductionReadinessTest extends TestCase
             ->assertRedirect(route('verification.notice'));
     }
 
+    public function test_forwarded_https_is_used_for_secure_form_actions(): void
+    {
+        $this->withHeaders([
+            'Host' => 'financi-ai.vercel.app',
+            'X-Forwarded-Host' => 'financi-ai.vercel.app',
+            'X-Forwarded-Proto' => 'https',
+        ])->get('http://financi-ai.vercel.app/login')
+            ->assertSuccessful()
+            ->assertSee('action="https://financi-ai.vercel.app/login"', false);
+    }
+
     public function test_csv_import_deduplicates_transactions(): void
     {
         $user = User::factory()->create();
