@@ -35,7 +35,16 @@ class DiagnoseMail extends Command
                 return self::FAILURE;
             }
 
+            $scheme = $smtp['scheme'] ?? null;
+
+            if (filled($scheme) && ! in_array($scheme, ['smtp', 'smtps'], true)) {
+                $this->error("Esquema SMTP inválido: {$scheme}. Use smtp ou smtps.");
+
+                return self::FAILURE;
+            }
+
             $this->line("SMTP: {$smtp['host']}:{$smtp['port']}");
+            $this->line('Esquema SMTP: '.($scheme ?: 'automático'));
             $this->line('Usuário SMTP: configurado');
             $this->line('Senha SMTP: configurada');
         }

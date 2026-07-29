@@ -90,7 +90,8 @@ class ProductionReadinessTest extends TestCase
         $manifest = json_decode(file_get_contents(public_path('manifest.webmanifest')), true, flags: JSON_THROW_ON_ERROR);
 
         $this->assertSame('financi.ai', $manifest['short_name']);
-        $this->assertStringContainsString('financi-ai-shell-v1', file_get_contents(public_path('service-worker.js')));
+        $this->assertContains('/images/brand/financi-ai-symbol.svg', array_column($manifest['icons'], 'src'));
+        $this->assertStringContainsString('financi-ai-shell-v2', file_get_contents(public_path('service-worker.js')));
     }
 
     public function test_future_income_appears_in_forecast_and_projected_dashboard_totals(): void
@@ -131,6 +132,44 @@ class ProductionReadinessTest extends TestCase
 
         $this->artisan('mail:diagnose')
             ->expectsOutputToContain('não envia mensagens')
+            ->assertSuccessful();
+    }
+
+    public function test_mail_diagnostics_rejects_unsupported_smtp_scheme(): void
+    {
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp' => [
+                'transport' => 'smtp',
+                'scheme' => 'tls',
+                'host' => 'smtp.gmail.com',
+                'port' => 587,
+                'username' => 'mailer@example.com',
+                'password' => 'app-password',
+            ],
+        ]);
+
+        $this->artisan('mail:diagnose')
+            ->expectsOutputToContain('Esquema SMTP inválido: tls')
+            ->assertFailed();
+    }
+
+    public function test_mail_diagnostics_accepts_smtp_with_starttls_port(): void
+    {
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp' => [
+                'transport' => 'smtp',
+                'scheme' => 'smtp',
+                'host' => 'smtp.gmail.com',
+                'port' => 587,
+                'username' => 'mailer@example.com',
+                'password' => 'app-password',
+            ],
+        ]);
+
+        $this->artisan('mail:diagnose')
+            ->expectsOutputToContain('Esquema SMTP: smtp')
             ->assertSuccessful();
     }
 }

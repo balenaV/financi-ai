@@ -5,9 +5,15 @@
     "start_url": "/dashboard",
     "scope": "/",
     "display": "standalone",
-    "background_color": "#0f1f3d",
-    "theme_color": "#0f1f3d",
+    "background_color": "#FFFDF2",
+    "theme_color": "#090A0B",
     "icons": [
+        {
+            "src": "/images/brand/financi-ai-symbol.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
         {
             "src": "/images/brand/financi-ai-symbol.png",
             "sizes": "512x512",

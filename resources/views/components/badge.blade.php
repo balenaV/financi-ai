@@ -1,9 +1,9 @@
 @props(['tone' => 'neutral'])
 @php
 $classes = match($tone) {
-    'success', 'completed', 'paid', 'active', 'income' => 'bg-accent-50 text-accent-800 ring-accent-400/30',
-    'danger', 'overdue', 'cancelled', 'expense' => 'bg-red-50 text-red-700 ring-red-200',
-    'warning', 'planned', 'pending' => 'bg-amber-50 text-amber-800 ring-amber-200',
+    'success', 'completed', 'paid', 'active', 'income' => 'bg-success-50 text-success-700 ring-success-100',
+    'danger', 'overdue', 'cancelled', 'expense' => 'bg-danger-50 text-danger-700 ring-danger-100',
+    'warning', 'planned', 'pending' => 'bg-warning-50 text-warning-700 ring-warning-100',
     'primary', 'transfer' => 'bg-primary-50 text-primary-800 ring-primary-200',
     default => 'bg-slate-100 text-slate-700 ring-slate-200',
 };

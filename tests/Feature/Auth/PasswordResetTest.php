@@ -70,4 +70,17 @@ class PasswordResetTest extends TestCase
             return true;
         });
     }
+
+    public function test_password_reset_email_uses_the_financiai_brand(): void
+    {
+        $user = User::factory()->create(['name' => 'Victor']);
+        $message = (new ResetPassword('test-token'))->toMail($user);
+        $html = (string) $message->render();
+
+        $this->assertSame('Redefina sua senha — financi.ai', $message->subject);
+        $this->assertSame('Olá, Victor!', $message->greeting);
+        $this->assertSame('Criar nova senha', $message->actionText);
+        $this->assertStringContainsString('clareza para suas finanças', $html);
+        $this->assertStringContainsString('Se o botão “Criar nova senha” não funcionar', $html);
+    }
 }

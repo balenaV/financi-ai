@@ -1,8 +1,9 @@
-const CACHE = 'financi-ai-shell-v1';
+const CACHE = 'financi-ai-shell-v2';
 const SHELL = [
     '/',
     '/manifest.webmanifest',
     '/images/brand/financi-ai-symbol.png',
+    '/images/brand/financi-ai-symbol.svg',
     '/images/brand/financi-ai-wordmark.png',
     '/images/brand/financi-ai-wordmark-white.png'
 ];

@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
@@ -54,5 +55,19 @@ class EmailVerificationTest extends TestCase
         $this->actingAs($user)->get($verificationUrl);
 
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
+    }
+
+    public function test_verification_email_uses_the_financiai_brand(): void
+    {
+        $user = User::factory()->unverified()->create(['name' => 'Victor']);
+        $message = (new VerifyEmail)->toMail($user);
+        $html = (string) $message->render();
+
+        $this->assertSame('Confirme seu e-mail — financi.ai', $message->subject);
+        $this->assertSame('Olá, Victor!', $message->greeting);
+        $this->assertSame('Confirmar meu e-mail', $message->actionText);
+        $this->assertStringContainsString('clareza para suas finanças', $html);
+        $this->assertStringContainsString('Organize hoje. Decida melhor amanhã.', $html);
+        $this->assertStringContainsString('#22bf77', strtolower($html));
     }
 }
