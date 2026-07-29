@@ -217,6 +217,13 @@
                     </span>
                     <span class="app-icon-button size-9" aria-hidden="true"><i class="fa-solid fa-gear"></i></span>
                 </a>
+                <form method="POST" action="{{ route('logout') }}" class="sidebar-logout">
+                    @csrf
+                    <button class="app-icon-button w-full" aria-label="Sair" data-tooltip="Sair">
+                        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                        <span>Sair</span>
+                    </button>
+                </form>
             </div>
         </aside>
     </div>
