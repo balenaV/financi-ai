@@ -12,7 +12,7 @@ test('usuário consegue entrar, navegar e sair', async ({ page }, testInfo) => {
     await expect(page).toHaveURL(/dashboard/);
 
     if (testInfo.project.name === 'mobile') {
-        await page.getByRole('button', { name: 'Conversas' }).click();
+        await page.getByRole('button', { name: 'Conversas', exact: true }).click();
     }
 
     await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible();
