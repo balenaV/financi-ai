@@ -133,4 +133,31 @@ export function initUi($) {
     $('[data-tooltip]').each(function () {
         $(this).attr('title', $(this).data('tooltip'));
     });
+
+    const revealElements = [...document.querySelectorAll('[data-reveal]')];
+
+    if (revealElements.length) {
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const revealImmediately = () => revealElements.forEach((element) => element.classList.add('is-visible'));
+
+        if (reducedMotion || !('IntersectionObserver' in window)) {
+            revealImmediately();
+        } else {
+            document.documentElement.classList.add('reveal-enabled');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) return;
+
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                });
+            }, {
+                rootMargin: '0px 0px -10% 0px',
+                threshold: 0.14,
+            });
+
+            revealElements.forEach((element) => observer.observe(element));
+        }
+    }
 }

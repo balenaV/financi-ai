@@ -6,32 +6,14 @@
 
 @php
     $resolvedVariant = $variant ?? ($compact ? 'symbol' : 'wordmark');
-    $brandAsset = match ($resolvedVariant) {
-        'symbol' => 'images/brand/financi-ai-symbol.png',
-        'stacked' => 'images/brand/financi-ai-stacked.png',
-        'wordmark-white' => 'images/brand/financi-ai-wordmark-white.png',
-        default => 'images/brand/financi-ai-wordmark.png',
-    };
-    $darkBrandAsset = $resolvedVariant === 'wordmark'
-        ? 'images/brand/financi-ai-wordmark-white.png'
-        : $brandAsset;
-    $brandClass = match (true) {
-        $resolvedVariant === 'wordmark' && $size === 'sidebar' => 'h-8 w-36',
+    $symbolClass = match (true) {
         $resolvedVariant === 'symbol' && $size === 'large' => 'size-16',
-        $resolvedVariant === 'symbol' => 'size-10',
-        $resolvedVariant === 'stacked' && $size === 'auth' => 'h-24 w-36',
-        $resolvedVariant === 'stacked' => 'h-40 w-56',
-        default => 'h-9 w-48',
+        default => 'size-10',
     };
-    $brandSize = match ($resolvedVariant) {
-        'symbol' => '180%',
-        'stacked' => '135%',
-        default => '123% auto',
-    };
-    $brandPosition = match ($resolvedVariant) {
-        'symbol' => '61% 50%',
-        'stacked' => '50% 48%',
-        default => '50% 50%',
+    $wordmarkClass = match ($size) {
+        'auth' => 'brand-wordmark text-4xl',
+        'sidebar' => 'brand-wordmark text-xl',
+        default => 'brand-wordmark text-2xl',
     };
 @endphp
 
@@ -41,9 +23,30 @@
     data-logo-variant="{{ $resolvedVariant }}"
     {{ $attributes->class(['inline-flex shrink-0 overflow-hidden']) }}
 >
-    <span
-        class="block shrink-0 bg-no-repeat {{ $brandClass }}"
-        style="--logo-light-image: url('{{ asset($brandAsset) }}'); --logo-dark-image: url('{{ asset($darkBrandAsset) }}'); background-image: var(--logo-light-image); background-size: {{ $brandSize }}; background-position: {{ $brandPosition }};"
-        aria-hidden="true"
-    ></span>
+    @if(in_array($resolvedVariant, ['wordmark', 'wordmark-white'], true))
+        <span
+            class="{{ $wordmarkClass }} {{ $resolvedVariant === 'wordmark-white' ? 'brand-wordmark-inverse' : '' }}"
+            aria-hidden="true"
+        >financi<span>.ai</span></span>
+    @elseif($resolvedVariant === 'stacked')
+        <span class="inline-flex flex-col items-center gap-1.5" aria-hidden="true">
+            <img
+                src="{{ asset('images/brand/financi-ai-symbol.svg') }}"
+                alt=""
+                class="size-14 shrink-0"
+                width="56"
+                height="56"
+            >
+            <span class="brand-wordmark text-xl">financi<span>.ai</span></span>
+        </span>
+    @else
+        <img
+            src="{{ asset('images/brand/financi-ai-symbol.svg') }}"
+            alt=""
+            class="{{ $symbolClass }} shrink-0"
+            width="{{ $size === 'large' ? 64 : 40 }}"
+            height="{{ $size === 'large' ? 64 : 40 }}"
+            aria-hidden="true"
+        >
+    @endif
 </span>

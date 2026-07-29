@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+    <title id="title">Símbolo financi.ai</title>
+    <desc id="description">Monograma F geométrico com gradiente verde e contorno escuro.</desc>
+
+    <defs>
+        <linearGradient id="brand-gradient" x1="86" y1="52" x2="368" y2="452" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#4BD496"/>
+            <stop offset="0.52" stop-color="#22BF77"/>
+            <stop offset="1" stop-color="#117A4C"/>
+        </linearGradient>
+    </defs>
+
+    <path
+        d="M116 48H392C418 48 438 68 438 94V108C438 134 418 154 392 154H206V206H310C336 206 356 226 356 252V264C356 290 336 310 310 310H206V414C206 444 184 466 154 466H116C86 466 64 444 64 414V100C64 70 86 48 116 48Z"
+        fill="url(#brand-gradient)"
+        stroke="#090A0B"
+        stroke-width="10"
+        stroke-linejoin="round"
+    />
+
+    <path
+        d="M116 71H381"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-width="5"
+        stroke-linecap="round"
+        opacity="0.26"
+    />
+</svg>

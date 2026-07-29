@@ -1,8 +1,8 @@
 @props(['label', 'value', 'tone' => 'neutral', 'hint' => null])
 @php
 $colors = match($tone) {
-    'positive' => 'text-accent-800',
-    'negative' => 'text-red-700',
+    'positive' => 'text-success-700',
+    'negative' => 'text-danger-700',
     'primary' => 'text-primary-800',
     default => 'text-slate-900',
 };
