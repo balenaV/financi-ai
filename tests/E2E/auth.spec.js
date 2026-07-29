@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('usuário consegue entrar, navegar e sair', async ({ page }) => {
+test('usuário consegue entrar, navegar e sair', async ({ page }, testInfo) => {
     await page.goto('/login');
     await expect(page.getByRole('heading', { name: 'Bem-vindo de volta' })).toBeVisible();
 
@@ -10,6 +10,11 @@ test('usuário consegue entrar, navegar e sair', async ({ page }) => {
     await page.getByRole('button', { name: 'Entrar' }).click();
 
     await expect(page).toHaveURL(/dashboard/);
+
+    if (testInfo.project.name === 'mobile') {
+        await page.getByRole('button', { name: 'Conversas' }).click();
+    }
+
     await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible();
     await page.getByRole('button', { name: 'Sair' }).click();
     await expect(page).toHaveURL('/');
