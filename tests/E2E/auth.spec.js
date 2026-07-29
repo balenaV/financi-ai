@@ -12,11 +12,15 @@ test('usuário consegue entrar, navegar e sair', async ({ page }, testInfo) => {
     await expect(page).toHaveURL(/dashboard/);
 
     if (testInfo.project.name === 'mobile') {
-        await page.getByRole('button', { name: 'Conversas', exact: true }).click();
+        await page.getByRole('button', { name: 'Abrir conversas', exact: true }).click();
+        const mobileSidebar = page.locator('#mobile-sidebar');
+        await expect(mobileSidebar).toBeVisible();
+        await expect(mobileSidebar.getByRole('button', { name: 'Sair', exact: true })).toBeVisible();
+        await mobileSidebar.getByRole('button', { name: 'Sair', exact: true }).click();
+    } else {
+        await expect(page.getByRole('button', { name: 'Sair', exact: true })).toBeVisible();
+        await page.getByRole('button', { name: 'Sair', exact: true }).click();
     }
-
-    await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible();
-    await page.getByRole('button', { name: 'Sair' }).click();
     await expect(page).toHaveURL('/');
 });
 
