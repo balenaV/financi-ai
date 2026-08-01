@@ -2,20 +2,33 @@
 
 O projeto mantém dois ambientes permanentes:
 
-- `dev`: desenvolvimento e homologação. Todo trabalho novo começa aqui ou em uma branch curta criada a partir dela.
+- `dev`: desenvolvimento e homologação (staging). Todo trabalho novo acontece em uma branch `feature/*` criada a partir dela — evite commitar direto em `dev` quando o trabalho tiver mais de um commit ou levar mais de um dia.
 - `main`: produção. Recebe somente alterações validadas por Pull Request vindo de `dev`.
 
-## Fluxo normal
+## Branches de feature
 
-```powershell
+Para qualquer trabalho não-trivial (UI/UX, nova tela, refatoração), crie uma branch a partir de `dev`:
+
+```bash
 git switch dev
 git pull --ff-only origin dev
+git switch -c feature/<escopo-curto>
 
 # desenvolver, testar e versionar
+git push -u origin feature/<escopo-curto>
+```
+
+Convenção de nome: `feature/<escopo-curto>`, em inglês ou português curto, descrevendo o que está sendo feito (ex.: `feature/landing-page-auth-uiux`, `feature/design-system`, `feature/app-tabs-layout`). Quando pronta, abra um Pull Request de volta para `dev` (não direto para `main`).
+
+## Fluxo normal (dev → main)
+
+```bash
+git switch dev
+git pull --ff-only origin dev
 git push origin dev
 ```
 
-Quando a versão estiver aprovada:
+Quando a versão em `dev` estiver aprovada:
 
 1. abra um Pull Request de `dev` para `main`;
 2. aguarde o CI concluir PHPUnit, Pint, build e Playwright;
@@ -28,9 +41,7 @@ Uma correção urgente parte de `main`, em uma branch `hotfix/*`. Depois do merg
 
 ## Ambientes externos
 
-- Vercel Production Branch: `main`.
-- Preview/Homologação Vercel: `dev`.
-- Supabase produção: usado somente por `main`.
-- Supabase desenvolvimento/homologação: projeto separado, usado por `dev`.
+- Ambiente de staging/homologação na VPS: alimentado por `dev`.
+- Ambiente de produção na VPS: alimentado por `main`.
 
 Nunca reutilize o banco de produção para testes ou previews. Proteja `main` contra push direto e exija o workflow `CI` antes do merge.
