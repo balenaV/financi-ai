@@ -52,7 +52,7 @@ DB_FORWARD_PORT=5433 docker compose up -d
 - Urgent fixes branch from `main` as `hotfix/*`, then get back-ported to `dev`.
 - Full detail: `docs/branching.md` (the branch policy itself is unaffected by the hosting migration below).
 
-**Production hosting is being migrated off Vercel + Supabase to a self-managed Hostinger VPS.** Treat the old Vercel/Supabase deploy path as legacy/in-flux, not current source of truth: `api/index.php` entrypoint, `vercel-php` runtime, `docs/deploy-vercel.md`, and the `CD Vercel` / `Migrate Supabase` / `Backup Supabase` GitHub Actions workflows will be replaced by VPS-native deploy steps. Don't assume Vercel-specific constraints (e.g. `/tmp`-only writable storage, `DB_POOL_MODE=transaction` for Supabase's pooler) still hold for production — confirm current state before relying on them, since this migration is actively in progress.
+**Production hosting is being migrated off Vercel + Supabase to a self-managed Hostinger VPS.** Treat the old Vercel/Supabase deploy path as legacy/in-flux, not current source of truth: `api/index.php` entrypoint, `vercel-php` runtime, `docs/deploy-vercel.md`, and the `CD Vercel` / `Migrate Supabase` / `Backup Supabase` GitHub Actions workflows will be replaced by VPS-native deploy steps. Don't assume Vercel-specific constraints (e.g. `/tmp`-only writable storage, `DB_POOL_MODE=transaction` for Supabase's pooler) still hold for production — confirm current state before relying on them, since this migration is actively in progress. `compose.prod.yaml` (standalone Nginx + PHP-FPM + Postgres, no Vercel/Supabase references) is the emerging VPS-native production stack.
 
 ## Architecture
 
@@ -84,7 +84,9 @@ app/
 
 **Frontend**: server-rendered Blade + Tailwind CSS 4, jQuery for interactivity, Chart.js for graphs. JS is split into small modules under `resources/js/modules/` (`charts.js`, `forms.js`, `ui.js`), entry point `resources/js/app.js`, built with Vite (`laravel-vite-plugin`). No SPA framework or build-time component system — views are Blade components in `resources/views/components/`.
 
-**Design tokens**: color/spacing tokens and their rationale (creme/black/green brand direction, WCAG-driven deviations from the original mockup values) are documented in `docs/design-system.md`. Treat it as the source of truth before hand-picking colors for new UI — several dark-mode values intentionally diverge from the reference mockup for contrast reasons.
+**Design tokens**: `docs/design-system.md` documents the target visual system (creme/black/green, Figtree, the "Capí" mascot, a distinctive "hard shadow" button interaction) sourced from a claude.ai/design project — not yet implemented in `resources/css/app.css`, which still runs the prior fundation (Instrument Sans, JetBrains Mono, navy tokens). Treat the doc as the target spec, and check `resources/css/app.css` before assuming any given token already exists in code. The brand name is confirmed as `financiaí` (accented) and the mascot is confirmed as "Capí" (capybara-derived, see `docs/design-system.md` §10) — this file, `README.md`, and `docs/financiai-rebranding-context.md` (which still describes an onça-pintada/jaguar symbol) are stale on both points and shouldn't be copied from for new work.
+
+**Rebrand in progress**: the product is being renamed from `financi.ai` to `financiai` (no dot, treated as one word) with a new visual identity — see `docs/financiai-rebranding-context.md` for the full brand direction (jaguar symbol, creme/caramelo/verde-mata palette, typography, landing/login/dashboard guidance). Existing code/docs (including this file, `README.md`, `.env.example`) still say `financi.ai` in places — that's expected mid-migration, not a bug to silently "fix" in unrelated changes. That doc also states explicit constraints for this work: don't alter business rules, financial calculations, or existing functionality while doing branding/visual work.
 
 ## Testing conventions
 
