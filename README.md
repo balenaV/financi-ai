@@ -29,11 +29,10 @@ Aplicação web de finanças pessoais construída com Laravel 13, PHP 8.5, Postg
 | Camada | Tecnologia |
 | --- | --- |
 | Backend | PHP 8.5, Laravel 13, Eloquent |
-| Banco | PostgreSQL 17 local ou Supabase PostgreSQL |
+| Banco | PostgreSQL 17 (Docker local, ou self-hosted na VPS) |
 | Frontend | Blade, Tailwind CSS 4, jQuery 3, Chart.js 4 |
 | Autenticação | Laravel Breeze |
 | Desenvolvimento | Docker Compose, Nginx, PHP-FPM, Node 22 |
-| Serverless | Vercel + `vercel-php@0.9.0` |
 
 ## Arquitetura
 
@@ -60,8 +59,6 @@ resources/
 tests/
 ├── Feature/               # fluxos, segurança e relatórios
 └── Unit/                  # cálculos monetários
-api/index.php              # entrada serverless
-vercel.json                # runtime e roteamento Vercel
 ```
 
 ## Ambiente local com Docker
@@ -119,47 +116,31 @@ saldo inicial
 
 Transações pendentes e canceladas não alteram o saldo. Transferências geram duas transações vinculadas e são salvas na mesma transação de banco. Compras no cartão são ligadas automaticamente à fatura correta conforme os dias de fechamento e vencimento; o saldo bancário só é reduzido no pagamento da fatura, evitando dupla contabilização. Valores monetários usam `decimal` e cálculos inteiros em centavos para evitar erros de ponto flutuante.
 
-## Supabase PostgreSQL
+## Banco em staging e produção (VPS)
 
-Crie um projeto no Supabase e copie os dados exibidos em **Connect**. Não grave chaves ou senhas no repositório.
-
-Conexão direta ou Session Pooler:
+Staging e produção rodam na mesma VPS, mas cada ambiente tem seu **próprio container PostgreSQL**, isolado (`financiai_staging` e `financiai_prod`, respectivamente) — nada é compartilhado entre os dois. Não há pooler em nenhum lugar: local, staging e produção usam sempre `DB_POOL_MODE=session`, direto contra um Postgres self-hosted comum.
 
 ```dotenv
 DB_CONNECTION=pgsql
-DB_HOST=db.SEUPROJETO.supabase.co
+DB_HOST=db
 DB_PORT=5432
-DB_DATABASE=postgres
-DB_USERNAME=postgres
+DB_DATABASE=financiai_prod
+DB_USERNAME=SEU_USUARIO
 DB_PASSWORD=SUA_SENHA
 DB_SCHEMA=finance
-DB_SSLMODE=require
+DB_SSLMODE=disable
 DB_POOL_MODE=session
 ```
 
-Transaction Pooler, indicado para muitas conexões serverless curtas:
+`DB_HOST=db` é o nome do serviço Docker do Postgres, resolvido internamente pela rede do Compose — não é um host público. Cada ambiente mantém seu próprio `.env` (nunca versionado) na respectiva pasta da VPS.
 
-```dotenv
-DB_CONNECTION=pgsql
-DB_HOST=HOST_DO_POOLER
-DB_PORT=6543
-DB_DATABASE=postgres
-DB_USERNAME=postgres.SEUPROJETO
-DB_PASSWORD=SUA_SENHA
-DB_SCHEMA=finance
-DB_SSLMODE=require
-DB_POOL_MODE=transaction
+As migrations em staging e produção rodam automaticamente a cada deploy (veja `.github/workflows/deploy.yml`). Para rodar manualmente, sem um deploy completo, use o workflow `migrate-vps.yml` (`workflow_dispatch`, escolhendo o ambiente) ou, direto na VPS:
+
+```bash
+docker compose -p financiai-prod -f compose.prod.yaml exec -T app php artisan migrate --force
 ```
 
-Use exatamente host, porta e usuário apresentados pelo painel do seu projeto. `DB_POOL_MODE=transaction` faz o driver usar prepared statements emulados, compatíveis com esse modo de pool.
-
-Para criar a estrutura no Supabase, execute de uma estação segura:
-
-```powershell
-docker compose run --rm app php artisan migrate --force
-```
-
-O comando usa as variáveis do `.env` ativo. Faça backup antes de apontar um ambiente local para um banco com dados reais. Não execute `migrate:fresh` nem o seeder de demonstração em produção.
+Faça backup antes de qualquer migration em ambiente com dados reais — veja `.github/workflows/backup-vps.yml`. Não execute `migrate:fresh` nem o seeder de demonstração fora do ambiente local.
 
 ## Testes e qualidade
 
@@ -172,14 +153,14 @@ docker compose run --rm --user root app npm run build
 
 A suíte cobre autenticação, autorização entre usuários, validação, saldo, transferências, parcelamentos, dívidas, investimentos, orçamentos, metas, dashboard, relatórios e exportações.
 
-O GitHub Actions também executa cobertura e testes ponta a ponta. Os workflows de migração, deploy e backup usam um environment protegido `production` e os secrets `APP_KEY`, `SUPABASE_DB_URL` e `VERCEL_TOKEN`.
+O GitHub Actions também executa cobertura e testes ponta a ponta. Os workflows de migração, deploy e backup usam um environment protegido `production` e os secrets `VPS_HOST` e `VPS_SSH_KEY`.
 
 ## Branches e ambientes
 
 - `dev` é a branch de desenvolvimento e homologação.
 - `main` é exclusiva para produção.
 - mudanças chegam à produção por Pull Request de `dev` para `main`;
-- tags `v*` na versão aprovada disparam o workflow de produção.
+- o próprio merge em `main` já dispara o deploy de produção, com aprovação manual via GitHub Environments.
 
 O fluxo completo está documentado em [docs/branching.md](docs/branching.md).
 
@@ -217,66 +198,26 @@ docker compose exec -T --user root app chown -R www-data:www-data storage bootst
 
 Execute comandos Artisan normalmente, sem `--user root`, para preservar as permissões.
 
-## Vercel
+## Deploy (VPS)
 
-O projeto está preparado para Vercel, mas não executa deploy automaticamente. A configuração usa `api/index.php` como entrada Laravel, armazenamento gravável em `/tmp`, ativos compilados em `public/build` e o runtime comunitário `vercel-php@0.9.0`.
+Staging e produção rodam na mesma VPS (Hostinger), como dois projetos Docker Compose totalmente separados — clones, `.env`, containers e bancos próprios, nada compartilhado:
 
-Antes de enviar:
+| | Staging | Produção |
+| --- | --- | --- |
+| Branch | `dev` | `main` |
+| Caminho na VPS | `/var/www/financiai-staging` | `/var/www/financiai` |
+| Projeto Compose (`-p`) | `financiai-staging` | `financiai-prod` |
+| Porta interna | `127.0.0.1:8081` | `127.0.0.1:8080` |
+| Domínio | `staging.financiai.cloud` | `financiai.cloud`, `www.financiai.cloud` |
 
-```powershell
-docker compose run --rm --user root app composer install --no-dev --optimize-autoloader
-docker compose run --rm --user root app npm ci
-docker compose run --rm --user root app npm run build
-```
+`compose.prod.yaml` é o mesmo arquivo, versionado no repositório, para os dois ambientes — o que muda é só o `.env` (nunca versionado) e a porta exposta de cada um. O Nginx do host (instalado via `apt`, fora do Docker) faz o proxy reverso de cada domínio para a porta interna do container correspondente e cuida do HTTPS via Certbot/Let's Encrypt. O container Nginx da aplicação (dentro do Docker) escuta só em `127.0.0.1`, nunca exposto direto à internet.
 
-O diretório `public/build` deve ser versionado, pois os ativos precisam existir no pacote do deploy. Restaure as dependências de desenvolvimento localmente com `composer install` após preparar um artefato dessa forma.
+O deploy é automático via GitHub Actions por SSH (`.github/workflows/deploy.yml`):
 
-Cadastre estas variáveis no projeto Vercel:
+- push em `dev` → deploy em staging, sem aprovação manual;
+- push em `main` → deploy em produção, atrás de aprovação manual (GitHub Environments com reviewers obrigatórios).
 
-```dotenv
-APP_NAME=financi.ai
-APP_ENV=production
-APP_KEY=base64:CHAVE_GERADA
-APP_DEBUG=false
-APP_URL=https://SEU_DOMINIO
-APP_LOCALE=pt_BR
-APP_FALLBACK_LOCALE=pt_BR
-APP_TIMEZONE=America/Sao_Paulo
-ALLOW_REGISTRATION=false
-
-LOG_CHANNEL=stderr
-LOG_LEVEL=warning
-
-DB_CONNECTION=pgsql
-DB_HOST=HOST_DO_SUPABASE_OU_POOLER
-DB_PORT=6543
-DB_DATABASE=postgres
-DB_USERNAME=USUARIO_DO_SUPABASE
-DB_PASSWORD=SENHA_DO_SUPABASE
-DB_SCHEMA=finance
-DB_SSLMODE=require
-DB_POOL_MODE=transaction
-
-SESSION_DRIVER=database
-CACHE_STORE=database
-QUEUE_CONNECTION=sync
-
-LARAVEL_STORAGE_PATH=/tmp/storage
-VIEW_COMPILED_PATH=/tmp/storage/framework/views
-APP_CONFIG_CACHE=/tmp/config.php
-APP_EVENTS_CACHE=/tmp/events.php
-APP_PACKAGES_CACHE=/tmp/packages.php
-APP_ROUTES_CACHE=/tmp/routes.php
-APP_SERVICES_CACHE=/tmp/services.php
-```
-
-Gere a chave fora da Vercel:
-
-```powershell
-docker compose run --rm app php artisan key:generate --show
-```
-
-Copie apenas o valor retornado para `APP_KEY`. Execute as migrations no Supabase antes do primeiro acesso. A documentação operacional detalhada está em [docs/deploy-vercel.md](docs/deploy-vercel.md).
+Cada job roda, na VPS: `git pull`, `docker compose -p <projeto> -f compose.prod.yaml up -d --build`, `composer install --no-dev --optimize-autoloader`, `php artisan migrate --force`, depois `config:cache`/`route:cache`/`view:cache`. Não há passo manual de variável de ambiente em painel externo — tudo fica no `.env` de cada pasta na própria VPS.
 
 ## Cadastro e segurança
 
@@ -312,14 +253,6 @@ Em um volume PostgreSQL antigo, crie o schema ou recrie apenas o ambiente local.
 docker compose run --rm --user root app npm run build
 docker compose run --rm app php artisan optimize:clear
 ```
-
-**Erro de escrita no serverless**
-
-Confirme as variáveis apontando cache, views e storage para `/tmp`, conforme a seção Vercel.
-
-**Erro de conexão com Supabase**
-
-Confira SSL, usuário completo do pooler, porta e modo. Para Transaction Pooler, use `DB_POOL_MODE=transaction`.
 
 ## Checklist antes de produção
 

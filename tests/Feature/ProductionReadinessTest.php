@@ -27,12 +27,12 @@ class ProductionReadinessTest extends TestCase
     public function test_forwarded_https_is_used_for_secure_form_actions(): void
     {
         $this->withHeaders([
-            'Host' => 'financi-ai.vercel.app',
-            'X-Forwarded-Host' => 'financi-ai.vercel.app',
+            'Host' => 'financiai.cloud',
+            'X-Forwarded-Host' => 'financiai.cloud',
             'X-Forwarded-Proto' => 'https',
-        ])->get('http://financi-ai.vercel.app/login')
+        ])->get('http://financiai.cloud/login')
             ->assertSuccessful()
-            ->assertSee('action="https://financi-ai.vercel.app/login"', false);
+            ->assertSee('action="https://financiai.cloud/login"', false);
     }
 
     public function test_csv_import_deduplicates_transactions(): void
