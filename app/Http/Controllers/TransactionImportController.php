@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CommitImportRequest;
+use App\Http\Requests\PreviewImportRequest;
+use App\Http\Requests\StoreImportRequest;
 use App\Models\Account;
-use App\Models\Category;
+use App\Models\ImportBatch;
 use App\Services\TransactionImportService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class TransactionImportController extends Controller
@@ -20,29 +23,74 @@ class TransactionImportController extends Controller
         ]);
     }
 
-    public function store(Request $request, TransactionImportService $service): RedirectResponse
+    public function store(StoreImportRequest $request, TransactionImportService $service): JsonResponse
     {
-        $validated = $request->validate([
-            'account_id' => [
-                'required',
-                Rule::exists('accounts', 'id')->where(fn ($query) => $query
-                    ->where('user_id', $request->user()->id)->whereNull('deleted_at')),
-            ],
-            'category_id' => [
-                'nullable',
-                Rule::exists('categories', 'id')->where(fn ($query) => $query
-                    ->where('user_id', $request->user()->id)->whereNull('deleted_at')),
-            ],
-            'file' => ['required', 'file', 'max:5120', 'mimes:csv,txt,ofx'],
+        $account = Account::query()->findOrFail($request->validated('account_id'));
+        $result = $service->createBatch($request->user(), $account, $request->file('file'));
+
+        return response()->json([
+            'batch_id' => $result['batch']->id,
+            'format' => $result['batch']->format->value,
+            'columns' => $result['columns'],
+            'suggested_mapping' => $result['suggested_mapping'],
         ]);
+    }
 
-        $account = Account::query()->findOrFail($validated['account_id']);
-        $category = isset($validated['category_id']) ? Category::query()->findOrFail($validated['category_id']) : null;
-        $result = $service->import($request->user(), $account, $request->file('file'), $category);
+    public function preview(PreviewImportRequest $request, ImportBatch $batch, TransactionImportService $service): JsonResponse
+    {
+        $this->authorize('view', $batch);
 
-        return to_route('transactions.index')->with(
-            'success',
-            "{$result['created']} transações importadas; {$result['duplicates']} duplicadas ignoradas; {$result['invalid']} linhas inválidas.",
+        $service->dispatchParse(
+            $batch,
+            $request->input('column_map'),
+            $request->input('date_format'),
+            $request->input('decimal_separator'),
         );
+
+        return response()->json(['status' => $batch->fresh()->status->value]);
+    }
+
+    public function show(ImportBatch $batch): JsonResponse
+    {
+        $this->authorize('view', $batch);
+
+        $batch->refresh();
+
+        return response()->json([
+            'status' => $batch->status->value,
+            'error' => $batch->error,
+            'rows_read' => $batch->rows_read,
+            'rows' => $batch->status->value === 'parsed' || $batch->status->value === 'committed'
+                ? $batch->rows()->orderBy('posted_at')->orderBy('id')->get()->map(fn ($row) => [
+                    'id' => $row->id,
+                    'posted_at' => $row->posted_at->format('d/m'),
+                    'description' => $row->description,
+                    'type' => $row->type->value,
+                    'amount' => $row->amount,
+                    'status' => $row->status->value,
+                    'status_label' => $row->status->label(),
+                    'included' => $row->included,
+                    'suggested_category_id' => $row->suggested_category_id,
+                ])
+                : [],
+        ]);
+    }
+
+    public function commit(CommitImportRequest $request, ImportBatch $batch, TransactionImportService $service): JsonResponse
+    {
+        $this->authorize('update', $batch);
+
+        $result = $service->commit($batch, $request->validated('row_ids'), $request->validated('categories', []));
+
+        return response()->json($result);
+    }
+
+    public function revert(ImportBatch $batch, TransactionImportService $service): RedirectResponse
+    {
+        $this->authorize('update', $batch);
+
+        $service->revert($batch);
+
+        return to_route('transactions.index')->with('success', 'Importação desfeita — os lançamentos foram removidos.');
     }
 }

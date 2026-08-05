@@ -31,8 +31,13 @@ Route::middleware(['auth', 'verified', 'audit'])->group(function () {
     Route::resource('accounts', AccountController::class);
     Route::resource('categories', CategoryController::class)->except(['create', 'show']);
     Route::get('transactions/export/csv', [TransactionController::class, 'export'])->name('transactions.export');
+    Route::get('transactions/export/ofx', [TransactionController::class, 'exportOfx'])->name('transactions.export.ofx');
     Route::get('transactions/import', [TransactionImportController::class, 'create'])->name('transactions.import.create');
     Route::post('transactions/import', [TransactionImportController::class, 'store'])->name('transactions.import.store');
+    Route::post('transactions/import/{batch}/preview', [TransactionImportController::class, 'preview'])->name('transactions.import.preview');
+    Route::get('transactions/import/{batch}', [TransactionImportController::class, 'show'])->name('transactions.import.show');
+    Route::post('transactions/import/{batch}/commit', [TransactionImportController::class, 'commit'])->name('transactions.import.commit');
+    Route::post('transactions/import/{batch}/revert', [TransactionImportController::class, 'revert'])->name('transactions.import.revert');
     Route::post('transactions/{transaction}/duplicate', [TransactionController::class, 'duplicate'])->name('transactions.duplicate');
     Route::patch('transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])->name('transactions.cancel');
     Route::resource('transactions', TransactionController::class)->except('show');

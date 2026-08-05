@@ -11,3 +11,7 @@ Artisan::command('inspire', function () {
 Schedule::command('finance:send-reminders --days=7')
     ->dailyAt('08:00')
     ->withoutOverlapping();
+
+Schedule::command('imports:prune-stale')
+    ->hourly()
+    ->withoutOverlapping();

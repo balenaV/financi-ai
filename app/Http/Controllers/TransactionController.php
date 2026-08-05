@@ -137,6 +137,34 @@ class TransactionController extends Controller
         }, 'transacoes-'.today()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
+    public function exportOfx(Request $request): StreamedResponse
+    {
+        $transactions = $request->user()->transactions()->with('account')
+            ->when($request->start_date, fn ($q, $date) => $q->whereDate('competence_date', '>=', $date))
+            ->when($request->end_date, fn ($q, $date) => $q->whereDate('competence_date', '<=', $date))
+            ->orderBy('competence_date')->get();
+
+        $start = $transactions->min('competence_date')?->format('Ymd') ?? today()->format('Ymd');
+        $end = $transactions->max('competence_date')?->format('Ymd') ?? today()->format('Ymd');
+
+        return response()->streamDownload(function () use ($transactions, $start, $end) {
+            echo "OFXHEADER:100\r\nDATA:OFXSGML\r\nVERSION:102\r\nSECURITY:NONE\r\nENCODING:UTF-8\r\nCHARSET:NONE\r\nCOMPRESSION:NONE\r\nOLDFILEUID:NONE\r\nNEWFILEUID:NONE\r\n\r\n";
+            echo "<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS><CURDEF>BRL<BANKTRANLIST><DTSTART>{$start}<DTEND>{$end}\n";
+            foreach ($transactions as $transaction) {
+                $amount = $transaction->type->value === 'expense' ? '-'.$transaction->amount : $transaction->amount;
+                $memo = $this->ofxSafe($transaction->description);
+                echo '<STMTTRN><TRNTYPE>'.($transaction->type->value === 'expense' ? 'DEBIT' : 'CREDIT')
+                    ."<DTPOSTED>{$transaction->competence_date->format('Ymd')}<TRNAMT>{$amount}<FITID>{$transaction->id}<MEMO>{$memo}</STMTTRN>\n";
+            }
+            echo '</BANKTRANLIST></STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>';
+        }, 'transacoes-'.today()->format('Y-m-d').'.ofx', ['Content-Type' => 'application/x-ofx']);
+    }
+
+    private function ofxSafe(string $value): string
+    {
+        return str_replace(['&', '<', '>'], ['&amp;', '&lt;', '&gt;'], $value);
+    }
+
     private function form(Request $request, Transaction $transaction): View
     {
         return view('transactions.form', [
