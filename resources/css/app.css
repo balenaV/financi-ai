@@ -1,7 +1,9 @@
-@import "@fontsource/instrument-sans/400.css";
-@import "@fontsource/instrument-sans/500.css";
-@import "@fontsource/instrument-sans/600.css";
-@import "@fontsource/instrument-sans/700.css";
+@import "@fontsource/figtree/400.css";
+@import "@fontsource/figtree/500.css";
+@import "@fontsource/figtree/600.css";
+@import "@fontsource/figtree/700.css";
+@import "@fontsource/figtree/800.css";
+@import "@fontsource/figtree/900.css";
 @import "@fortawesome/fontawesome-free/css/all.min.css";
 @import "tailwindcss";
 
@@ -13,34 +15,43 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
     --spacing: 0.25rem;
 
-    --text-xs: 0.6875rem;
+    --text-xs: 0.75rem;
     --text-xs--line-height: 1rem;
     --text-sm: 0.8125rem;
-    --text-sm--line-height: 1.25rem;
+    --text-sm--line-height: 1.4;
     --text-base: 0.9375rem;
-    --text-base--line-height: 1.5rem;
+    --text-base--line-height: 1.55;
     --text-md: 1rem;
     --text-md--line-height: 1.5rem;
-    --text-lg: 1.125rem;
-    --text-lg--line-height: 1.75rem;
-    --text-xl: 1.25rem;
-    --text-xl--line-height: 1.75rem;
-    --text-2xl: 1.5rem;
-    --text-2xl--line-height: 2rem;
+    --text-lg: 1.0625rem;
+    --text-lg--line-height: 1.6;
+    --text-xl: 1.3125rem;
+    --text-xl--line-height: 1.25;
+    --text-xl--font-weight: 750;
+    --text-xl--letter-spacing: -0.025em;
+    --text-2xl: 1.625rem;
+    --text-2xl--line-height: 1.15;
+    --text-2xl--letter-spacing: -0.03em;
     --text-3xl: 1.875rem;
-    --text-3xl--line-height: 2.25rem;
-    --text-4xl: 2.25rem;
-    --text-4xl--line-height: 2.5rem;
-    --text-5xl: 3rem;
-    --text-5xl--line-height: 1;
+    --text-3xl--line-height: 1.1;
+    --text-3xl--letter-spacing: -0.03em;
+    --text-4xl: 2.625rem;
+    --text-4xl--line-height: 1.1;
+    --text-4xl--letter-spacing: -0.035em;
+    --text-5xl: 3.375rem;
+    --text-5xl--line-height: 1.03;
+    --text-5xl--letter-spacing: -0.04em;
 
-    --radius-sm: 0.375rem;
-    --radius-md: 0.625rem;
+    --tracking-tighter: -0.035em;
+    --tracking-tightest: -0.04em;
+
+    --radius-sm: 0.5rem;
+    --radius-md: 0.6875rem;
     --radius-lg: 1rem;
     --radius-xl: 1.25rem;
     --radius-2xl: 1.75rem;
@@ -50,8 +61,9 @@
     --shadow-md: 0 4px 6px -1px rgb(9 10 11 / 0.07), 0 2px 4px -2px rgb(9 10 11 / 0.05);
     --shadow-lg: 0 10px 15px -3px rgb(9 10 11 / 0.08), 0 4px 6px -4px rgb(9 10 11 / 0.05);
     --shadow-xl: 0 20px 25px -5px rgb(9 10 11 / 0.08), 0 8px 10px -6px rgb(9 10 11 / 0.04);
-    --shadow-card: 0 1px 3px 0 rgb(9 10 11 / 0.06), 0 1px 2px -1px rgb(9 10 11 / 0.04);
-    --shadow-focus: 0 0 0 3px rgb(34 191 119 / 0.22);
+    --shadow-card: none;
+    --shadow-hard: 5px 5px 0 0 var(--hard);
+    --shadow-focus: 0 0 0 4px rgb(56 193 114 / 0.22);
 }
 
 @theme inline {
@@ -84,22 +96,22 @@
     --color-secondary-500: var(--navy-light);
     --color-secondary-700: var(--navy);
 
-    --color-accent-50: var(--teal-50);
-    --color-accent-100: var(--teal-100);
-    --color-accent-400: var(--teal-400);
-    --color-accent-500: var(--teal-500);
-    --color-accent-600: var(--teal-600);
-    --color-accent-700: var(--teal-700);
-    --color-accent-800: var(--teal-700);
+    --color-accent-50: var(--brand-50);
+    --color-accent-100: var(--brand-100);
+    --color-accent-400: var(--brand-400);
+    --color-accent-500: var(--brand-500);
+    --color-accent-600: var(--brand-600);
+    --color-accent-700: var(--brand-700);
+    --color-accent-800: var(--brand-800);
 
-    --color-success-50: var(--teal-50);
-    --color-success-100: var(--teal-100);
-    --color-success-200: var(--teal-100);
-    --color-success-400: var(--teal-400);
-    --color-success-500: var(--teal-500);
-    --color-success-600: var(--teal-600);
-    --color-success-700: var(--teal-700);
-    --color-success-800: var(--teal-700);
+    --color-success-50: var(--brand-50);
+    --color-success-100: var(--brand-100);
+    --color-success-200: var(--brand-200);
+    --color-success-400: var(--brand-400);
+    --color-success-500: var(--brand-500);
+    --color-success-600: var(--brand-600);
+    --color-success-700: var(--brand-700);
+    --color-success-800: var(--brand-800);
 
     --color-danger-50: var(--red-50);
     --color-danger-100: var(--red-100);
@@ -117,51 +129,91 @@
     --color-ai-600: var(--violet-600);
     --color-ai-700: var(--violet-700);
     --color-ai-900: var(--violet-900);
+
+    --color-slate-50: var(--neutral-50);
+    --color-slate-100: var(--neutral-100);
+    --color-slate-200: var(--neutral-200);
+    --color-slate-300: var(--neutral-300);
+    --color-slate-400: var(--neutral-400);
+    --color-slate-500: var(--neutral-500);
+    --color-slate-600: var(--neutral-600);
+    --color-slate-700: var(--neutral-700);
+    --color-slate-800: var(--neutral-800);
+    --color-slate-900: var(--neutral-900);
+    --color-slate-950: var(--neutral-950);
+
+    --color-red-50: var(--red-50);
+    --color-red-100: var(--red-100);
+    --color-red-200: var(--red-100);
+    --color-red-500: var(--red-500);
+    --color-red-600: var(--red-600);
+    --color-red-700: var(--red-700);
+    --color-red-800: var(--red-800);
+    --color-red-900: var(--red-900);
+
+    --color-amber-50: var(--orange-50);
+    --color-amber-100: var(--orange-100);
+    --color-amber-200: var(--orange-100);
+    --color-amber-500: var(--orange-500);
+    --color-amber-700: var(--orange-700);
+    --color-amber-800: var(--orange-800);
+    --color-amber-900: var(--orange-900);
 }
 
 :root {
-    --bg-base: #fffdf2;
-    --bg-alt: #f8f6eb;
+    --bg-base: #fff6e6;
+    --bg-alt: #fbf4e4;
     --bg-card: #ffffff;
     --bg-elevated: #ffffff;
     --bg-overlay: #ffffff;
     --bg-input: #ffffff;
 
-    --text-primary: #090a0b;
-    --text-secondary: #4b4a45;
-    --text-tertiary: #78766f;
-    --text-inverse: #fffdf2;
+    --text-primary: #111111;
+    --text-secondary: #5b5a54;
+    --text-tertiary: #8a8880;
+    --text-inverse: #fff6e6;
     --text-on-blue: #ffffff;
     --text-on-teal: #ffffff;
-    --text-on-brand: #06150d;
+    --text-on-brand: #fff6e6;
+    /* Dark text for use specifically on the bright folha (--brand-400) green —
+       constant across themes, since it's about contrast with that one hue. */
+    --text-on-brand-alt: #0b3b26;
 
-    --border-subtle: #dedacf;
-    --border-default: #bdb8ad;
-    --border-strong: #090a0b;
+    --border-subtle: rgb(17 17 17 / 0.10);
+    --border-default: rgb(17 17 17 / 0.14);
+    --border-strong: #111111;
 
-    --brand-50: #eefbf4;
-    --brand-100: #d7f7e5;
-    --brand-200: #afeecb;
-    --brand-400: #4bd496;
-    --brand-500: #22bf77;
-    --brand-600: #15995d;
-    --brand-700: #117a4c;
-    --brand-800: #105f3e;
-    --brand-900: #0c4e34;
+    /* hard-shadow ink: #111 on light surfaces, creme on dark ones */
+    --hard: #111111;
 
-    --blue-50: #eff6ff;
-    --blue-100: #dbeafe;
-    --blue-200: #bfdbfe;
-    --blue-400: #60a5fa;
-    --blue-500: #3b82f6;
-    --blue-600: #2563eb;
-    --blue-700: #1d4ed8;
+    /* Capí only — never aliased into a semantic --color-*, see @theme inline */
+    --mascot-caramelo: #d07a2a;
+    --mascot-marrom: #6a4a20;
+
+    --brand-50: #e9f8ef;
+    --brand-100: #cdf1dc;
+    --brand-200: #9fe4be;
+    --brand-400: #38c172;
+    --brand-500: #239f5c;
+    --brand-600: #137a4a;
+    --brand-700: #0f6b40;
+    --brand-800: #0b5733;
+    --brand-900: #0a472a;
+
+    --blue-50: #eef4ff;
+    --blue-100: #dbe7fe;
+    --blue-200: #bcd4fd;
+    --blue-400: #6b96f5;
+    --blue-500: #4a80f0;
+    --blue-600: #2f6fed;
+    --blue-700: #2557c4;
     --blue-800: #1e40af;
     --blue-900: #102a43;
 
     --navy: #102a43;
     --navy-light: #1e3a5f;
 
+    /* Decorative chart hue only — no longer carries a "success" meaning. */
     --teal-50: #ecfdf5;
     --teal-100: #d1fae5;
     --teal-400: #2dd4bf;
@@ -169,26 +221,43 @@
     --teal-600: #0d9488;
     --teal-700: #0f766e;
 
-    --violet-500: #8b5cf6;
-    --violet-600: #7c3aed;
-    --violet-700: #6d28d9;
-    --violet-900: #3b0764;
+    --violet-500: #7a5af8;
+    --violet-600: #6841e0;
+    --violet-700: #5a34c9;
+    --violet-900: #2e1a6b;
 
-    --red-50: #fef2f2;
-    --red-100: #fee2e2;
-    --red-500: #ef4444;
-    --red-600: #dc2626;
-    --red-700: #b91c1c;
+    --red-50: #fdf1f0;
+    --red-100: rgb(179 38 30 / 0.12);
+    --red-500: #c23a2e;
+    --red-600: #bc2e22;
+    --red-700: #b3261e;
+    --red-800: #8f1e17;
+    --red-900: #6b1712;
 
-    --orange-50: #fff7ed;
-    --orange-100: #ffedd5;
-    --orange-500: #f97316;
-    --orange-600: #ea580c;
-    --orange-700: #c2410c;
+    --orange-50: rgb(224 138 30 / 0.14);
+    --orange-100: rgb(224 138 30 / 0.22);
+    --orange-500: #e89b3e;
+    --orange-600: #e08a1e;
+    --orange-700: #8a5310;
+    --orange-800: #6e3f0c;
+    --orange-900: #4a2a08;
 
     --yellow-50: #fefce8;
     --yellow-400: #facc15;
     --yellow-500: #eab308;
+
+    /* Neutro — warm gray, replaces Tailwind's default cool slate everywhere. */
+    --neutral-50: #fbf4e4;
+    --neutral-100: #f1e9d6;
+    --neutral-200: #e4dac2;
+    --neutral-300: #cfc3ac;
+    --neutral-400: #aba495;
+    --neutral-500: #8a8880;
+    --neutral-600: #6e6c63;
+    --neutral-700: #57554e;
+    --neutral-800: #3a3934;
+    --neutral-900: #232220;
+    --neutral-950: #161511;
 
     --duration-fast: 100ms;
     --duration-base: 150ms;
@@ -200,46 +269,50 @@
 }
 
 html.dark {
-    --bg-base: #080a0d;
-    --bg-alt: #0d1117;
-    --bg-card: #11151a;
-    --bg-elevated: #171c22;
-    --bg-overlay: #1e2530;
-    --bg-input: #11151a;
+    --bg-base: #111310;
+    --bg-alt: #212520;
+    --bg-card: #1a1d18;
+    --bg-elevated: #21251f;
+    --bg-overlay: #21251f;
+    --bg-input: #1a1d18;
 
-    --text-primary: #fffdf2;
-    --text-secondary: #c9c6b9;
-    --text-tertiary: #969388;
-    --text-inverse: #090a0b;
+    --text-primary: #fff6e6;
+    --text-secondary: #a9a79c;
+    --text-tertiary: #7d7b70;
+    --text-inverse: #111111;
 
-    --border-subtle: #292b28;
-    --border-default: #444740;
-    --border-strong: #fffdf2;
+    --border-subtle: rgb(255 246 230 / 0.10);
+    --border-default: rgb(255 246 230 / 0.16);
+    --border-strong: #fff6e6;
 
-    --brand-50: #102b20;
-    --brand-100: rgb(34 191 119 / 0.15);
-    --brand-200: rgb(34 191 119 / 0.28);
+    /* hard-shadow ink flips to creme so it still reads against dark surfaces */
+    --hard: #fff6e6;
 
-    --blue-50: #1e3a5f;
-    --blue-100: rgb(30 64 175 / 0.13);
-    --blue-200: rgb(29 78 216 / 0.25);
+    /* dark theme swaps which green leads: folha becomes the accent, floresta the support */
+    --brand-50: #0f2018;
+    --brand-100: rgb(56 193 114 / 0.15);
+    --brand-200: rgb(56 193 114 / 0.28);
+
+    --blue-50: #16233d;
+    --blue-100: rgb(47 111 237 / 0.18);
+    --blue-200: rgb(47 111 237 / 0.30);
 
     --teal-50: #0d2b26;
-    --teal-100: rgb(19 78 74 / 0.19);
+    --teal-100: rgb(20 184 154 / 0.19);
 
-    --red-50: #2d1212;
-    --red-100: rgb(127 29 29 / 0.25);
+    --red-50: #2a1512;
+    --red-100: rgb(179 38 30 / 0.22);
 
-    --orange-50: #2d1a0a;
-    --orange-100: rgb(124 45 18 / 0.25);
+    --orange-50: #2c1d0a;
+    --orange-100: rgb(224 138 30 / 0.24);
 
     --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.40);
     --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.45), 0 1px 2px -1px rgb(0 0 0 / 0.35);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.35);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.50), 0 4px 6px -4px rgb(0 0 0 / 0.35);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.55), 0 8px 10px -6px rgb(0 0 0 / 0.35);
-    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.40), 0 1px 2px -1px rgb(0 0 0 / 0.30);
-    --shadow-focus: 0 0 0 3px rgb(34 191 119 / 0.35);
+    --shadow-card: none;
+    --shadow-focus: 0 0 0 4px rgb(56 193 114 / 0.35);
 }
 
 @layer base {
@@ -270,11 +343,15 @@ html.dark {
     }
 
     .brand-wordmark > span {
-        color: var(--brand-500);
+        color: var(--brand-600);
+    }
+
+    .dark .brand-wordmark > span {
+        color: var(--brand-400);
     }
 
     .brand-wordmark-inverse {
-        color: #fffdf2;
+        color: #fff6e6;
     }
 
     .form-control {
@@ -320,7 +397,9 @@ html.dark {
     .btn,
     .btn-primary,
     .btn-secondary,
-    .btn-danger {
+    .btn-danger,
+    .btn-ghost,
+    .btn-destaque {
         min-height: 2.5rem;
         border-radius: var(--radius-md);
         transition:
@@ -328,61 +407,104 @@ html.dark {
             border-color var(--duration-base) var(--ease-default),
             color var(--duration-base) var(--ease-default),
             box-shadow var(--duration-base) var(--ease-default),
-            transform var(--duration-fast) var(--ease-default);
+            transform var(--duration-base) var(--ease-default);
         @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold;
     }
 
     .btn:active,
     .btn-primary:active,
     .btn-secondary:active,
-    .btn-danger:active { transform: translateY(1px); }
+    .btn-danger:active,
+    .btn-ghost:active,
+    .btn-destaque:active { transform: translateY(1px); }
 
     .btn:disabled,
     .btn-primary:disabled,
     .btn-secondary:disabled,
-    .btn-danger:disabled {
+    .btn-danger:disabled,
+    .btn-ghost:disabled,
+    .btn-destaque:disabled {
         cursor: not-allowed;
         opacity: .60;
         transform: none;
+        box-shadow: none;
     }
 
     .btn { color: var(--text-secondary); }
     .btn:hover { background-color: var(--bg-alt); color: var(--text-primary); }
 
+    /* Primary action: the only place a hard, un-blurred shadow appears. */
     .btn-primary {
-        border: 1px solid var(--text-primary);
-        background-color: var(--brand-500);
+        border: 1.5px solid var(--hard);
+        background-color: var(--brand-600);
         color: var(--text-on-brand);
         box-shadow: none;
     }
     .btn-primary:hover {
         background-color: var(--brand-400);
-        box-shadow: 3px 3px 0 var(--text-primary);
-        transform: translate(-1px, -1px);
+        color: var(--text-on-brand-alt);
+        box-shadow: var(--shadow-hard);
+        transform: translate(-3px, -3px);
     }
     .btn-primary:active {
+        background-color: var(--brand-700);
+        color: var(--text-on-brand);
+        box-shadow: none;
+        transform: translateY(1px);
+    }
+    .dark .btn-primary {
+        background-color: var(--brand-400);
+        color: var(--text-on-brand-alt);
+    }
+    .dark .btn-primary:hover {
         background-color: var(--brand-600);
+        color: var(--text-on-brand);
+    }
+
+    /* Secondary: no hard shadow — full color inversion on hover instead. */
+    .btn-secondary {
+        border: 1.5px solid var(--hard);
+        background-color: var(--bg-card);
+        color: var(--text-primary);
+        box-shadow: none;
+    }
+    .btn-secondary:hover {
+        background-color: var(--text-primary);
+        color: var(--text-inverse);
+        border-color: var(--text-primary);
+    }
+
+    /* Destaque: same hard-shadow language as primary, starts at the bright accent. */
+    .btn-destaque {
+        border: 1.5px solid var(--hard);
+        background-color: var(--brand-400);
+        color: var(--text-on-brand-alt);
+        box-shadow: none;
+    }
+    .btn-destaque:hover {
+        box-shadow: var(--shadow-hard);
+        transform: translate(-3px, -3px);
+    }
+    .btn-destaque:active {
         box-shadow: none;
         transform: translateY(1px);
     }
 
-    .btn-secondary {
-        border: 1px solid var(--border-default);
-        background-color: var(--bg-card);
-        color: var(--text-secondary);
-        box-shadow: var(--shadow-xs);
+    /* Ghost: text-only, never a hard shadow — just a soft brand-tinted hover. */
+    .btn-ghost {
+        border: none;
+        background-color: transparent;
+        color: var(--brand-600);
+        box-shadow: none;
     }
-    .btn-secondary:hover {
-        border-color: var(--border-strong);
-        background-color: var(--bg-alt);
-        color: var(--text-primary);
-    }
+    .btn-ghost:hover { background-color: rgb(56 193 114 / 0.12); }
+    .dark .btn-ghost { color: var(--brand-400); }
 
     .btn-danger {
         border: 1px solid transparent;
         background-color: var(--red-600);
         color: #fff;
-        box-shadow: var(--shadow-sm);
+        box-shadow: none;
     }
     .btn-danger:hover { background-color: var(--red-700); }
 

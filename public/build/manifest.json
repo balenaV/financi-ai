@@ -1,67 +1,99 @@
 {
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-400-normal.woff": {
-    "file": "assets/instrument-sans-latin-400-normal-D1W7dsQl.woff",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-400-normal.woff"
+  "node_modules/@fontsource/figtree/files/figtree-latin-400-normal.woff": {
+    "file": "assets/figtree-latin-400-normal-BD4aNku5.woff",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-400-normal.woff"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-400-normal.woff2": {
-    "file": "assets/instrument-sans-latin-400-normal-DRC__1Mx.woff2",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-400-normal.woff2"
+  "node_modules/@fontsource/figtree/files/figtree-latin-400-normal.woff2": {
+    "file": "assets/figtree-latin-400-normal-g7Dtegnw.woff2",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-400-normal.woff2"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-500-normal.woff": {
-    "file": "assets/instrument-sans-latin-500-normal-Z6ESRlEs.woff",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-500-normal.woff"
+  "node_modules/@fontsource/figtree/files/figtree-latin-500-normal.woff": {
+    "file": "assets/figtree-latin-500-normal-B_yy1phn.woff",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-500-normal.woff"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-500-normal.woff2": {
-    "file": "assets/instrument-sans-latin-500-normal-Dk9ku72i.woff2",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-500-normal.woff2"
+  "node_modules/@fontsource/figtree/files/figtree-latin-500-normal.woff2": {
+    "file": "assets/figtree-latin-500-normal-BWnGEVsr.woff2",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-500-normal.woff2"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-600-normal.woff": {
-    "file": "assets/instrument-sans-latin-600-normal-B9e8oLYv.woff",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-600-normal.woff"
+  "node_modules/@fontsource/figtree/files/figtree-latin-600-normal.woff": {
+    "file": "assets/figtree-latin-600-normal-BM_oTo4n.woff",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-600-normal.woff"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-600-normal.woff2": {
-    "file": "assets/instrument-sans-latin-600-normal-B7fBEWYG.woff2",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-600-normal.woff2"
+  "node_modules/@fontsource/figtree/files/figtree-latin-600-normal.woff2": {
+    "file": "assets/figtree-latin-600-normal-Cv_xCTDl.woff2",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-600-normal.woff2"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-700-normal.woff": {
-    "file": "assets/instrument-sans-latin-700-normal-DfAjL1vF.woff",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-700-normal.woff"
+  "node_modules/@fontsource/figtree/files/figtree-latin-700-normal.woff": {
+    "file": "assets/figtree-latin-700-normal-BCCt2T1q.woff",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-700-normal.woff"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-700-normal.woff2": {
-    "file": "assets/instrument-sans-latin-700-normal-CYfAanHo.woff2",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-700-normal.woff2"
+  "node_modules/@fontsource/figtree/files/figtree-latin-700-normal.woff2": {
+    "file": "assets/figtree-latin-700-normal-th6qEP7c.woff2",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-700-normal.woff2"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-400-normal.woff": {
-    "file": "assets/instrument-sans-latin-ext-400-normal-r32jotim.woff",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-400-normal.woff"
+  "node_modules/@fontsource/figtree/files/figtree-latin-800-normal.woff": {
+    "file": "assets/figtree-latin-800-normal-B7vj2UK8.woff",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-800-normal.woff"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-400-normal.woff2": {
-    "file": "assets/instrument-sans-latin-ext-400-normal-Q_nF8v4l.woff2",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-400-normal.woff2"
+  "node_modules/@fontsource/figtree/files/figtree-latin-800-normal.woff2": {
+    "file": "assets/figtree-latin-800-normal-30yxI7TZ.woff2",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-800-normal.woff2"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-500-normal.woff": {
-    "file": "assets/instrument-sans-latin-ext-500-normal-CAxz3nsc.woff",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-500-normal.woff"
+  "node_modules/@fontsource/figtree/files/figtree-latin-900-normal.woff": {
+    "file": "assets/figtree-latin-900-normal-BAYHxy6Q.woff",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-900-normal.woff"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-500-normal.woff2": {
-    "file": "assets/instrument-sans-latin-ext-500-normal-CTEe1bJa.woff2",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-500-normal.woff2"
+  "node_modules/@fontsource/figtree/files/figtree-latin-900-normal.woff2": {
+    "file": "assets/figtree-latin-900-normal-BCLx4uqW.woff2",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-900-normal.woff2"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-600-normal.woff": {
-    "file": "assets/instrument-sans-latin-ext-600-normal-DMks36a2.woff",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-600-normal.woff"
+  "node_modules/@fontsource/figtree/files/figtree-latin-ext-400-normal.woff": {
+    "file": "assets/figtree-latin-ext-400-normal-Gbh-3PTk.woff",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-ext-400-normal.woff"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-600-normal.woff2": {
-    "file": "assets/instrument-sans-latin-ext-600-normal-BsaQcF38.woff2",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-600-normal.woff2"
+  "node_modules/@fontsource/figtree/files/figtree-latin-ext-400-normal.woff2": {
+    "file": "assets/figtree-latin-ext-400-normal-CXAzuTZb.woff2",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-ext-400-normal.woff2"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-700-normal.woff": {
-    "file": "assets/instrument-sans-latin-ext-700-normal-BQc-7cTM.woff",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-700-normal.woff"
+  "node_modules/@fontsource/figtree/files/figtree-latin-ext-500-normal.woff": {
+    "file": "assets/figtree-latin-ext-500-normal-BOEJvrb_.woff",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-ext-500-normal.woff"
   },
-  "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-700-normal.woff2": {
-    "file": "assets/instrument-sans-latin-ext-700-normal-ClYbKGw-.woff2",
-    "src": "node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-ext-700-normal.woff2"
+  "node_modules/@fontsource/figtree/files/figtree-latin-ext-500-normal.woff2": {
+    "file": "assets/figtree-latin-ext-500-normal-Du0rIuHj.woff2",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-ext-500-normal.woff2"
+  },
+  "node_modules/@fontsource/figtree/files/figtree-latin-ext-600-normal.woff": {
+    "file": "assets/figtree-latin-ext-600-normal-CQqsimlV.woff",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-ext-600-normal.woff"
+  },
+  "node_modules/@fontsource/figtree/files/figtree-latin-ext-600-normal.woff2": {
+    "file": "assets/figtree-latin-ext-600-normal-DJlfifZj.woff2",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-ext-600-normal.woff2"
+  },
+  "node_modules/@fontsource/figtree/files/figtree-latin-ext-700-normal.woff": {
+    "file": "assets/figtree-latin-ext-700-normal-BoDi4KL2.woff",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-ext-700-normal.woff"
+  },
+  "node_modules/@fontsource/figtree/files/figtree-latin-ext-700-normal.woff2": {
+    "file": "assets/figtree-latin-ext-700-normal-CS4sQkGV.woff2",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-ext-700-normal.woff2"
+  },
+  "node_modules/@fontsource/figtree/files/figtree-latin-ext-800-normal.woff": {
+    "file": "assets/figtree-latin-ext-800-normal-Cp4dEvwL.woff",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-ext-800-normal.woff"
+  },
+  "node_modules/@fontsource/figtree/files/figtree-latin-ext-800-normal.woff2": {
+    "file": "assets/figtree-latin-ext-800-normal-DLIuazCv.woff2",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-ext-800-normal.woff2"
+  },
+  "node_modules/@fontsource/figtree/files/figtree-latin-ext-900-normal.woff": {
+    "file": "assets/figtree-latin-ext-900-normal-BfyWW5yK.woff",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-ext-900-normal.woff"
+  },
+  "node_modules/@fontsource/figtree/files/figtree-latin-ext-900-normal.woff2": {
+    "file": "assets/figtree-latin-ext-900-normal-7_pmoOkR.woff2",
+    "src": "node_modules/@fontsource/figtree/files/figtree-latin-ext-900-normal.woff2"
   },
   "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2": {
     "file": "assets/fa-brands-400-Bs6tcqqs.woff2",
@@ -80,7 +112,7 @@
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-v4compatibility.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-CbLiTt2O.css",
+    "file": "assets/app-6P3Sapx9.css",
     "name": "app",
     "names": [
       "app.css"
@@ -88,22 +120,30 @@
     "src": "resources/css/app.css",
     "isEntry": true,
     "assets": [
-      "assets/instrument-sans-latin-ext-400-normal-Q_nF8v4l.woff2",
-      "assets/instrument-sans-latin-ext-400-normal-r32jotim.woff",
-      "assets/instrument-sans-latin-400-normal-DRC__1Mx.woff2",
-      "assets/instrument-sans-latin-400-normal-D1W7dsQl.woff",
-      "assets/instrument-sans-latin-ext-500-normal-CTEe1bJa.woff2",
-      "assets/instrument-sans-latin-ext-500-normal-CAxz3nsc.woff",
-      "assets/instrument-sans-latin-500-normal-Dk9ku72i.woff2",
-      "assets/instrument-sans-latin-500-normal-Z6ESRlEs.woff",
-      "assets/instrument-sans-latin-ext-600-normal-BsaQcF38.woff2",
-      "assets/instrument-sans-latin-ext-600-normal-DMks36a2.woff",
-      "assets/instrument-sans-latin-600-normal-B7fBEWYG.woff2",
-      "assets/instrument-sans-latin-600-normal-B9e8oLYv.woff",
-      "assets/instrument-sans-latin-ext-700-normal-ClYbKGw-.woff2",
-      "assets/instrument-sans-latin-ext-700-normal-BQc-7cTM.woff",
-      "assets/instrument-sans-latin-700-normal-CYfAanHo.woff2",
-      "assets/instrument-sans-latin-700-normal-DfAjL1vF.woff",
+      "assets/figtree-latin-ext-400-normal-CXAzuTZb.woff2",
+      "assets/figtree-latin-ext-400-normal-Gbh-3PTk.woff",
+      "assets/figtree-latin-400-normal-g7Dtegnw.woff2",
+      "assets/figtree-latin-400-normal-BD4aNku5.woff",
+      "assets/figtree-latin-ext-500-normal-Du0rIuHj.woff2",
+      "assets/figtree-latin-ext-500-normal-BOEJvrb_.woff",
+      "assets/figtree-latin-500-normal-BWnGEVsr.woff2",
+      "assets/figtree-latin-500-normal-B_yy1phn.woff",
+      "assets/figtree-latin-ext-600-normal-DJlfifZj.woff2",
+      "assets/figtree-latin-ext-600-normal-CQqsimlV.woff",
+      "assets/figtree-latin-600-normal-Cv_xCTDl.woff2",
+      "assets/figtree-latin-600-normal-BM_oTo4n.woff",
+      "assets/figtree-latin-ext-700-normal-CS4sQkGV.woff2",
+      "assets/figtree-latin-ext-700-normal-BoDi4KL2.woff",
+      "assets/figtree-latin-700-normal-th6qEP7c.woff2",
+      "assets/figtree-latin-700-normal-BCCt2T1q.woff",
+      "assets/figtree-latin-ext-800-normal-DLIuazCv.woff2",
+      "assets/figtree-latin-ext-800-normal-Cp4dEvwL.woff",
+      "assets/figtree-latin-800-normal-30yxI7TZ.woff2",
+      "assets/figtree-latin-800-normal-B7vj2UK8.woff",
+      "assets/figtree-latin-ext-900-normal-7_pmoOkR.woff2",
+      "assets/figtree-latin-ext-900-normal-BfyWW5yK.woff",
+      "assets/figtree-latin-900-normal-BCLx4uqW.woff2",
+      "assets/figtree-latin-900-normal-BAYHxy6Q.woff",
       "assets/fa-brands-400-Bs6tcqqs.woff2",
       "assets/fa-regular-400-DRN8N0d1.woff2",
       "assets/fa-solid-900-IAB4Droh.woff2",
@@ -111,7 +151,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-ChG5js9o.js",
+    "file": "assets/app-B10lPDO-.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true
