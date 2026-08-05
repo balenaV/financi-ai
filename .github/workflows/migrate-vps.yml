@@ -1,0 +1,33 @@
+name: Run Migrations on VPS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Ambiente onde rodar as migrations'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Run migrations
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            if [ "${{ inputs.environment }}" = "production" ]; then
+              cd /var/www/financiai
+              docker compose -p financiai-prod -f compose.prod.yaml exec -T app php artisan migrate --force
+            else
+              cd /var/www/financiai-staging
+              docker compose -p financiai-staging -f compose.prod.yaml exec -T app php artisan migrate --force
+            fi

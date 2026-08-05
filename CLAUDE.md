@@ -74,7 +74,7 @@ Host-level Nginx (outside Docker, installed via apt) reverse-proxies each domain
 
 compose.prod.yaml is the same file for both environments (versioned in the repo); what differs between staging and production is only the .env (never versioned) and the exposed port. Don't hardcode staging- or production-specific values into compose.prod.yaml — those belong in .env.
 
-Legacy Vercel/Supabase artifacts (api/index.php entrypoint, vercel-php runtime, vercel.json, docs/deploy-vercel.md) are being removed as they're found; if you encounter references to them, they're stale and safe to delete unless told otherwise. Don't assume Vercel-specific constraints (e.g. /tmp-only writable storage, DB_POOL_MODE=transaction for Supabase's pooler) apply anymore — production now runs standard Laravel filesystem storage and DB_POOL_MODE=session against self-hosted Postgres, same as local dev.
+Legacy Vercel/Supabase artifacts (api/index.php entrypoint, vercel-php runtime, vercel.json, docs/deploy-vercel.md) have been removed. If you still encounter references to them, they're stale and safe to delete unless told otherwise. Vercel-specific constraints (e.g. /tmp-only writable storage, DB_POOL_MODE=transaction for Supabase's pooler) no longer apply anywhere — production runs standard Laravel filesystem storage and DB_POOL_MODE=session against self-hosted Postgres, same as local dev.
 
 OAuth (Google / GitHub login)
 Google: a single OAuth Client ID/Secret is shared across local, staging, and production — each environment's callback URL ({APP_URL}/auth/google/callback) is registered as an additional Authorized redirect URI on the same Google Cloud OAuth client.

@@ -1,0 +1,47 @@
+name: Backup VPS Database
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '20 3 * * 0'
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Dump database and download backup
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /var/www/financiai
+            set -a
+            source .env
+            set +a
+            mkdir -p /var/www/backups
+            FILENAME="financiai-prod-$(date +%Y%m%d-%H%M%S).dump"
+            docker compose -p financiai-prod -f compose.prod.yaml exec -T db \
+              pg_dump -U "$DB_USERNAME" -d "$DB_DATABASE" --format=custom --no-owner --no-acl \
+              > "/var/www/backups/$FILENAME"
+            # mantém só os 10 backups mais recentes
+            ls -t /var/www/backups/*.dump | tail -n +11 | xargs -r rm --
+
+      - name: Copy backup file to runner
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "/var/www/backups/*.dump"
+          target: "./downloaded-backup"
+          strip_components: 3
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: financiai-backup-${{ github.run_id }}
+          path: downloaded-backup/*.dump
+          retention-days: 30

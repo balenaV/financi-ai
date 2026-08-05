@@ -3,7 +3,7 @@
     "name": "victor-balena/meu-financeiro",
     "type": "project",
     "description": "Gerenciador financeiro pessoal responsivo em Laravel.",
-    "keywords": ["financas", "laravel", "postgresql", "supabase"],
+    "keywords": ["financas", "laravel", "postgresql"],
     "license": "MIT",
     "require": {
         "php": "^8.5",
