@@ -26,7 +26,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="theme-color" content="#fffdf2">
+    <meta name="theme-color" content="#FFF6E6">
     <meta name="application-name" content="financi.ai">
     <title>{{ isset($title) ? $title.' — ' : '' }}{{ config('app.name') }}</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/brand/financi-ai-symbol.svg') }}">

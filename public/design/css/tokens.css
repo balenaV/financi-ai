@@ -1,0 +1,93 @@
+/* financiaí — design tokens
+   Fonte única de verdade para cores, raios e tipografia.
+   Não redefinir valores nos componentes: sempre referenciar var(--...). */
+
+:root {
+  /* Superfícies */
+  --bg: #FFF6E6;
+  --surface: #FFFFFF;
+  --surface-2: #FBF4E4;
+  --field: #FFFFFF;
+  --panel: #0D1410;
+  --panel-line: transparent;
+
+  /* Texto */
+  --fg: #111111;
+  --muted: #5B5A54;
+
+  /* Traços */
+  --line: rgba(17, 17, 17, 0.10);
+  --line-strong: rgba(17, 17, 17, 0.22);
+  --hard: #111111;
+
+  /* Inversão (botão outline hover) */
+  --inv-bg: #111111;
+  --inv-fg: #FFFFFF;
+
+  /* Marca */
+  --accent: #137A4A;
+  --accent-bright: #38C172;
+  --accent-deep: #0B3B26;
+  --on-accent: #FFF6E6;
+  --focus-ring: rgba(56, 193, 114, 0.18);
+  --danger: #B3261E;
+  --warn: #8A5A12;
+
+  /* Paleta nomeada (usada nas ilustrações e destaques) */
+  --cream: #FFF6E6;
+  --forest: #137A4A;
+  --leaf: #38C172;
+  --caramel: #D07A2A;
+  --brown: #6A4A20;
+
+  /* Header flutuante */
+  --glass: rgba(255, 246, 230, 0.80);
+  --shadow: 0 1px 2px rgba(17, 17, 17, 0.06);
+
+  /* Links */
+  --link: #137A4A;
+  --link-hover: #38C172;
+
+  /* Tipografia */
+  --font-sans: Figtree, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Raios */
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 12px;
+  --r-panel: clamp(0px, 2vw, 22px);
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme="dark"] {
+  --bg: #111310;
+  --surface: #1A1D18;
+  --surface-2: #212520;
+  --field: #1A1D18;
+  --panel: #1B241E;
+  --panel-line: rgba(255, 246, 230, 0.14);
+
+  --fg: #FFF6E6;
+  --muted: #A9A79C;
+
+  --line: rgba(255, 246, 230, 0.12);
+  --line-strong: rgba(255, 246, 230, 0.26);
+  --hard: #FFF6E6;
+
+  --inv-bg: #FFF6E6;
+  --inv-fg: #111310;
+
+  --accent: #38C172;
+  --on-accent: #0B3B26;
+
+  --link: #38C172;
+  --link-hover: #8FF0B4;
+
+  --danger: #F2837B;
+  --warn: #E0A44A;
+
+  --glass: rgba(26, 29, 24, 0.75);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}

@@ -6,6 +6,23 @@ export function initUi($) {
         },
     });
 
+    $(document).on('click', '[data-landing-theme]', () => {
+        const dark = document.documentElement.classList.toggle('dark');
+        const theme = dark ? 'dark' : 'light';
+        document.documentElement.dataset.theme = theme;
+        try {
+            localStorage.setItem('financi-theme', theme);
+        } catch (error) {}
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#111310' : '#FFF6E6');
+    });
+
+    $(document).on('click', '[data-toggle-password]', function () {
+        const $input = $(this).siblings('input');
+        const hidden = $input.attr('type') === 'password';
+        $input.attr('type', hidden ? 'text' : 'password');
+        $(this).text(hidden ? 'Ocultar' : 'Mostrar');
+    });
+
     const openModal = (selector) => {
         const $modal = $(selector);
         $modal.removeClass('hidden');
