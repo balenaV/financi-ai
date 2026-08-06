@@ -120,7 +120,7 @@ class CreditCardThemeTest extends TestCase
 
         $dashboard = $this->actingAs($user)->get(route('dashboard'));
         $dashboard->assertOk()
-            ->assertSee('class="dark"', false)
+            ->assertSee('data-theme="dark"', false)
             ->assertSee('fa-chart-pie', false)
             ->assertSee('fa-eye', false)
             ->assertDontSee('>01<', false);
