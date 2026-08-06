@@ -67,7 +67,7 @@ class SendFinancialReminders extends Command
                             'planned-transaction',
                             $transaction->description,
                             'Vence em '.$transaction->due_date->format('d/m/Y').' · R$ '.number_format((float) $transaction->amount, 2, ',', '.'),
-                            route('transactions.edit', $transaction, absolute: false),
+                            route('dashboard', absolute: false),
                         );
                     });
             }

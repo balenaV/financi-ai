@@ -36,6 +36,95 @@
     return 'R$ ' + Number(amount).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
+  /* ---------- Dropdown do sistema, montado via JS ----------
+     dashboard.js só liga abrir/fechar nos ".dropdown" que já existem quando a
+     página carrega; estes aqui nascem depois (mapeamento de colunas do CSV
+     muda por arquivo). Replica aqui a mesma lógica de abrir/fechar e marcar
+     .is-selected — fechar-ao-clicar-fora já funciona sozinho porque
+     dashboard.js reconsulta o DOM a cada clique, sem depender de uma lista
+     fixada no carregamento da página. */
+  function createDropdown(options, selectedValue, hiddenAttr) {
+    var wrap = document.createElement('div');
+    wrap.className = 'dropdown dropdown--block';
+    wrap.setAttribute('data-dropdown', '');
+
+    var btn = document.createElement('button');
+    btn.className = 'dropdown__btn';
+    btn.type = 'button';
+    btn.setAttribute('aria-haspopup', 'listbox');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('data-dropdown-btn', '');
+
+    var rotulo = document.createElement('span');
+    rotulo.setAttribute('data-dropdown-label', '');
+
+    var chevron = document.createElement('i');
+    chevron.className = 'fa-solid fa-chevron-down dropdown__chevron';
+
+    btn.appendChild(rotulo);
+    btn.appendChild(chevron);
+
+    var menu = document.createElement('div');
+    menu.className = 'dropdown__menu';
+    menu.setAttribute('role', 'listbox');
+    menu.hidden = true;
+
+    var selected = options.filter(function (o) { return o.value === selectedValue; })[0] || options[0];
+    rotulo.textContent = selected ? selected.label : 'Selecione';
+
+    var hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.setAttribute(hiddenAttr, '');
+    hidden.value = selected ? selected.value : '';
+
+    options.forEach(function (o) {
+      var opt = document.createElement('button');
+      opt.type = 'button';
+      opt.setAttribute('role', 'option');
+      opt.setAttribute('data-value', o.value);
+      opt.className = 'dropdown__opt' + (selected && o.value === selected.value ? ' is-selected' : '');
+      opt.appendChild(document.createTextNode(o.label));
+      var check = document.createElement('i');
+      check.className = 'fa-solid fa-check';
+      opt.appendChild(check);
+
+      opt.addEventListener('click', function (e) {
+        e.stopPropagation();
+        menu.querySelectorAll('.dropdown__opt').forEach(function (o2) { o2.classList.toggle('is-selected', o2 === opt); });
+        rotulo.textContent = o.label;
+        hidden.value = o.value;
+        hidden.dispatchEvent(new Event('change', { bubbles: true }));
+        wrap.setAttribute('data-open', 'false');
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      });
+
+      menu.appendChild(opt);
+    });
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var aberto = wrap.getAttribute('data-open') === 'true';
+      document.querySelectorAll('[data-dropdown]').forEach(function (d) {
+        if (d === wrap) return;
+        d.setAttribute('data-open', 'false');
+        var m = d.querySelector('.dropdown__menu');
+        var b = d.querySelector('[data-dropdown-btn]');
+        if (m) m.hidden = true;
+        if (b) b.setAttribute('aria-expanded', 'false');
+      });
+      wrap.setAttribute('data-open', String(!aberto));
+      menu.hidden = aberto;
+      btn.setAttribute('aria-expanded', String(!aberto));
+    });
+
+    wrap.appendChild(btn);
+    wrap.appendChild(menu);
+    wrap.appendChild(hidden);
+
+    return wrap;
+  }
+
   var state = { file: null, batchId: null, format: null, columns: [], rows: [], rowState: {}, pollTimer: null };
 
   /* ---------- Trilha de etapas ---------- */
@@ -172,33 +261,14 @@
       span.className = 'map-field__label';
       span.textContent = columnLabels[field];
 
-      var selectWrap = document.createElement('span');
-      selectWrap.className = 'field-select field-select--block';
+      var options = [{ value: '', label: 'Não usar' }].concat(
+        state.columns.map(function (coluna) { return { value: coluna, label: coluna }; })
+      );
+      var dropdown = createDropdown(options, suggested[field] || '', 'data-column-field');
+      dropdown.querySelector('[data-column-field]').setAttribute('data-column-field', field);
 
-      var select = document.createElement('select');
-      select.setAttribute('data-column-field', field);
-      select.setAttribute('aria-label', columnLabels[field]);
-
-      var skipOpt = document.createElement('option');
-      skipOpt.value = '';
-      skipOpt.textContent = 'Não usar';
-      select.appendChild(skipOpt);
-
-      state.columns.forEach(function (coluna) {
-        var opt = document.createElement('option');
-        opt.value = coluna;
-        opt.textContent = coluna;
-        if (suggested[field] === coluna) opt.selected = true;
-        select.appendChild(opt);
-      });
-
-      var chevron = document.createElement('i');
-      chevron.className = 'fa-solid fa-chevron-down field-select__chevron';
-
-      selectWrap.appendChild(select);
-      selectWrap.appendChild(chevron);
       label.appendChild(span);
-      label.appendChild(selectWrap);
+      label.appendChild(dropdown);
       wrap.appendChild(label);
     });
   }
@@ -414,7 +484,7 @@
           rowIds.push(Number(id));
           var entry = state.rowState[id];
           var changed = (entry.categoryId || null) !== (entry.suggestedCategoryId || null);
-          if (changed && entry.categoryId) categories[id] = entry.categoryId;
+          if (changed) categories[id] = entry.categoryId || null;
         }
       });
 

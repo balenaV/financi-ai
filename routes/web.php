@@ -40,7 +40,7 @@ Route::middleware(['auth', 'verified', 'audit'])->group(function () {
     Route::post('transactions/import/{batch}/revert', [TransactionImportController::class, 'revert'])->name('transactions.import.revert');
     Route::post('transactions/{transaction}/duplicate', [TransactionController::class, 'duplicate'])->name('transactions.duplicate');
     Route::patch('transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])->name('transactions.cancel');
-    Route::resource('transactions', TransactionController::class)->except('show');
+    Route::resource('transactions', TransactionController::class)->except(['show', 'create', 'edit']);
 
     Route::post('credit-cards/{credit_card}/bills', [CreditCardBillController::class, 'store'])->name('credit-cards.bills.store');
     Route::get('credit-card-bills/{bill}/edit', [CreditCardBillController::class, 'edit'])->name('credit-card-bills.edit');
@@ -66,6 +66,7 @@ Route::middleware(['auth', 'verified', 'audit'])->group(function () {
     Route::get('/profile/security-history', [AuditLogController::class, 'index'])->name('profile.audit-log');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::patch('/profile/sessions/logout-other', [ProfileController::class, 'logoutOtherSessions'])->name('profile.logout-other-sessions');
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
     Route::patch('/settings/toggle-values', [SettingsController::class, 'toggleValues'])->name('settings.toggle-values');

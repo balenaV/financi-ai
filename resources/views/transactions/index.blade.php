@@ -3,7 +3,7 @@
     <x-page-header title="Transações" description="Consulte, filtre e organize todas as movimentações.">
         <a href="{{ route('transactions.import.create') }}" class="btn-secondary"><i class="fa-solid fa-file-import" aria-hidden="true"></i> Importar</a>
         <a href="{{ route('transactions.export', request()->query()) }}" class="btn-secondary">Exportar CSV</a>
-        <a href="{{ route('transactions.create') }}" class="btn-primary">＋ Nova transação</a>
+        <a href="{{ route('dashboard') }}" class="btn-primary">＋ Nova transação</a>
     </x-page-header>
 
     <form method="GET" class="surface mb-5 p-4" data-filter-form>
@@ -42,7 +42,6 @@
                         <td class="px-5 py-4"><x-badge :tone="$transaction->status->value">{{ $transaction->status->label() }}</x-badge></td>
                         <td class="px-5 py-4 text-right font-bold {{ $transaction->type->value === 'income' ? 'text-accent-800' : ($transaction->type->value === 'expense' ? 'text-red-700' : 'text-slate-700') }}"><x-money :value="$transaction->amount" /></td>
                         <td class="px-5 py-4"><div class="flex justify-end gap-1">
-                            <a href="{{ route('transactions.edit', $transaction) }}" class="btn !min-h-9 !px-3 text-primary-600 hover:bg-primary-50">Editar</a>
                             <form method="POST" action="{{ route('transactions.duplicate', $transaction) }}">@csrf<button class="btn !min-h-9 !px-3 text-slate-600 hover:bg-slate-100" data-tooltip="Duplicar">⧉</button></form>
                             @if($transaction->status->value !== 'cancelled')<form method="POST" action="{{ route('transactions.cancel', $transaction) }}" data-confirm="Cancelar esta transação?">@csrf @method('PATCH')<button class="btn !min-h-9 !px-3 text-amber-700 hover:bg-amber-50">Cancelar</button></form>@endif
                             <form method="POST" action="{{ route('transactions.destroy', $transaction) }}" data-confirm="Excluir permanentemente esta transação?">@csrf @method('DELETE')<button class="btn !min-h-9 !px-3 text-red-600 hover:bg-red-50">Excluir</button></form>

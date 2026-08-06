@@ -25,5 +25,6 @@
 <script src="{{ asset('design/js/theme.js') }}"></script>
 <script src="{{ asset('design/js/dashboard.js') }}"></script>
 <script src="{{ asset('design/js/dashboard-settings-sync.js') }}"></script>
+<script src="{{ asset('design/js/form-widgets-sync.js') }}"></script>
 </body>
 </html>

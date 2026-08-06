@@ -50,11 +50,6 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function create(Request $request): View
-    {
-        return $this->form($request, new Transaction);
-    }
-
     public function store(TransactionRequest $request, TransactionService $service): RedirectResponse
     {
         $created = $service->create($request->user(), $request->validated());
@@ -62,13 +57,6 @@ class TransactionController extends Controller
         return to_route('transactions.index')->with('success', $created->count() > 1
             ? "{$created->count()} transações criadas com sucesso."
             : 'Transação criada com sucesso.');
-    }
-
-    public function edit(Request $request, Transaction $transaction): View
-    {
-        $this->authorize('update', $transaction);
-
-        return $this->form($request, $transaction);
     }
 
     public function update(TransactionRequest $request, Transaction $transaction, TransactionService $service): RedirectResponse
@@ -163,18 +151,6 @@ class TransactionController extends Controller
     private function ofxSafe(string $value): string
     {
         return str_replace(['&', '<', '>'], ['&amp;', '&lt;', '&gt;'], $value);
-    }
-
-    private function form(Request $request, Transaction $transaction): View
-    {
-        return view('transactions.form', [
-            'transaction' => $transaction,
-            'accounts' => $request->user()->accounts()->active()->orderBy('name')->get(),
-            'creditCards' => $request->user()->creditCards()->where('active', true)->orderBy('name')->get(),
-            'categories' => $request->user()->categories()->where('active', true)->orderBy('name')->get(),
-            'types' => TransactionType::cases(),
-            'statuses' => TransactionStatus::cases(),
-        ]);
     }
 
     private function csvSafe(string $value): string

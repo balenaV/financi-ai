@@ -123,7 +123,7 @@
                 <button type="button" id="toggle-values" data-url="{{ route('settings.toggle-values') }}" data-hidden="{{ $userSettings->hide_values ? 'true' : 'false' }}" class="app-icon-button cursor-pointer" aria-label="{{ $userSettings->hide_values ? 'Exibir valores' : 'Ocultar valores' }}" data-tooltip="{{ $userSettings->hide_values ? 'Exibir valores' : 'Ocultar valores' }}">
                     <i class="fa-solid {{ $userSettings->hide_values ? 'fa-eye-slash' : 'fa-eye' }}" aria-hidden="true"></i>
                 </button>
-                <a href="{{ route('transactions.create') }}" class="btn-primary">
+                <a href="{{ route('dashboard') }}" class="btn-primary">
                     <i class="fa-solid fa-plus" aria-hidden="true"></i>
                     <span class="hidden sm:inline">Nova transação</span>
                 </a>
@@ -231,7 +231,7 @@
     <nav class="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-surface px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden" aria-label="Navegação móvel">
         <a href="{{ route('dashboard') }}" class="flex min-h-12 flex-col items-center justify-center gap-1 text-[11px] font-semibold {{ request()->routeIs('dashboard') ? 'text-primary-600' : 'text-foreground-tertiary' }}"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Início</span></a>
         <a href="{{ route('transactions.index') }}" class="flex min-h-12 flex-col items-center justify-center gap-1 text-[11px] font-semibold {{ request()->routeIs('transactions.index') ? 'text-primary-600' : 'text-foreground-tertiary' }}"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i><span>Transações</span></a>
-        <a href="{{ route('transactions.create') }}" class="mx-auto grid size-12 place-items-center rounded-full border border-border-strong bg-primary-500 text-xl text-foreground shadow-[2px_2px_0_var(--text-primary)]" aria-label="Nova transação"><i class="fa-solid fa-plus" aria-hidden="true"></i></a>
+        <a href="{{ route('dashboard') }}" class="mx-auto grid size-12 place-items-center rounded-full border border-border-strong bg-primary-500 text-xl text-foreground shadow-[2px_2px_0_var(--text-primary)]" aria-label="Nova transação"><i class="fa-solid fa-plus" aria-hidden="true"></i></a>
         <a href="{{ route('credit-cards.index') }}" class="flex min-h-12 flex-col items-center justify-center gap-1 text-[11px] font-semibold {{ request()->routeIs('credit-cards.*') ? 'text-primary-600' : 'text-foreground-tertiary' }}"><i class="fa-solid fa-credit-card" aria-hidden="true"></i><span>Cartões</span></a>
         <button type="button" data-sidebar-open class="flex min-h-12 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-foreground-tertiary"><i class="fa-regular fa-message" aria-hidden="true"></i><span>Conversas</span></button>
     </nav>

@@ -49,15 +49,10 @@
       <section class="card">
         <div class="destination">
           <span class="destination__label">Importar para</span>
-          <label class="field-select">
-            <i class="fa-solid fa-building-columns"></i>
-            <select aria-label="Conta de destino" data-account-select>
-              @foreach($accounts as $account)
-                <option value="{{ $account->id }}">{{ $account->name }}</option>
-              @endforeach
-            </select>
-            <i class="fa-solid fa-chevron-down field-select__chevron"></i>
-          </label>
+          <x-dropdown name="account_id" icon="fa-solid fa-building-columns" :block="false"
+              :selected="$accounts->first()?->id"
+              :options="$accounts->map(fn ($account) => ['value' => $account->id, 'label' => $account->name])"
+              data-account-select />
         </div>
 
         <label class="dropzone" data-dropzone data-dragging="false">
@@ -81,21 +76,20 @@
       <section class="card card--tight">
         <div class="tutorial__head">
           <h2 class="card__title card__title--sm">Onde encontrar seu extrato</h2>
-          <label class="field-select">
-            <i class="fa-solid fa-building-columns"></i>
-            <select aria-label="Seu banco" data-bank-select>
-              <option>Nubank</option>
-              <option>Itaú</option>
-              <option>Bradesco</option>
-              <option>Banco do Brasil</option>
-              <option>Caixa</option>
-              <option>Santander</option>
-              <option>Inter</option>
-              <option>C6 Bank</option>
-              <option>Outro banco</option>
-            </select>
-            <i class="fa-solid fa-chevron-down field-select__chevron"></i>
-          </label>
+          <x-dropdown name="_bank_display" icon="fa-solid fa-building-columns" :block="false"
+              selected="Nubank"
+              :options="[
+                  ['value' => 'Nubank', 'label' => 'Nubank'],
+                  ['value' => 'Itaú', 'label' => 'Itaú'],
+                  ['value' => 'Bradesco', 'label' => 'Bradesco'],
+                  ['value' => 'Banco do Brasil', 'label' => 'Banco do Brasil'],
+                  ['value' => 'Caixa', 'label' => 'Caixa'],
+                  ['value' => 'Santander', 'label' => 'Santander'],
+                  ['value' => 'Inter', 'label' => 'Inter'],
+                  ['value' => 'C6 Bank', 'label' => 'C6 Bank'],
+                  ['value' => 'Outro banco', 'label' => 'Outro banco'],
+              ]"
+              data-bank-select />
         </div>
 
         <ol class="tutorial__steps" data-bank-steps></ol>
@@ -126,24 +120,22 @@
         <div class="map-grid map-grid--divided">
           <label class="map-field">
             <span class="map-field__label">Formato de data</span>
-            <span class="field-select field-select--block">
-              <select aria-label="Formato de data" data-date-format>
-                <option value="DD/MM/AAAA">DD/MM/AAAA</option>
-                <option value="AAAA-MM-DD">AAAA-MM-DD</option>
-                <option value="MM/DD/AAAA">MM/DD/AAAA</option>
-              </select>
-              <i class="fa-solid fa-chevron-down field-select__chevron"></i>
-            </span>
+            <x-dropdown name="_date_format_display" selected="DD/MM/AAAA"
+                :options="[
+                    ['value' => 'DD/MM/AAAA', 'label' => 'DD/MM/AAAA'],
+                    ['value' => 'AAAA-MM-DD', 'label' => 'AAAA-MM-DD'],
+                    ['value' => 'MM/DD/AAAA', 'label' => 'MM/DD/AAAA'],
+                ]"
+                data-date-format />
           </label>
           <label class="map-field">
             <span class="map-field__label">Separador decimal</span>
-            <span class="field-select field-select--block">
-              <select aria-label="Separador decimal" data-decimal-separator>
-                <option value="virgula">Vírgula (1.234,56)</option>
-                <option value="ponto">Ponto (1,234.56)</option>
-              </select>
-              <i class="fa-solid fa-chevron-down field-select__chevron"></i>
-            </span>
+            <x-dropdown name="_decimal_separator_display" selected="virgula"
+                :options="[
+                    ['value' => 'virgula', 'label' => 'Vírgula (1.234,56)'],
+                    ['value' => 'ponto', 'label' => 'Ponto (1,234.56)'],
+                ]"
+                data-decimal-separator />
           </label>
         </div>
       </section>

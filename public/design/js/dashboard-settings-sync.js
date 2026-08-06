@@ -36,4 +36,29 @@
     var target = document.querySelector('[data-goto="' + location.hash.slice(1) + '"]');
     if (target) target.click();
   }
+
+  /* Chips "Claro/Escuro" em Configurações › Preferências: o dashboard.js do
+     pacote só troca o atributo data-theme na hora (e grava numa chave de
+     localStorage diferente da que theme.js lê). Aqui persistimos de verdade
+     no servidor — só quando o valor muda — e mantemos o input oculto do
+     formulário de preferências sincronizado, para o "Salvar preferências"
+     não reverter uma troca de tema feita momentos antes. */
+  var themeSetButtons = document.querySelectorAll('[data-theme-set]');
+  if (themeSetButtons.length) {
+    var currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    var themeToggle = document.querySelector('[data-theme-toggle]');
+    var themeToggleUrl = themeToggle ? themeToggle.getAttribute('data-toggle-url') : null;
+    var themeInput = document.querySelector('[data-theme-input]');
+
+    themeSetButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var target = btn.getAttribute('data-theme-set');
+        try { localStorage.setItem('financiai:theme', target); } catch (e) {}
+        if (themeInput) themeInput.value = target;
+        if (target === currentTheme) return;
+        currentTheme = target;
+        if (themeToggleUrl) persist(themeToggleUrl);
+      });
+    });
+  }
 })();

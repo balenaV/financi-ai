@@ -155,6 +155,27 @@ class ProductionReadinessTest extends TestCase
         $this->assertSame('new', $rows[0]['status']);
     }
 
+    public function test_clearing_a_suggested_category_during_review_is_respected(): void
+    {
+        $user = User::factory()->create();
+        $account = Account::factory()->for($user)->create();
+        $csv = "Data;Descrição;Valor\n25/07/2026;IFOOD *RESTAURANTE SP;-68,90\n";
+
+        $batchId = $this->createAndPreviewCsv($user, $account, $csv);
+        $rows = $this->getJson(route('transactions.import.show', $batchId))->json('rows');
+        $alimentacao = $user->categories()->where('name', 'Alimentação')->where('type', 'expense')->first();
+        $this->assertSame($alimentacao->id, $rows[0]['suggested_category_id']);
+
+        // O usuário discorda da sugestão automática e limpa para "Sem categoria"
+        // — isso precisa ser respeitado, não silenciosamente substituído pela sugestão.
+        $this->postJson(route('transactions.import.commit', $batchId), [
+            'row_ids' => [$rows[0]['id']],
+            'categories' => [$rows[0]['id'] => null],
+        ])->assertSuccessful();
+
+        $this->assertNull($user->transactions()->sole()->category_id);
+    }
+
     public function test_correcting_a_category_creates_a_rule_used_on_the_next_import(): void
     {
         $user = User::factory()->create();
@@ -257,7 +278,7 @@ class ProductionReadinessTest extends TestCase
 
         $this->assertSame('financi.ai', $manifest['short_name']);
         $this->assertContains('/design/assets/capi/capi-rosto.png', array_column($manifest['icons'], 'src'));
-        $this->assertStringContainsString('financi-ai-shell-v2', file_get_contents(public_path('service-worker.js')));
+        $this->assertMatchesRegularExpression('/const CACHE = \'financi-ai-shell-v\d+\';/', file_get_contents(public_path('service-worker.js')));
     }
 
     public function test_future_income_appears_in_forecast_and_projected_dashboard_totals(): void

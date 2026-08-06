@@ -39,6 +39,15 @@
     $cardsLimitTotal = collect($dashboard['credit_cards'])->reduce(fn ($t, $c) => bcadd($t, $c['available_limit'], 2), '0.00');
 
     $upcomingTotal = $dashboard['upcoming']->reduce(fn ($t, $u) => bcadd($t, $u->amount, 2), '0.00');
+
+    $initials = collect(explode(' ', trim($user->name)))->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))->take(2)->implode('');
+    $transactionsInPeriod = $user->transactions()->whereBetween('competence_date', [$dashboard['period']['start'], $dashboard['period']['end']])->count();
+    $activeSessionsCount = \Illuminate\Support\Facades\DB::table('sessions')->where('user_id', $user->id)->count();
+
+    $monthStartDayOptions = collect([1, 5, 10, 15, 20]);
+    if (! $monthStartDayOptions->contains($userSettings->financial_month_start_day)) {
+        $monthStartDayOptions = $monthStartDayOptions->push($userSettings->financial_month_start_day)->sort()->values();
+    }
 @endphp
 <x-dashboard-layout title="Visão geral">
 
@@ -81,17 +90,46 @@
       </div>
     </div>
 
-    <div class="sidebar__user">
-      <span class="avatar">{{ collect(explode(' ', trim($user->name)))->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))->take(2)->implode('') }}</span>
-      <span class="sidebar__user-info sidebar__label">
-        <span class="sidebar__user-name">{{ $user->name }}</span>
-        <span class="sidebar__user-plan">Beta aberto</span>
-      </span>
-      <a class="sidebar__settings" href="{{ route('settings.edit') }}" aria-label="Configurações"><i class="fa-solid fa-gear"></i></a>
-      <form method="POST" action="{{ route('logout') }}">
-        @csrf
-        <button class="sidebar__settings" type="submit" aria-label="Sair"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
-      </form>
+    <div class="sidebar__user" data-user-menu>
+      <div class="sidebar__user-row">
+        <button class="sidebar__user-btn" type="button" aria-label="Sua conta" aria-expanded="false" data-user-toggle>
+          <span class="avatar">@if($user->avatarUrl())<img src="{{ $user->avatarUrl() }}" alt="">@else{{ $initials }}@endif</span>
+          <span class="sidebar__user-info sidebar__label">
+            <span class="sidebar__user-name">{{ $user->name }}</span>
+            <span class="sidebar__user-plan">Beta aberto</span>
+          </span>
+        </button>
+        <button class="sidebar__settings" type="button" aria-label="Configurações" data-goto="config"><i class="fa-solid fa-gear"></i></button>
+      </div>
+
+      <div class="user-card" hidden data-user-card>
+        <div class="user-card__head">
+          <span class="avatar avatar--lg">@if($user->avatarUrl())<img src="{{ $user->avatarUrl() }}" alt="">@else{{ $initials }}@endif</span>
+          <span class="user-card__ident">
+            <span class="user-card__name">{{ $user->name }}</span>
+            <span class="user-card__mail">{{ $user->email }}</span>
+          </span>
+        </div>
+
+        <div class="user-card__plan">
+          <span class="user-card__plan-info">
+            <span class="user-card__plan-name">Beta aberto</span>
+          </span>
+        </div>
+
+        <div class="user-card__stats">
+          <span class="user-card__stat"><strong>{{ $dashboard['accounts']->count() }}</strong>{{ $dashboard['accounts']->count() === 1 ? 'conta conectada' : 'contas conectadas' }}</span>
+          <span class="user-card__stat"><strong>{{ $transactionsInPeriod }}</strong>lançamentos no período</span>
+        </div>
+
+        <div class="user-card__actions">
+          <button class="user-card__action" type="button" data-goto="config"><i class="fa-solid fa-gear"></i>Configurações</button>
+          <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button class="user-card__action user-card__action--out" type="submit"><i class="fa-solid fa-arrow-right-from-bracket"></i>Sair da conta</button>
+          </form>
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -118,7 +156,7 @@
           </button>
           <button class="icon-btn" type="button" data-theme-toggle data-toggle-url="{{ route('settings.toggle-theme') }}" aria-label="Alternar tema"><i class="fa-solid {{ $userSettings->theme === 'dark' ? 'fa-sun' : 'fa-moon' }}"></i></button>
           <button class="icon-btn" type="button" data-toggle-money data-toggle-url="{{ route('settings.toggle-values') }}" aria-label="Mostrar ou ocultar valores" aria-pressed="{{ $hide ? 'true' : 'false' }}"><i class="fa-regular {{ $hide ? 'fa-eye-slash' : 'fa-eye' }}"></i></button>
-          <a class="btn-add" href="{{ route('transactions.create') }}"><i class="fa-solid fa-plus"></i>Nova transação</a>
+          <button class="btn-add" type="button" data-modal-open="transacao"><i class="fa-solid fa-plus"></i>Nova transação</button>
 
           <div class="notif-panel" data-notif-panel hidden>
             <div class="notif-panel__head">
@@ -180,9 +218,9 @@
             </div>
             <div class="date-range" data-date-range hidden>
               <i class="fa-regular fa-calendar"></i>
-              <input type="date" value="{{ $dashboard['period']['start']->toDateString() }}" aria-label="Data inicial">
+              <x-datepicker name="period_start" :value="$dashboard['period']['start']->toDateString()" label="Data inicial" inline bare />
               <span>até</span>
-              <input type="date" value="{{ $dashboard['period']['end']->toDateString() }}" aria-label="Data final">
+              <x-datepicker name="period_end" :value="$dashboard['period']['end']->toDateString()" label="Data final" inline right bare />
             </div>
             <span class="period__summary" data-period-summary>{{ $dashboard['period']['start']->translatedFormat('j \d\e M') }} – {{ $dashboard['period']['end']->translatedFormat('j \d\e M \d\e Y') }}</span>
           </div>
@@ -309,24 +347,20 @@
               <i class="fa-solid fa-magnifying-glass"></i>
               <input type="search" placeholder="Buscar por descrição">
             </label>
-            <label class="select-field">
-              <i class="fa-solid fa-arrow-right-arrow-left"></i>
-              <select aria-label="Tipo de lançamento">
-                <option value="todos">Entradas e saídas</option>
-                <option value="entradas">Somente entradas</option>
-                <option value="saidas">Somente saídas</option>
-                <option value="pendentes">Pendentes</option>
-              </select>
-              <i class="fa-solid fa-chevron-down select-field__chevron"></i>
-            </label>
-            <a class="select-field" href="{{ route('transactions.index') }}" style="justify-content: center; text-decoration: none;">
-              <i class="fa-solid fa-list"></i><span>Ver lista completa e filtrar</span>
-            </a>
+            <x-dropdown name="_tipo_lancamento_display" icon="fa-solid fa-arrow-right-arrow-left" :block="false" :options="[
+                ['value' => 'todos', 'label' => 'Entradas e saídas'],
+                ['value' => 'entradas', 'label' => 'Somente entradas'],
+                ['value' => 'saidas', 'label' => 'Somente saídas'],
+                ['value' => 'pendentes', 'label' => 'Pendentes'],
+            ]" />
+            <x-dropdown name="_categoria_display" icon="fa-solid fa-tag" :block="false" :options="collect([['value' => '', 'label' => 'Todas as categorias']])->concat($categories->map(fn ($category) => ['value' => $category->id, 'label' => $category->name]))" />
           </div>
 
           @forelse($dashboard['transactions_by_day'] as $date => $items)
             <section class="list-card" data-enter>
-              @php($dayTotal = $items->reduce(fn ($t, $i) => $i->type->value === 'income' ? bcadd($t, $i->amount, 2) : bcsub($t, $i->amount, 2), '0.00'))
+              @php
+                $dayTotal = $items->reduce(fn ($t, $i) => $i->type->value === 'income' ? bcadd($t, $i->amount, 2) : bcsub($t, $i->amount, 2), '0.00');
+              @endphp
               <div class="list-card__head">
                 <span class="list-card__title">{{ \Illuminate\Support\Carbon::parse($date)->isToday() ? 'Hoje · ' : (\Illuminate\Support\Carbon::parse($date)->isYesterday() ? 'Ontem · ' : '') }}{{ \Illuminate\Support\Carbon::parse($date)->translatedFormat('j \d\e F') }}</span>
                 <span class="list-card__total" data-money>{{ bccomp($dayTotal, '0', 2) >= 0 ? '+ ' : '− ' }}{{ Money::format(ltrim($dayTotal, '-'), $hide) }}</span>
@@ -340,8 +374,8 @@
               @endforeach
             </section>
           @empty
-            <section class="list-card" data-enter>
-              <p style="padding: 20px; font-size: 14px; color: var(--muted);">Nenhuma transação efetivada ainda. <a href="{{ route('transactions.create') }}">Registrar a primeira</a>.</p>
+            <section class="empty-state" data-enter>
+              <p>Nenhuma transação efetivada ainda. <button class="link-btn" type="button" data-modal-open="transacao">Registrar a primeira.</button></p>
             </section>
           @endforelse
         </section>
@@ -362,7 +396,9 @@
             </article>
             <article class="kpi" data-enter>
               <div class="kpi__label"><i class="fa-regular fa-clock"></i>Próxima cobrança</div>
-              @php($next = $dashboard['subscriptions']->sortBy('due_date')->first())
+              @php
+                $next = $dashboard['subscriptions']->sortBy('due_date')->first();
+              @endphp
               <div class="kpi__value kpi__value--sm kpi__value--accent">{{ $next?->due_date?->format('d/m') ?? '—' }}</div>
               <div class="kpi__note">{{ $next?->description ?? 'Nenhuma cadastrada' }}</div>
             </article>
@@ -381,10 +417,15 @@
                 <span class="row__right"><span class="row__value" data-money>{{ Money::format($sub->amount, $hide) }}</span><span class="row__next">{{ $sub->due_date?->format('d/m') }}</span></span>
               </div>
             @empty
-              <div class="list-card__foot">
-                <span>Nenhuma assinatura identificada ainda. Lançamentos recorrentes cadastrados como despesa aparecem aqui automaticamente.</span>
+              <div class="row row--tall">
+                <span class="row__body"><span class="row__name row__name--bold">Nenhuma assinatura identificada ainda.</span><span class="row__detail">Lançamentos recorrentes cadastrados como despesa aparecem aqui automaticamente.</span></span>
               </div>
             @endforelse
+
+            <div class="list-card__foot">
+              <span>Cancelar uma assinatura pouco usada é o ajuste mais rápido no seu mês.</span>
+              <button class="btn-outline" type="button" data-modal-open="assinatura"><i class="fa-solid fa-plus"></i>Adicionar assinatura</button>
+            </div>
           </section>
         </section>
 
@@ -485,60 +526,175 @@
               </article>
             @endforeach
 
-            <a class="add-card" href="{{ route('accounts.create') }}">
+            <button class="add-card" type="button" data-goto="novaConta">
               <i class="fa-solid fa-plus"></i>
               <span>Adicionar conta manual</span>
-            </a>
+            </button>
           </div>
         </section>
 
         <!-- ============ Cartões ============ -->
         <section class="page stack" data-page="cartoes" hidden>
 
-          <div class="grid-3">
-            <article class="kpi" data-enter>
-              <div class="kpi__label"><i class="fa-regular fa-credit-card"></i>Faturas em aberto</div>
-              <div class="kpi__value kpi__value--sm" data-money>{{ Money::format($cardsOutstandingTotal, $hide) }}</div>
-              <div class="kpi__note">{{ count($dashboard['credit_cards']) }} {{ Str::plural('cartão ativo', count($dashboard['credit_cards'])) }}</div>
-            </article>
-            <article class="kpi" data-enter>
-              <div class="kpi__label"><i class="fa-solid fa-gauge-high"></i>Limite disponível</div>
-              <div class="kpi__value kpi__value--sm kpi__value--accent" data-money>{{ Money::format($cardsLimitTotal, $hide) }}</div>
-              <div class="kpi__note">Somado entre os cartões ativos</div>
-            </article>
-          </div>
+          @if(count($dashboard['credit_cards']) > 0)
+              <div class="grid-3">
+                <article class="kpi" data-enter>
+                  <div class="kpi__label"><i class="fa-regular fa-credit-card"></i>Faturas em aberto</div>
+                  <div class="kpi__value kpi__value--sm" data-money>{{ Money::format($cardsOutstandingTotal, $hide) }}</div>
+                  <div class="kpi__note">{{ count($dashboard['credit_cards']) }} {{ Str::plural('cartão ativo', count($dashboard['credit_cards'])) }}</div>
+                </article>
+                <article class="kpi" data-enter>
+                  <div class="kpi__label"><i class="fa-solid fa-gauge-high"></i>Limite disponível</div>
+                  <div class="kpi__value kpi__value--sm kpi__value--accent" data-money>{{ Money::format($cardsLimitTotal, $hide) }}</div>
+                  <div class="kpi__note">Somado entre os cartões ativos</div>
+                </article>
+              </div>
 
-          <div class="grid-cards">
-            @forelse($dashboard['credit_cards'] as $row)
-              <article class="credit-card" data-enter>
-                <div class="credit-card__top">
-                  <div class="credit-card__brand-row">
-                    <span class="credit-card__brand"><i class="fa-regular fa-credit-card"></i>{{ $row['card']->issuer }}</span>
-                    <span class="credit-card__state">Ativo</span>
-                  </div>
-                  <div class="credit-card__name">{{ $row['card']->name }}</div>
+              <div class="grid-cards">
+                @foreach($dashboard['credit_cards'] as $row)
+                  <article class="credit-card" data-enter>
+                    <div class="credit-card__top">
+                      <div class="credit-card__brand-row">
+                        <span class="credit-card__brand"><i class="fa-regular fa-credit-card"></i>{{ $row['card']->issuer }}</span>
+                        <span class="credit-card__state">Ativo</span>
+                      </div>
+                      <div class="credit-card__name">{{ $row['card']->name }}</div>
+                    </div>
+                    <div class="credit-card__body">
+                      <div class="credit-card__figures">
+                        <span class="credit-card__figure">
+                          <span class="credit-card__figure-label">Fatura atual</span>
+                          <span class="credit-card__figure-value" data-money>{{ Money::format($row['outstanding'], $hide) }}</span>
+                        </span>
+                        <span class="credit-card__figure credit-card__figure--right">
+                          <span class="credit-card__figure-label">Vence</span>
+                          <span class="credit-card__figure-value credit-card__figure-value--sm">{{ $row['next_bill']?->due_date?->format('d/m') ?? '—' }}</span>
+                        </span>
+                      </div>
+                      <div class="credit-card__limit">
+                        <div class="credit-card__limit-row"><span>Limite usado</span><span>{{ str_replace('.', ',', $row['limit_used_pct']) }}%</span></div>
+                        <div class="track"><span class="track__fill" style="width:{{ min(100, $row['limit_used_pct']) }}%"></span></div>
+                      </div>
+                    </div>
+                  </article>
+                @endforeach
+
+                <button class="add-card add-card--tall" type="button" data-modal-open="cartao">
+                  <i class="fa-solid fa-plus"></i>
+                  <span>Adicionar cartão</span>
+                </button>
+              </div>
+          @else
+              <section class="empty-state" data-enter>
+                <p>Nenhum cartão cadastrado. <button class="link-btn" type="button" data-modal-open="cartao">Adicionar cartão.</button></p>
+              </section>
+          @endif
+        </section>
+
+        <!-- ============ Nova conta manual ============ -->
+        <section class="page" data-page="novaConta" hidden>
+          <form class="new-account" data-enter method="POST" action="{{ route('accounts.store') }}">
+            @csrf
+
+            <section class="panel new-account__form">
+              <div>
+                <h2 class="panel__title">Dados da conta</h2>
+                <p class="panel__sub">Contas manuais servem para dinheiro que não vem de extrato: carteira, cofrinho, conta de outro banco. Você registra o saldo de partida e segue lançando por aqui.</p>
+              </div>
+
+              <div class="field">
+                <span class="field__label">Tipo de conta</span>
+                <div class="option-grid" data-account-type>
+                  @foreach($accountTypeTiles as $tile)
+                    <button class="option-tile {{ $loop->first ? 'is-selected' : '' }}" type="button" data-value="{{ $tile['key'] }}" data-type="{{ $tile['type'] }}" data-icon-key="{{ $tile['icon'] }}" data-icon="{{ $tile['iconClass'] }}"><i class="{{ $tile['iconClass'] }}"></i>{{ $tile['label'] }}</button>
+                  @endforeach
                 </div>
-                <div class="credit-card__body">
-                  <div class="credit-card__figures">
-                    <span class="credit-card__figure">
-                      <span class="credit-card__figure-label">Fatura atual</span>
-                      <span class="credit-card__figure-value" data-money>{{ Money::format($row['outstanding'], $hide) }}</span>
-                    </span>
-                    <span class="credit-card__figure credit-card__figure--right">
-                      <span class="credit-card__figure-label">Vence</span>
-                      <span class="credit-card__figure-value credit-card__figure-value--sm">{{ $row['next_bill']?->due_date?->format('d/m') ?? '—' }}</span>
-                    </span>
-                  </div>
-                  <div class="credit-card__limit">
-                    <div class="credit-card__limit-row"><span>Limite usado</span><span>{{ str_replace('.', ',', $row['limit_used_pct']) }}%</span></div>
-                    <div class="track"><span class="track__fill" style="width:{{ min(100, $row['limit_used_pct']) }}%"></span></div>
-                  </div>
+                <input type="hidden" name="type" value="{{ $accountTypeTiles[0]['type'] }}" id="novaConta-type">
+                <input type="hidden" name="icon" value="{{ $accountTypeTiles[0]['icon'] }}" id="novaConta-icon">
+                @error('type')<span class="field-error">{{ $message }}</span>@enderror
+              </div>
+
+              <div class="field-row">
+                <label class="field">
+                  <span class="field__label">Nome da conta</span>
+                  <input class="input" type="text" name="name" placeholder="Ex.: Carteira do dia a dia" value="{{ old('name') }}" data-account-name required>
+                  @error('name')<span class="field-error">{{ $message }}</span>@enderror
+                </label>
+                <label class="field">
+                  <span class="field__label">Instituição <span class="field__hint">· opcional</span></span>
+                  <input class="input" type="text" name="institution" placeholder="Ex.: Nubank, Caixa, dinheiro em espécie" value="{{ old('institution') }}" data-account-bank>
+                </label>
+              </div>
+
+              <div class="field-row">
+                <label class="field">
+                  <span class="field__label">Saldo de partida</span>
+                  <span class="input-group">
+                    <span class="input-group__prefix">R$</span>
+                    <input class="input-group__input input-group__input--num" type="text" inputmode="decimal" name="initial_balance" placeholder="0,00" value="{{ old('initial_balance') }}" data-account-balance>
+                  </span>
+                  @error('initial_balance')<span class="field-error">{{ $message }}</span>@enderror
+                </label>
+                <div class="field">
+                  <span class="field__label">Saldo nesta data</span>
+                  <x-datepicker name="initial_balance_date" :value="old('initial_balance_date', now()->toDateString())" data-account-date />
+                  @error('initial_balance_date')<span class="field-error">{{ $message }}</span>@enderror
                 </div>
+              </div>
+
+              <div class="field">
+                <span class="field__label">Cor da conta</span>
+                <div class="swatches" data-account-colors>
+                  @foreach(['#137A4A' => 'Verde escuro', '#38C172' => 'Verde', '#2F6FEB' => 'Azul', '#E0A21C' => 'Amarelo', '#B3261E' => 'Vermelho', '#6C4BD6' => 'Roxo'] as $hex => $label)
+                    <button class="swatch {{ $loop->first ? 'is-selected' : '' }}" type="button" style="--swatch:{{ $hex }}" data-value="{{ $hex }}" aria-label="{{ $label }}"><i class="fa-solid fa-check"></i></button>
+                  @endforeach
+                </div>
+                <input type="hidden" name="color" value="#137A4A" id="novaConta-color">
+                @error('color')<span class="field-error">{{ $message }}</span>@enderror
+              </div>
+
+              <div class="switch-row">
+                <button class="switch is-on" type="button" role="switch" aria-checked="true" data-account-total><span class="switch__pin"></span></button>
+                <span class="switch-row__body">
+                  <span class="switch-row__title">Somar no saldo total</span>
+                  <span class="switch-row__text">Deixe desligado para acompanhar a conta separadamente, sem afetar os números do painel.</span>
+                </span>
+              </div>
+              <input type="hidden" name="active" value="1" id="novaConta-active">
+              <input type="hidden" name="currency" value="BRL">
+
+              <label class="field">
+                <span class="field__label">Observação <span class="field__hint">· opcional</span></span>
+                <textarea class="input input--area" rows="2" name="notes" placeholder="Para que serve essa conta">{{ old('notes') }}</textarea>
+              </label>
+
+              <div class="form-foot">
+                <button class="btn-ghost" type="button" data-goto="contas">Cancelar</button>
+                <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar conta</button>
+              </div>
+            </section>
+
+            <div class="new-account__aside">
+              <article class="panel preview-card">
+                <span class="preview-card__label">Prévia</span>
+                <div class="account-card__head preview-card__head">
+                  <span class="row__icon row__icon--lg preview-card__icon" data-preview-icon><i class="{{ $accountTypeTiles[0]['iconClass'] }}"></i></span>
+                  <span class="account-card__info">
+                    <span class="account-card__name" data-preview-name>Nome da conta</span>
+                    <span class="account-card__type" data-preview-type>{{ $accountTypeTiles[0]['label'] }}</span>
+                  </span>
+                </div>
+                <div class="account-card__balance" data-preview-balance>R$ 0,00</div>
+                <div class="account-card__note" data-preview-note>Saldo informado em {{ now()->format('d/m/Y') }}</div>
               </article>
-            @empty
-              <p style="font-size: 14px; color: var(--muted);">Nenhum cartão cadastrado. <a href="{{ route('credit-cards.create') }}">Adicionar cartão</a>.</p>
-            @endforelse
-          </div>
+
+              <article class="tip-card">
+                <span class="tip-card__title"><img src="{{ asset('design/assets/capi/capi-rosto.png') }}" alt="">Dica do Capí</span>
+                <p class="tip-card__text">Use o saldo que está na conta hoje, não o do começo do mês. A partir dessa data eu passo a somar e subtrair só o que você lançar.</p>
+                <a class="tip-card__link" href="{{ route('transactions.import.create') }}">Prefere importar um extrato?<i class="fa-solid fa-arrow-right"></i></a>
+              </article>
+            </div>
+          </form>
         </section>
 
         <!-- ============ Capí (chat) ============ -->
@@ -619,9 +775,530 @@
           </div>
         </section>
 
+        <!-- ============ Configurações ============ -->
+        <section class="page" data-page="config" hidden>
+          <div class="settings" data-enter>
+
+            <nav class="settings__nav">
+              <a href="#cfg-perfil"><i class="fa-regular fa-user"></i>Perfil</a>
+              <a href="#cfg-preferencias"><i class="fa-solid fa-sliders"></i>Preferências</a>
+              <a href="#cfg-notificacoes"><i class="fa-regular fa-bell"></i>Notificações</a>
+              <a href="#cfg-seguranca"><i class="fa-solid fa-shield-halved"></i>Segurança</a>
+              <a href="#cfg-conta"><i class="fa-solid fa-gear"></i>Conta</a>
+            </nav>
+
+            <div class="settings__body">
+
+              <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
+                @csrf
+                @method('PATCH')
+                <section class="panel settings__block" id="cfg-perfil">
+                  <div>
+                    <h2 class="settings__title">Perfil</h2>
+                    <p class="settings__sub">Como você aparece no financiaí e para onde mandamos os avisos.</p>
+                  </div>
+                  <div class="field">
+                    <span class="field__label">Foto de perfil</span>
+                    <div class="avatar-upload" id="avatarUpload">
+                      <span class="avatar avatar--xl avatar-upload__preview">
+                        <span class="avatar-upload__initials" @if($user->avatarUrl()) hidden @endif>{{ $initials }}</span>
+                        <img class="avatar-upload__img" id="avatarPreview" alt="Foto de perfil" src="{{ $user->avatarUrl() }}" @unless($user->avatarUrl()) hidden @endunless>
+                      </span>
+                      <div class="avatar-upload__text">
+                        <span class="avatar-upload__name" id="avatarName">{{ $user->avatarUrl() ? 'Foto atual' : 'Nenhuma foto enviada' }}</span>
+                        <span class="avatar-upload__hint">Arraste um arquivo aqui ou escolha do computador. JPG ou PNG, até 5 MB.</span>
+                      </div>
+                      <div class="avatar-upload__actions">
+                        <button class="btn-outline" type="button" id="avatarPick">Escolher arquivo</button>
+                        <button class="avatar-upload__remove" type="button" id="avatarRemove" @unless($user->avatarUrl()) hidden @endunless>Remover</button>
+                      </div>
+                      <input class="avatar-upload__input" type="file" id="avatarInput" name="avatar" accept="image/png, image/jpeg">
+                    </div>
+                    <span class="avatar-upload__error" id="avatarError" hidden></span>
+                    <input type="hidden" name="remove_avatar" id="removeAvatarFlag" value="0">
+                    @error('avatar')<span class="field-error">{{ $message }}</span>@enderror
+                  </div>
+                  <div class="field-row">
+                    <label class="field">
+                      <span class="field__label">Nome</span>
+                      <input class="input" type="text" name="name" value="{{ old('name', $user->name) }}">
+                      @error('name')<span class="field-error">{{ $message }}</span>@enderror
+                    </label>
+                    <label class="field">
+                      <span class="field__label">E-mail</span>
+                      <input class="input" type="email" name="email" value="{{ old('email', $user->email) }}">
+                      @error('email')<span class="field-error">{{ $message }}</span>@enderror
+                    </label>
+                  </div>
+                  <div class="form-foot form-foot--bare">
+                    <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar perfil</button>
+                  </div>
+                </section>
+              </form>
+
+              <form method="POST" action="{{ route('settings.update') }}">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="timezone" value="{{ $userSettings->timezone }}">
+                <input type="hidden" name="view_preference" value="{{ $userSettings->view_preference }}">
+                <input type="hidden" name="hide_values" value="{{ $userSettings->hide_values ? '1' : '0' }}">
+                <input type="hidden" name="confirm_deletion" value="{{ $userSettings->confirm_deletion ? '1' : '0' }}">
+                <section class="panel settings__block" id="cfg-preferencias">
+                  <div>
+                    <h2 class="settings__title">Preferências</h2>
+                    <p class="settings__sub">Ajustes que mudam o jeito que o painel se comporta.</p>
+                  </div>
+                  <div class="field">
+                    <span class="field__label">Tema</span>
+                    <div class="chip-row" data-chip-group>
+                      <button class="chip {{ $userSettings->theme === 'light' ? 'is-selected' : '' }}" type="button" data-theme-set="light"><i class="fa-solid fa-sun"></i>Claro</button>
+                      <button class="chip {{ $userSettings->theme === 'dark' ? 'is-selected' : '' }}" type="button" data-theme-set="dark"><i class="fa-solid fa-moon"></i>Escuro</button>
+                    </div>
+                    <input type="hidden" name="theme" value="{{ $userSettings->theme }}" data-theme-input>
+                  </div>
+                  <div class="field-row">
+                    <div class="field">
+                      <span class="field__label">Moeda</span>
+                      <x-dropdown name="currency" icon="fa-solid fa-coins" :selected="$userSettings->currency" :options="[
+                          ['value' => 'BRL', 'label' => 'Real (R$)'],
+                          ['value' => 'USD', 'label' => 'Dólar (US$)'],
+                          ['value' => 'EUR', 'label' => 'Euro (€)'],
+                      ]" />
+                    </div>
+                    <div class="field">
+                      <span class="field__label">Início do mês financeiro</span>
+                      <x-dropdown name="financial_month_start_day" icon="fa-regular fa-calendar" :selected="$userSettings->financial_month_start_day" :options="$monthStartDayOptions->map(fn ($day) => ['value' => $day, 'label' => 'Dia '.$day])" />
+                    </div>
+                  </div>
+                  <div class="form-foot form-foot--bare">
+                    <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar preferências</button>
+                  </div>
+                </section>
+              </form>
+
+              <section class="panel settings__block" id="cfg-notificacoes">
+                <div>
+                  <h2 class="settings__title">Notificações<span class="tag-soon">em breve</span></h2>
+                  <p class="settings__sub">Escolha o que vale um aviso e o que pode esperar você abrir o painel.</p>
+                </div>
+                <div class="settings__list">
+                  <div class="switch-row">
+                    <button class="switch is-on" type="button" role="switch" aria-checked="true"><span class="switch__pin"></span></button>
+                    <span class="switch-row__body">
+                      <span class="switch-row__title">Fatura fechando</span>
+                      <span class="switch-row__text">Três dias antes do fechamento de cada cartão.</span>
+                    </span>
+                  </div>
+                  <div class="switch-row">
+                    <button class="switch" type="button" role="switch" aria-checked="false"><span class="switch__pin"></span></button>
+                    <span class="switch-row__body">
+                      <span class="switch-row__title">Saldo baixo</span>
+                      <span class="switch-row__text">Quando alguma conta fica abaixo do limite que você definiu.</span>
+                    </span>
+                  </div>
+                  <div class="switch-row">
+                    <button class="switch is-on" type="button" role="switch" aria-checked="true"><span class="switch__pin"></span></button>
+                    <span class="switch-row__body">
+                      <span class="switch-row__title">Assinatura renovando</span>
+                      <span class="switch-row__text">Aviso na véspera da cobrança recorrente.</span>
+                    </span>
+                  </div>
+                  <div class="switch-row">
+                    <button class="switch" type="button" role="switch" aria-checked="false"><span class="switch__pin"></span></button>
+                    <span class="switch-row__body">
+                      <span class="switch-row__title">Resumo semanal</span>
+                      <span class="switch-row__text">Um panorama do que entrou e saiu, toda segunda.</span>
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel settings__block" id="cfg-seguranca">
+                <div>
+                  <h2 class="settings__title">Segurança</h2>
+                  <p class="settings__sub">Sua senha e os dispositivos com acesso à conta.</p>
+                </div>
+                <div class="settings__list">
+                  <div class="settings__row">
+                    <span class="settings__row-body">
+                      <span class="settings__row-title">Senha</span>
+                    </span>
+                    <button class="btn-outline btn-outline--sm" type="button" data-modal-open="senha">Alterar senha</button>
+                  </div>
+                  <div class="settings__row">
+                    <span class="settings__row-body">
+                      <span class="settings__row-title">Sessões ativas</span>
+                      <span class="settings__row-text">{{ $activeSessionsCount }} {{ $activeSessionsCount === 1 ? 'dispositivo conectado' : 'dispositivos conectados' }}</span>
+                    </span>
+                    <button class="btn-ghost" type="button" data-modal-open="encerrarSessoes">Encerrar as outras</button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel settings__block" id="cfg-conta">
+                <div>
+                  <h2 class="settings__title">Conta</h2>
+                  <p class="settings__sub">Exportar o que é seu ou encerrar de vez.</p>
+                </div>
+                <div class="settings__list">
+                  <div class="settings__row">
+                    <span class="settings__row-body">
+                      <span class="settings__row-title">Exportar dados</span>
+                      <span class="settings__row-text">Todos os lançamentos em CSV</span>
+                    </span>
+                    <a class="btn-outline btn-outline--sm" href="{{ route('transactions.export') }}"><i class="fa-solid fa-download"></i>Baixar CSV</a>
+                  </div>
+                  <div class="settings__row settings__row--danger">
+                    <span class="settings__row-body">
+                      <span class="settings__row-title">Encerrar conta</span>
+                      <span class="settings__row-text">Apaga tudo. Não dá para desfazer.</span>
+                    </span>
+                    <button class="btn-danger" type="button" data-modal-open="encerrarConta">Encerrar</button>
+                  </div>
+                </div>
+              </section>
+
+            </div>
+          </div>
+        </section>
+
       </div>
     </div>
   </main>
+</div>
+
+@php
+    $defaultAccountId = $dashboard['accounts']->first()['account']->id ?? null;
+@endphp
+
+<!-- ============ Modal: nova transação ============ -->
+<div class="modal" data-modal="transacao" hidden>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-transacao-titulo">
+    <form method="POST" action="{{ route('transactions.store') }}">
+      @csrf
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-transacao-titulo">Nova transação</h2>
+          <p class="modal__sub">Um lançamento avulso, que não veio de extrato.</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <div class="field">
+          <span class="field__label">Tipo</span>
+          <div class="chip-row" data-chip-group>
+            <button class="chip" type="button" data-value="income"><i class="fa-solid fa-arrow-down-long"></i>Entrada</button>
+            <button class="chip is-selected" type="button" data-value="expense"><i class="fa-solid fa-arrow-up-long"></i>Saída</button>
+            <button class="chip" type="button" data-value="transfer"><i class="fa-solid fa-arrow-right-arrow-left"></i>Transferência</button>
+          </div>
+          <input type="hidden" name="type" value="expense" data-chip-input>
+        </div>
+
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Valor</span>
+            <span class="input-group">
+              <span class="input-group__prefix">R$</span>
+              <input class="input-group__input input-group__input--num" type="text" inputmode="decimal" name="amount" placeholder="0,00" required>
+            </span>
+            @error('amount')<span class="field-error">{{ $message }}</span>@enderror
+          </label>
+          <div class="field">
+            <span class="field__label">Data</span>
+            <x-datepicker name="competence_date" :value="now()->toDateString()" />
+          </div>
+        </div>
+
+        <label class="field">
+          <span class="field__label">Descrição</span>
+          <input class="input" type="text" name="description" placeholder="Ex.: Mercado da esquina" required>
+          @error('description')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+
+        <div class="field-row">
+          <div class="field">
+            <span class="field__label">Categoria</span>
+            <x-dropdown name="category_id" icon="fa-solid fa-tag" up
+                :options="$categories->map(fn ($c) => ['value' => $c->id, 'label' => $c->name])" />
+            @error('category_id')<span class="field-error">{{ $message }}</span>@enderror
+          </div>
+          <div class="field">
+            <span class="field__label">Conta ou cartão</span>
+            <div class="dropdown dropdown--block dropdown--up" data-dropdown data-account-or-card>
+              <button class="dropdown__btn" type="button" aria-haspopup="listbox" aria-expanded="false" data-dropdown-btn>
+                <i class="fa-solid fa-building-columns"></i>
+                <span data-dropdown-label>{{ $dashboard['accounts']->first()['account']->name ?? 'Selecione' }}</span>
+                <i class="fa-solid fa-chevron-down dropdown__chevron"></i>
+              </button>
+              <div class="dropdown__menu" role="listbox" hidden>
+                @foreach($dashboard['accounts'] as $row)
+                  <button class="dropdown__opt {{ $loop->first ? 'is-selected' : '' }}" type="button" role="option" data-account-id="{{ $row['account']->id }}">{{ $row['account']->name }}<i class="fa-solid fa-check"></i></button>
+                @endforeach
+                @foreach($dashboard['credit_cards'] as $row)
+                  <button class="dropdown__opt" type="button" role="option" data-credit-card-id="{{ $row['card']->id }}">{{ $row['card']->name }} (cartão)<i class="fa-solid fa-check"></i></button>
+                @endforeach
+              </div>
+            </div>
+            <input type="hidden" name="payment_channel" value="account" data-payment-channel>
+            <input type="hidden" name="account_id" value="{{ $defaultAccountId }}" data-account-id-field>
+            <input type="hidden" name="credit_card_id" value="" data-credit-card-id-field>
+            @error('account_id')<span class="field-error">{{ $message }}</span>@enderror
+            @error('credit_card_id')<span class="field-error">{{ $message }}</span>@enderror
+          </div>
+        </div>
+        <input type="hidden" name="status" value="completed">
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar transação</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: novo cartão ============ -->
+<div class="modal" data-modal="cartao" hidden>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-cartao-titulo">
+    <form method="POST" action="{{ route('credit-cards.store') }}">
+      @csrf
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-cartao-titulo">Novo cartão</h2>
+          <p class="modal__sub">Só o essencial para calcular fatura e limite. Os lançamentos entram depois.</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <div class="field">
+          <span class="field__label">Bandeira</span>
+          <div class="chip-row" data-chip-group>
+            <button class="chip is-selected" type="button" data-value="Visa">Visa</button>
+            <button class="chip" type="button" data-value="Mastercard">Mastercard</button>
+            <button class="chip" type="button" data-value="Elo">Elo</button>
+            <button class="chip" type="button" data-value="Amex">Amex</button>
+            <button class="chip" type="button" data-value="Outra">Outra</button>
+          </div>
+          <input type="hidden" name="issuer" value="Visa" data-chip-input>
+          @error('issuer')<span class="field-error">{{ $message }}</span>@enderror
+        </div>
+
+        <label class="field">
+          <span class="field__label">Apelido do cartão</span>
+          <input class="input" type="text" name="name" placeholder="Ex.: Cartão do mercado" required>
+          @error('name')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+
+        <div class="field-row field-row--3">
+          <label class="field">
+            <span class="field__label">Limite</span>
+            <span class="input-group">
+              <span class="input-group__prefix">R$</span>
+              <input class="input-group__input input-group__input--num" type="text" inputmode="decimal" name="credit_limit" placeholder="0,00" required>
+            </span>
+            @error('credit_limit')<span class="field-error">{{ $message }}</span>@enderror
+          </label>
+          <label class="field">
+            <span class="field__label">Fecha no dia</span>
+            <input class="input input--num" type="number" min="1" max="31" name="closing_day" value="28">
+          </label>
+          <label class="field">
+            <span class="field__label">Vence no dia</span>
+            <input class="input input--num" type="number" min="1" max="31" name="due_day" value="5">
+          </label>
+        </div>
+
+        <input type="hidden" name="color" value="#137A4A">
+
+        <div class="field">
+          <span class="field__label">Conta que paga a fatura <span class="field__hint">· opcional</span></span>
+          <x-dropdown name="_payer_account_display" icon="fa-solid fa-building-columns" up
+              :options="$dashboard['accounts']->map(fn ($row) => ['value' => $row['account']->id, 'label' => $row['account']->name])" />
+        </div>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar cartão</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: nova assinatura ============ -->
+<div class="modal" data-modal="assinatura" hidden>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-assinatura-titulo">
+    <form method="POST" action="{{ route('transactions.store') }}">
+      @csrf
+      <input type="hidden" name="type" value="expense">
+      <input type="hidden" name="status" value="planned">
+      <input type="hidden" name="payment_channel" value="account">
+      <input type="hidden" name="account_id" value="{{ $defaultAccountId }}">
+      <input type="hidden" name="recurrence_count" value="12">
+
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-assinatura-titulo">Nova assinatura</h2>
+          <p class="modal__sub">Cadastre uma cobrança que se repete, para ela aparecer nos próximos meses.</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <label class="field">
+          <span class="field__label">Nome do serviço</span>
+          <input class="input" type="text" name="description" placeholder="Ex.: Streaming, academia, nuvem" required>
+          @error('description')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Valor</span>
+            <span class="input-group">
+              <span class="input-group__prefix">R$</span>
+              <input class="input-group__input input-group__input--num" type="text" inputmode="decimal" name="amount" placeholder="0,00" required>
+            </span>
+            @error('amount')<span class="field-error">{{ $message }}</span>@enderror
+          </label>
+          <div class="field">
+            <span class="field__label">Próxima cobrança</span>
+            <x-datepicker name="competence_date" :value="now()->addMonth()->startOfMonth()->toDateString()" />
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field__label">Repete a cada</span>
+          <div class="chip-row" data-chip-group>
+            <button class="chip is-selected" type="button">Mês</button>
+            <button class="chip" type="button">Dois meses</button>
+            <button class="chip" type="button">Ano</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field__label">Categoria</span>
+          @php
+            $assinaturasCategoria = $categories->firstWhere('name', 'Assinaturas');
+          @endphp
+          <x-dropdown name="category_id" icon="fa-regular fa-credit-card" up
+              :selected="$assinaturasCategoria?->id"
+              :options="$categories->where('type', \App\Enums\CategoryType::Expense)->map(fn ($c) => ['value' => $c->id, 'label' => $c->name])" />
+        </div>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar assinatura</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: alterar senha ============ -->
+<div class="modal" data-modal="senha" hidden>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-senha-titulo">
+    <form method="POST" action="{{ route('password.update') }}">
+      @csrf
+      @method('PUT')
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-senha-titulo">Alterar senha</h2>
+          <p class="modal__sub">Use uma senha que você ainda não usou em outro lugar.</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <label class="field">
+          <span class="field__label">Senha atual</span>
+          <input class="input" type="password" name="current_password" required>
+          @error('current_password', 'updatePassword')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+        <label class="field">
+          <span class="field__label">Nova senha</span>
+          <input class="input" type="password" name="password" required>
+          @error('password', 'updatePassword')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+        <label class="field">
+          <span class="field__label">Confirmar nova senha</span>
+          <input class="input" type="password" name="password_confirmation" required>
+        </label>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar senha</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: encerrar outras sessões ============ -->
+<div class="modal" data-modal="encerrarSessoes" hidden>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-encerrar-sessoes-titulo">
+    <form method="POST" action="{{ route('profile.logout-other-sessions') }}">
+      @csrf
+      @method('PATCH')
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-encerrar-sessoes-titulo">Encerrar as outras sessões</h2>
+          <p class="modal__sub">Todos os outros dispositivos conectados à sua conta vão precisar entrar de novo.</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <label class="field">
+          <span class="field__label">Confirme sua senha</span>
+          <input class="input" type="password" name="password" required>
+          @error('password')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Encerrar as outras</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: encerrar conta ============ -->
+<div class="modal" data-modal="encerrarConta" hidden>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-encerrar-conta-titulo">
+    <form method="POST" action="{{ route('profile.destroy') }}">
+      @csrf
+      @method('DELETE')
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-encerrar-conta-titulo">Encerrar conta</h2>
+          <p class="modal__sub">Isso apaga sua conta e todos os seus dados. Não dá para desfazer.</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <label class="field">
+          <span class="field__label">Confirme sua senha</span>
+          <input class="input" type="password" name="password" required>
+          @error('password', 'userDeletion')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-danger" type="submit">Encerrar conta</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 </x-dashboard-layout>

@@ -182,7 +182,7 @@ class TransactionImportService
             $rows = $batch->rows()->whereIn('id', $includedRowIds)->where('status', '!=', ImportRowStatus::Invalid)->get();
 
             foreach ($rows as $row) {
-                $categoryId = $categoryOverrides[$row->id] ?? $row->suggested_category_id;
+                $categoryId = array_key_exists($row->id, $categoryOverrides) ? $categoryOverrides[$row->id] : $row->suggested_category_id;
                 if ($categoryId !== null && ! Category::where('id', $categoryId)->where('user_id', $batch->user_id)->exists()) {
                     $categoryId = null;
                 }
@@ -210,7 +210,7 @@ class TransactionImportService
                 ]);
 
                 $result['imported']++;
-                if ($row->suggested_category_id !== null && ! isset($categoryOverrides[$row->id])) {
+                if ($row->suggested_category_id !== null && ! array_key_exists($row->id, $categoryOverrides)) {
                     $result['auto_categorized']++;
                 }
             }

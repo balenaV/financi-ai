@@ -22,6 +22,7 @@ jobs:
             docker compose -p financiai-staging -f compose.prod.yaml up -d --build
             docker compose -p financiai-staging -f compose.prod.yaml exec -T app composer install --no-dev --optimize-autoloader
             docker compose -p financiai-staging -f compose.prod.yaml exec -T app php artisan migrate --force
+            docker compose -p financiai-staging -f compose.prod.yaml exec -T app php artisan storage:link
             docker compose -p financiai-staging -f compose.prod.yaml exec -T app php artisan config:cache
             docker compose -p financiai-staging -f compose.prod.yaml exec -T app php artisan route:cache
             docker compose -p financiai-staging -f compose.prod.yaml exec -T app php artisan view:cache
@@ -44,6 +45,7 @@ jobs:
             docker compose -p financiai-prod -f compose.prod.yaml up -d --build
             docker compose -p financiai-prod -f compose.prod.yaml exec -T app composer install --no-dev --optimize-autoloader
             docker compose -p financiai-prod -f compose.prod.yaml exec -T app php artisan migrate --force
+            docker compose -p financiai-prod -f compose.prod.yaml exec -T app php artisan storage:link
             docker compose -p financiai-prod -f compose.prod.yaml exec -T app php artisan config:cache
             docker compose -p financiai-prod -f compose.prod.yaml exec -T app php artisan route:cache
             docker compose -p financiai-prod -f compose.prod.yaml exec -T app php artisan view:cache

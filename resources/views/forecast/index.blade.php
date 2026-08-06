@@ -1,10 +1,10 @@
 <x-app-layout>
     <x-slot name="title">Planejamento futuro</x-slot>
     <x-page-header title="Planejamento futuro" description="Veja o que você espera receber e pagar nos próximos meses.">
-        <a href="{{ route('transactions.create', ['type' => 'income', 'status' => 'planned', 'competence_date' => today()->addMonth()->toDateString()]) }}" class="btn-primary">
+        <a href="{{ route('dashboard') }}" class="btn-primary">
             <i class="fa-solid fa-calendar-plus" aria-hidden="true"></i> Adicionar ganho futuro
         </a>
-        <a href="{{ route('transactions.create', ['type' => 'expense', 'status' => 'planned', 'competence_date' => today()->addMonth()->toDateString()]) }}" class="btn-secondary">
+        <a href="{{ route('dashboard') }}" class="btn-secondary">
             <i class="fa-solid fa-calendar-minus" aria-hidden="true"></i> Adicionar despesa futura
         </a>
     </x-page-header>
@@ -51,7 +51,6 @@
                         <span class="text-xs text-slate-500">{{ $transaction->competence_date->format('d/m/Y') }} · {{ $transaction->account?->name ?? 'Sem conta' }}</span>
                     </div>
                     <span class="font-bold {{ $transaction->type === \App\Enums\TransactionType::Income ? 'text-accent-800' : 'text-red-700' }}"><x-money :value="$transaction->amount" /></span>
-                    <a href="{{ route('transactions.edit', $transaction) }}" class="btn-secondary !min-h-9 !px-3">Editar</a>
                 </div>
             @empty
                 <div class="p-10 text-center text-sm text-slate-500">Cadastre um ganho ou uma despesa futura para começar sua projeção.</div>
