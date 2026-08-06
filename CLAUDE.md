@@ -43,9 +43,10 @@ bash
 APP_PORT=8081 docker compose up -d
 DB_FORWARD_PORT=5433 docker compose up -d
 Branching and deploy
-dev = development/staging. All work starts here.
+dev = development/staging. Reached exclusively via squash-merge PRs from <type>/<scope> branches — never commit directly.
+<type>/<scope> = all work, branched from dev. Types: feat, fix, chore, docs, refactor, test. Scope names the app area touched (dashboard, importacao, config, auth...) — broad, not per-task. PR base: dev.
 main = production only. Reached exclusively via PR from dev, merged without extra commits.
-Urgent fixes branch from main as hotfix/*, then get back-ported to dev.
+Urgent fixes branch from main as hotfix/*, merged via PR to main, then back-ported to dev via its own small PR (cherry-pick) — dev never receives a direct push, even for hotfixes.
 Full detail: docs/branching.md.
 
 Production hosting has been migrated off Vercel + Supabase to a self-managed Hostinger VPS. Both staging and production run on the same VPS, as fully separate Docker Compose projects (separate clones, .env files, containers, and Postgres databases — nothing is shared between them).
