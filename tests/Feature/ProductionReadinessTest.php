@@ -256,7 +256,7 @@ class ProductionReadinessTest extends TestCase
         $manifest = json_decode(file_get_contents(public_path('manifest.webmanifest')), true, flags: JSON_THROW_ON_ERROR);
 
         $this->assertSame('financi.ai', $manifest['short_name']);
-        $this->assertContains('/images/brand/financi-ai-symbol.svg', array_column($manifest['icons'], 'src'));
+        $this->assertContains('/design/assets/capi/capi-rosto.png', array_column($manifest['icons'], 'src'));
         $this->assertStringContainsString('financi-ai-shell-v2', file_get_contents(public_path('service-worker.js')));
     }
 

@@ -89,3 +89,28 @@
 .card__text--flush {
   margin: 0;
 }
+
+/* Histórico de conversas ainda não existe (agentes/chat não estão ativos);
+   sem isso o container vazio (flex:1) fica sobrepondo o resto da sidebar
+   em telas estreitas e bloqueia cliques nos botões abaixo dele. */
+.sidebar__history,
+.history__list--empty {
+  pointer-events: none;
+}
+
+/* .app do pacote usa min-height:100vh, então quando o conteúdo do .stage é
+   mais alto que a tela, .app cresce e a sidebar (align-items:stretch)
+   estica junto — empurrando o bloco de usuário/sair para bem abaixo da
+   viewport. Travar a altura em 100vh deixa .stage (que já tem
+   overflow-y:auto) rolando por conta própria e a sidebar sempre visível
+   por inteiro, do jeito que o resto do CSS já pressupõe. */
+.app {
+  height: 100vh;
+  min-height: 0;
+}
+
+.history__empty-text {
+  padding: 0 4px;
+  font-size: 13px;
+  color: var(--muted);
+}

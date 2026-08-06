@@ -76,8 +76,8 @@
         <span class="history__title">Conversas</span>
         <span class="tag-soon">em breve</span>
       </div>
-      <div class="history__list">
-        <p style="padding: 0 4px; font-size: 13px; color: var(--muted);">O histórico de conversas com o Capí chega junto com os agentes.</p>
+      <div class="history__list history__list--empty">
+        <p class="history__empty-text">O histórico de conversas com o Capí chega junto com os agentes.</p>
       </div>
     </div>
 
@@ -88,6 +88,10 @@
         <span class="sidebar__user-plan">Beta aberto</span>
       </span>
       <a class="sidebar__settings" href="{{ route('settings.edit') }}" aria-label="Configurações"><i class="fa-solid fa-gear"></i></a>
+      <form method="POST" action="{{ route('logout') }}">
+        @csrf
+        <button class="sidebar__settings" type="submit" aria-label="Sair"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+      </form>
     </div>
   </aside>
 

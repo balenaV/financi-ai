@@ -29,7 +29,7 @@
     <meta name="theme-color" content="#FFF6E6">
     <meta name="application-name" content="financi.ai">
     <title>{{ isset($title) ? $title.' — ' : '' }}{{ config('app.name') }}</title>
-    <link rel="icon" type="image/svg+xml" href="{{ asset('images/brand/financi-ai-symbol.svg') }}">
+    <link rel="icon" type="image/png" href="{{ asset('design/assets/capi/capi-rosto.png') }}">
     <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
     <script>
         try {
