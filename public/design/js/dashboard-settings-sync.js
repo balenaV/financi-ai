@@ -29,4 +29,11 @@
     var url = eyeBtn.getAttribute('data-toggle-url');
     if (url) eyeBtn.addEventListener('click', function () { persist(url); });
   }
+
+  /* Abre a aba certa quando chega de outra página com #aba na URL
+     (ex: link "Voltar para Contas" da importação). */
+  if (location.hash) {
+    var target = document.querySelector('[data-goto="' + location.hash.slice(1) + '"]');
+    if (target) target.click();
+  }
 })();

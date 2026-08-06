@@ -1,143 +1,249 @@
-<x-app-layout>
-    <x-slot name="title">Importar extrato</x-slot>
-    <x-page-header title="Importar extrato" description="Traga seus lançamentos do banco sem digitar um por um." />
+<x-import-layout title="Importar extrato">
 
-    <div
-        id="import-wizard"
-        class="mx-auto max-w-3xl space-y-5"
-        data-store-url="{{ route('transactions.import.store') }}"
-        data-transactions-url="{{ route('transactions.index') }}"
-    >
-        <ol class="flex flex-wrap items-center gap-2" data-steps>
-            @foreach(['upload' => 'Arquivo', 'mapear' => 'Colunas', 'revisar' => 'Revisão', 'concluido' => 'Pronto'] as $key => $label)
-                <li data-step-pill="{{ $key }}" class="flex items-center gap-2 rounded-full border border-(--border-subtle) px-3 py-1.5 text-sm font-semibold text-slate-500">
-                    <span class="grid size-5 place-items-center rounded-full bg-slate-100 text-xs font-bold">{{ $loop->iteration }}</span>
-                    {{ $label }}
-                </li>
-            @endforeach
-        </ol>
+<header class="import-page__header">
+  <div class="import-page__header-inner">
+    <a class="back-link" href="{{ route('dashboard') }}#contas"><i class="fa-solid fa-arrow-left"></i>Voltar para Contas</a>
+    <button class="btn-icon" type="button" data-theme-toggle data-toggle-url="{{ route('settings.toggle-theme') }}" aria-label="Alternar tema"><i class="fa-solid fa-moon"></i></button>
+  </div>
+</header>
 
-        {{-- Etapa 1: upload --}}
-        <section data-step="upload" class="surface space-y-5 p-6">
-            <x-form.select name="account_id" label="Importar para" data-account-select required>
-                @foreach($accounts as $account)
-                    <option value="{{ $account->id }}">{{ $account->name }}</option>
-                @endforeach
-            </x-form.select>
+<main class="import-page__main">
+  <div class="import-page__inner" id="import-wizard" data-store-url="{{ route('transactions.import.store') }}" data-transactions-url="{{ url('/transactions') }}" data-export-csv-url="{{ route('transactions.export') }}" data-export-ofx-url="{{ route('transactions.export.ofx') }}" data-dashboard-url="{{ route('dashboard') }}">
 
-            <label data-dropzone class="flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-(--border-default) p-8 text-center transition-colors">
-                <span class="grid size-14 place-items-center rounded-2xl bg-primary-50 text-primary-600"><i class="fa-solid fa-file-arrow-up text-xl"></i></span>
-                <span class="text-lg font-extrabold tracking-tight">Arraste seu extrato aqui</span>
-                <span class="max-w-md text-sm text-slate-500">Ou clique para escolher um arquivo. Aceitamos OFX e CSV, até 10 MB.</span>
-                <span class="btn-primary mt-1">Escolher arquivo</span>
-                <input type="file" accept=".ofx,.csv" data-file-input class="hidden">
-            </label>
+    <h1 class="import-page__title">Importar extrato</h1>
+    <p class="import-page__sub">Traga seus lançamentos do banco sem digitar um por um.</p>
 
-            <div data-file-info class="hidden items-center gap-3 rounded-xl border border-(--border-subtle) bg-(--bg-alt) p-4">
-                <span class="grid size-9 place-items-center rounded-lg bg-white text-primary-600"><i class="fa-solid fa-file-lines"></i></span>
-                <span class="min-w-0 flex-1">
-                    <span data-file-name class="block truncate text-sm font-bold"></span>
-                    <span data-file-meta class="block text-xs text-slate-500"></span>
-                </span>
-                <button type="button" data-action="clear-file" class="btn-ghost" aria-label="Remover arquivo"><i class="fa-solid fa-xmark"></i></button>
-            </div>
+    <ol class="steps-trail">
+      <li data-trail="upload" data-trail-icon="fa-solid fa-file-arrow-up" data-state="current">
+        <span class="trail-step" data-state="current">
+          <span class="trail-step__bubble"><i class="fa-solid fa-file-arrow-up"></i></span>
+          <span class="trail-step__name">Arquivo</span>
+        </span>
+        <span class="steps-trail__dash"></span>
+      </li>
+      <li data-trail="mapear" data-trail-icon="fa-solid fa-table-columns" data-state="todo">
+        <span class="trail-step" data-state="todo">
+          <span class="trail-step__bubble"><i class="fa-solid fa-table-columns"></i></span>
+          <span class="trail-step__name">Colunas</span>
+        </span>
+        <span class="steps-trail__dash"></span>
+      </li>
+      <li data-trail="revisar" data-trail-icon="fa-solid fa-list-check" data-state="todo">
+        <span class="trail-step" data-state="todo">
+          <span class="trail-step__bubble"><i class="fa-solid fa-list-check"></i></span>
+          <span class="trail-step__name">Revisão</span>
+        </span>
+        <span class="steps-trail__dash"></span>
+      </li>
+      <li data-trail="concluido" data-trail-icon="fa-solid fa-check" data-state="todo">
+        <span class="trail-step" data-state="todo">
+          <span class="trail-step__bubble"><i class="fa-solid fa-check"></i></span>
+          <span class="trail-step__name">Pronto</span>
+        </span>
+      </li>
+    </ol>
 
-            <p class="flex items-start gap-2 text-sm text-slate-500"><i class="fa-solid fa-shield-halved mt-0.5 text-primary-600"></i>O arquivo é lido para extrair os lançamentos e descartado em seguida. O financiaí nunca pede a senha do seu banco.</p>
+    <!-- ============ Etapa 1: arquivo ============ -->
+    <div class="import-step" data-step="upload">
 
-            <div class="flex justify-end">
-                <button type="button" data-action="upload" class="btn-primary" disabled>Continuar<i class="fa-solid fa-arrow-right ml-1"></i></button>
-            </div>
-        </section>
+      <section class="card">
+        <div class="destination">
+          <span class="destination__label">Importar para</span>
+          <label class="field-select">
+            <i class="fa-solid fa-building-columns"></i>
+            <select aria-label="Conta de destino" data-account-select>
+              @foreach($accounts as $account)
+                <option value="{{ $account->id }}">{{ $account->name }}</option>
+              @endforeach
+            </select>
+            <i class="fa-solid fa-chevron-down field-select__chevron"></i>
+          </label>
+        </div>
 
-        {{-- Etapa 2: mapear colunas (só aparece para CSV) --}}
-        <section data-step="mapear" class="hidden space-y-5">
-            <div class="surface space-y-5 p-6">
-                <div>
-                    <h2 class="text-lg font-extrabold tracking-tight">Conferir as colunas</h2>
-                    <p class="mt-1 max-w-xl text-sm text-slate-500">Diga qual coluna do arquivo corresponde a cada campo — na próxima importação desse banco já vem preenchido.</p>
-                </div>
-                <div data-column-fields class="grid grid-cols-1 gap-4 sm:grid-cols-2"></div>
-                <div class="grid grid-cols-1 gap-4 border-t border-(--border-subtle) pt-4 sm:grid-cols-2">
-                    <x-form.select name="date_format" label="Formato de data" data-date-format>
-                        <option value="DD/MM/AAAA">DD/MM/AAAA</option>
-                        <option value="AAAA-MM-DD">AAAA-MM-DD</option>
-                        <option value="MM/DD/AAAA">MM/DD/AAAA</option>
-                    </x-form.select>
-                    <x-form.select name="decimal_separator" label="Separador decimal" data-decimal-separator>
-                        <option value="virgula">Vírgula (1.234,56)</option>
-                        <option value="ponto">Ponto (1,234.56)</option>
-                    </x-form.select>
-                </div>
-            </div>
+        <label class="dropzone" data-dropzone data-dragging="false">
+          <span class="dropzone__icon"><i class="fa-solid fa-file-arrow-up"></i></span>
+          <span class="dropzone__title">Arraste seu extrato aqui</span>
+          <span class="dropzone__hint">Ou clique para escolher um arquivo. Aceitamos OFX e CSV, até 10 MB.</span>
+          <span class="dropzone__cta">Escolher arquivo</span>
+          <input type="file" accept=".ofx,.csv" data-file-input>
+        </label>
 
-            <div class="flex justify-between gap-3">
-                <button type="button" data-action="back-upload" class="btn-secondary"><i class="fa-solid fa-arrow-left mr-1"></i>Voltar</button>
-                <button type="button" data-action="parse" class="btn-primary">Ler lançamentos<i class="fa-solid fa-arrow-right ml-1"></i></button>
-            </div>
-        </section>
+        <div class="file-chip" data-file-chip hidden>
+          <span class="file-chip__icon"><i class="fa-solid fa-file-lines"></i></span>
+          <span class="file-chip__body">
+            <span class="file-chip__name" data-file-name></span>
+            <span class="file-chip__meta" data-file-meta></span>
+          </span>
+          <button class="file-chip__remove" type="button" data-file-remove aria-label="Remover arquivo"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </section>
 
-        {{-- Etapa 3: revisar --}}
-        <section data-step="revisar" class="hidden space-y-4">
-            <div data-parsing-state class="surface flex items-center gap-3 p-6 text-sm font-semibold text-slate-500">
-                <i class="fa-solid fa-spinner fa-spin"></i>Lendo o arquivo...
-            </div>
+      <section class="card card--tight">
+        <div class="tutorial__head">
+          <h2 class="card__title card__title--sm">Onde encontrar seu extrato</h2>
+          <label class="field-select">
+            <i class="fa-solid fa-building-columns"></i>
+            <select aria-label="Seu banco" data-bank-select>
+              <option>Nubank</option>
+              <option>Itaú</option>
+              <option>Bradesco</option>
+              <option>Banco do Brasil</option>
+              <option>Caixa</option>
+              <option>Santander</option>
+              <option>Inter</option>
+              <option>C6 Bank</option>
+              <option>Outro banco</option>
+            </select>
+            <i class="fa-solid fa-chevron-down field-select__chevron"></i>
+          </label>
+        </div>
 
-            <div data-review-content class="hidden space-y-4">
-                <div data-summary class="grid grid-cols-1 gap-3 sm:grid-cols-3"></div>
+        <ol class="tutorial__steps" data-bank-steps></ol>
 
-                <div class="surface overflow-hidden !p-0">
-                    <div class="flex items-center gap-3 border-b border-(--border-subtle) bg-(--bg-alt) px-5 py-3">
-                        <input type="checkbox" data-select-all class="size-4 accent-(--brand-600)">
-                        <span class="text-sm font-bold">Lançamento</span>
-                        <span data-selected-text class="ml-auto text-sm text-slate-500"></span>
-                    </div>
-                    <div data-rows></div>
-                </div>
-            </div>
+        <p class="note note--boxed" data-bank-note>
+          <i class="fa-solid fa-circle-info"></i><span data-bank-note-text></span>
+        </p>
+        <p class="note note--safe">
+          <i class="fa-solid fa-shield-halved"></i>O arquivo é lido para extrair os lançamentos e descartado em seguida. O financiaí nunca pede a senha do seu banco.
+        </p>
+        <p class="note note--fine">Os caminhos podem mudar conforme atualizações do app ou do site do banco.</p>
+      </section>
 
-            <div class="flex justify-between gap-3">
-                <button type="button" data-action="back-mapear" class="btn-secondary"><i class="fa-solid fa-arrow-left mr-1"></i>Voltar</button>
-                <button type="button" data-action="commit" class="btn-primary" data-commit-label><i class="fa-solid fa-check mr-1"></i>Importar lançamentos</button>
-            </div>
-        </section>
-
-        {{-- Etapa 4: concluído --}}
-        <section data-step="concluido" class="hidden space-y-4">
-            <div class="relative flex flex-wrap items-center gap-6 overflow-hidden rounded-2xl border border-(--border-subtle) p-8" style="background:#0D1410">
-                <div class="min-w-[250px] flex-1">
-                    <span class="inline-flex items-center gap-2 rounded-full bg-[rgba(56,193,114,0.14)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[#38C172]"><i class="fa-solid fa-check"></i>Importação concluída</span>
-                    <h2 data-final-title class="mt-3 text-2xl font-extrabold tracking-tight text-[#FFF6E6]"></h2>
-                    <p data-final-detail class="mt-2 max-w-xl text-sm text-white/70"></p>
-                </div>
-                <img src="{{ asset('images/mascot/capi-comemorando.png') }}" alt="" class="ml-auto w-32 shrink-0">
-            </div>
-
-            <div data-final-summary class="grid grid-cols-1 gap-3 sm:grid-cols-3"></div>
-
-            <div class="flex justify-between gap-3">
-                <button type="button" data-action="restart" class="btn-secondary"><i class="fa-solid fa-rotate-left mr-1"></i>Importar outro extrato</button>
-                <a href="{{ route('dashboard') }}" class="btn-primary">Ver meu painel<i class="fa-solid fa-arrow-right ml-1"></i></a>
-            </div>
-        </section>
+      <div class="step-nav step-nav--end">
+        <button class="btn-step-next" type="button" data-step-goto="mapear" data-continue disabled>Continuar<i class="fa-solid fa-arrow-right"></i></button>
+      </div>
     </div>
 
-    <template data-row-template>
-        <div class="flex items-center gap-3 border-b border-(--border-subtle) px-5 py-3 last:border-0" data-row>
-            <input type="checkbox" data-row-check class="size-4 shrink-0 accent-(--brand-600)">
-            <span data-row-date class="w-12 shrink-0 text-xs font-bold text-slate-500"></span>
-            <span class="min-w-0 flex-1">
-                <span class="flex items-center gap-2">
-                    <span data-row-desc class="truncate text-sm font-semibold"></span>
-                    <span data-row-badge></span>
-                </span>
+    <!-- ============ Etapa 2: colunas (só para CSV) ============ -->
+    <div class="import-step" data-step="mapear" hidden>
+
+      <section class="card">
+        <h2 class="card__title">Conferir as colunas</h2>
+        <p class="card__text">Cada banco exporta o CSV de um jeito. Diga qual coluna do arquivo corresponde a cada campo.</p>
+
+        <div class="map-grid" data-column-fields></div>
+
+        <div class="map-grid map-grid--divided">
+          <label class="map-field">
+            <span class="map-field__label">Formato de data</span>
+            <span class="field-select field-select--block">
+              <select aria-label="Formato de data" data-date-format>
+                <option value="DD/MM/AAAA">DD/MM/AAAA</option>
+                <option value="AAAA-MM-DD">AAAA-MM-DD</option>
+                <option value="MM/DD/AAAA">MM/DD/AAAA</option>
+              </select>
+              <i class="fa-solid fa-chevron-down field-select__chevron"></i>
             </span>
-            <select data-row-category class="form-control !mt-0 !w-40 !py-1.5 text-sm">
-                <option value="">Sem categoria</option>
-                @foreach($categories as $category)
-                    <option value="{{ $category->id }}">{{ $category->name }}</option>
-                @endforeach
-            </select>
-            <span data-row-amount class="w-28 shrink-0 text-right text-sm font-bold"></span>
+          </label>
+          <label class="map-field">
+            <span class="map-field__label">Separador decimal</span>
+            <span class="field-select field-select--block">
+              <select aria-label="Separador decimal" data-decimal-separator>
+                <option value="virgula">Vírgula (1.234,56)</option>
+                <option value="ponto">Ponto (1,234.56)</option>
+              </select>
+              <i class="fa-solid fa-chevron-down field-select__chevron"></i>
+            </span>
+          </label>
         </div>
-    </template>
-</x-app-layout>
+      </section>
+
+      <div class="step-nav">
+        <button class="btn-step-back" type="button" data-step-goto="upload"><i class="fa-solid fa-arrow-left"></i>Voltar</button>
+        <button class="btn-step-next" type="button" data-action="parse">Ler lançamentos<i class="fa-solid fa-arrow-right"></i></button>
+      </div>
+    </div>
+
+    <!-- ============ Etapa 3: revisão ============ -->
+    <div class="import-step" data-step="revisar" hidden>
+
+      <div class="card" data-parsing-state>
+        <p class="card__text card__text--flush"><i class="fa-solid fa-spinner fa-spin"></i>&nbsp; Lendo o arquivo...</p>
+      </div>
+
+      <div class="import-step" data-review-content hidden>
+        <div class="summary-grid" data-summary></div>
+
+        <div class="review-filters" data-review-filters>
+          <button class="filter-pill" type="button" data-filter="todos" aria-pressed="true">Todos<span class="filter-pill__count" data-count="todos"></span></button>
+          <button class="filter-pill" type="button" data-filter="duplicado" aria-pressed="false">Duplicados<span class="filter-pill__count" data-count="duplicado"></span></button>
+          <button class="filter-pill" type="button" data-filter="revisar" aria-pressed="false">Sem categoria<span class="filter-pill__count" data-count="revisar"></span></button>
+          <span class="review-filters__status" data-review-status></span>
+        </div>
+
+        <section class="card card--flush">
+          <div class="review-head">
+            <input class="entry__check" type="checkbox" data-check-all checked aria-label="Selecionar todos">
+            <span class="review-head__label">Lançamento</span>
+            <span class="review-head__value">Valor</span>
+          </div>
+          <div data-entries></div>
+        </section>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn-step-back" type="button" data-step-goto="mapear"><i class="fa-solid fa-arrow-left"></i>Voltar</button>
+        <button class="btn-step-next" type="button" data-action="commit"><i class="fa-solid fa-check"></i><span data-confirm-label>Importar lançamentos</span></button>
+      </div>
+    </div>
+
+    <!-- ============ Etapa 4: concluído ============ -->
+    <div class="import-step" data-step="concluido" hidden>
+
+      <section class="done-hero">
+        <span class="done-hero__ring" aria-hidden="true"></span>
+        <div class="done-hero__body">
+          <span class="done-hero__badge"><i class="fa-solid fa-check"></i>Importação concluída</span>
+          <h2 class="done-hero__title" data-final-title></h2>
+          <p class="done-hero__text" data-final-detail></p>
+        </div>
+        <img class="done-hero__art" src="{{ asset('design/assets/capi/capi-comemorando.png') }}" alt="">
+      </section>
+
+      <div class="summary-grid summary-grid--final" data-final-summary></div>
+
+      <section class="export-card">
+        <div>
+          <h2 class="card__title card__title--sm">Seus dados continuam seus</h2>
+          <p>Exporte tudo o que você registrou em CSV ou OFX quando quiser, sem pedir autorização a ninguém.</p>
+        </div>
+        <div class="export-card__actions">
+          <a class="btn-export" href="{{ route('transactions.export') }}"><i class="fa-solid fa-file-csv"></i>Exportar CSV</a>
+          <a class="btn-export" href="{{ route('transactions.export.ofx') }}"><i class="fa-solid fa-file-arrow-down"></i>Exportar OFX</a>
+        </div>
+      </section>
+
+      <div class="step-nav">
+        <button class="btn-step-back" type="button" data-restart><i class="fa-solid fa-rotate-left"></i>Importar outro extrato</button>
+        <a class="btn-step-next" href="{{ route('dashboard') }}#contas">Ver meu painel<i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<template data-entry-template>
+  <div class="entry" data-entry>
+    <input class="entry__check" type="checkbox" aria-label="Incluir lançamento">
+    <span class="entry__date" data-entry-date></span>
+    <span class="entry__body">
+      <span class="entry__title-row">
+        <span class="entry__name" data-entry-name></span>
+        <span class="entry__flag" data-entry-flag hidden></span>
+      </span>
+      <span class="entry__source" data-entry-source></span>
+    </span>
+    <span class="entry__category">
+      <select aria-label="Categoria" data-entry-category>
+        <option value="">Sem categoria</option>
+        @foreach($categories as $category)
+          <option value="{{ $category->id }}">{{ $category->name }}</option>
+        @endforeach
+      </select>
+      <i class="fa-solid fa-chevron-down"></i>
+    </span>
+    <span class="entry__value" data-entry-value></span>
+  </div>
+</template>
+
+</x-import-layout>

@@ -26,3 +26,66 @@
   padding: 10px 14px;
   margin: -6px 0 4px;
 }
+
+.password-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: -2px;
+}
+
+.password-strength__track {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.password-strength__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--danger);
+  width: 0%;
+  transition: width 160ms ease, background 160ms ease;
+}
+
+.password-strength__label {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--danger);
+  white-space: nowrap;
+}
+
+.password-strength[data-level="medium"] .password-strength__fill,
+.password-strength[data-level="medium"] .password-strength__label {
+  background: var(--warn);
+  color: var(--warn);
+}
+
+.password-strength[data-level="strong"] .password-strength__fill,
+.password-strength[data-level="strong"] .password-strength__label {
+  background: var(--accent);
+  color: var(--accent);
+}
+
+.auth-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.auth-actions form {
+  display: grid;
+}
+
+.auth-actions__ghost {
+  text-align: center;
+  padding: 13px;
+}
+
+.card__text--flush {
+  margin: 0;
+}

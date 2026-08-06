@@ -117,9 +117,13 @@
                 <label class="field">
                   <span class="field__label">Senha</span>
                   <span class="input-group">
-                    <input class="input-group__input" type="password" name="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres">
+                    <input class="input-group__input" type="password" name="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" data-password-strength-input>
                     <button class="input-group__action" type="button" data-password-toggle aria-label="Mostrar ou ocultar senha">Mostrar</button>
                   </span>
+                  <div class="password-strength" data-password-strength hidden>
+                    <div class="password-strength__track"><span class="password-strength__fill" data-password-strength-fill></span></div>
+                    <span class="password-strength__label" data-password-strength-label></span>
+                  </div>
                   @error('password', 'registro') <span class="field-error">{{ $message }}</span> @enderror
                 </label>
 
@@ -129,9 +133,10 @@
                 </label>
 
                 <label class="checkbox-row checkbox-row--top">
-                  <input class="checkbox" type="checkbox" name="terms">
+                  <input class="checkbox" type="checkbox" name="terms" required>
                   <span>Li e aceito os <a href="#termos">termos de uso</a> e a <a href="#privacidade">política de privacidade</a>.</span>
                 </label>
+                @error('terms', 'registro') <span class="field-error">{{ $message }}</span> @enderror
 
                 <button class="btn-primary" type="submit">Criar minha conta</button>
               </form>
