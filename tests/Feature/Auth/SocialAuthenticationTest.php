@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Contracts\Provider;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
@@ -16,15 +17,22 @@ class SocialAuthenticationTest extends TestCase
 
     public function test_social_access_is_offered_only_on_the_login_screen(): void
     {
+        $googleUrl = route('social.redirect', ['provider' => 'google']);
+        $githubUrl = route('social.redirect', ['provider' => 'github']);
+
         $this->get('/login')
             ->assertOk()
-            ->assertSee(route('social.redirect', ['provider' => 'google']))
-            ->assertSee(route('social.redirect', ['provider' => 'github']));
+            ->assertSee($googleUrl)
+            ->assertSee($githubUrl);
 
-        $this->get('/register')
-            ->assertOk()
-            ->assertDontSee(route('social.redirect', ['provider' => 'google']))
-            ->assertDontSee(route('social.redirect', ['provider' => 'github']));
+        // Login and register share one page with a client-side tab switch, so both
+        // forms are always present in the markup. The business rule that matters is
+        // that social auth can never complete the *registration* form itself.
+        $registerResponse = $this->get('/register')->assertOk();
+        $registroForm = Str::before(Str::after($registerResponse->getContent(), 'auth-form--registro'), '</form>');
+
+        $this->assertStringNotContainsString($googleUrl, $registroForm);
+        $this->assertStringNotContainsString($githubUrl, $registroForm);
     }
 
     public function test_unsupported_social_provider_returns_not_found(): void

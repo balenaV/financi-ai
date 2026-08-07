@@ -1,0 +1,153 @@
+/* financiaí — extensões do backend sobre o pacote de design.
+   Arquivo novo: nada aqui sobrescreve tokens.css, base.css ou auth.css. */
+
+.field-error {
+  font-size: 12.5px;
+  color: var(--danger);
+}
+
+.form-status {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--accent);
+  margin: -6px 0 4px;
+}
+
+.form-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  margin: -6px 0 4px;
+}
+
+.password-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: -2px;
+}
+
+.password-strength__track {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.password-strength__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--danger);
+  width: 0%;
+  transition: width 160ms ease, background 160ms ease;
+}
+
+.password-strength__label {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--danger);
+  white-space: nowrap;
+}
+
+.password-strength[data-level="medium"] .password-strength__fill,
+.password-strength[data-level="medium"] .password-strength__label {
+  background: var(--warn);
+  color: var(--warn);
+}
+
+.password-strength[data-level="strong"] .password-strength__fill,
+.password-strength[data-level="strong"] .password-strength__label {
+  background: var(--accent);
+  color: var(--accent);
+}
+
+.auth-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.auth-actions form {
+  display: grid;
+}
+
+.auth-actions__ghost {
+  text-align: center;
+  padding: 13px;
+}
+
+.card__text--flush {
+  margin: 0;
+}
+
+/* Histórico de conversas ainda não existe (agentes/chat não estão ativos);
+   sem isso o container vazio (flex:1) fica sobrepondo o resto da sidebar
+   em telas estreitas e bloqueia cliques nos botões abaixo dele. */
+.sidebar__history,
+.history__list--empty {
+  pointer-events: none;
+}
+
+/* .app do pacote usa min-height:100vh, então quando o conteúdo do .stage é
+   mais alto que a tela, .app cresce e a sidebar (align-items:stretch)
+   estica junto — empurrando o bloco de usuário/sair para bem abaixo da
+   viewport. Travar a altura em 100vh deixa .stage (que já tem
+   overflow-y:auto) rolando por conta própria e a sidebar sempre visível
+   por inteiro, do jeito que o resto do CSS já pressupõe. */
+.app {
+  height: 100vh;
+  min-height: 0;
+}
+
+.history__empty-text {
+  padding: 0 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* O pacote de design não limita a altura de .dropdown__menu. Com listas
+   reais do backend (ex.: categorias do usuário) o menu pode crescer demais
+   e passar do topo da viewport quando abre para cima. Trava em ~4 itens
+   visíveis e deixa o resto rolável, sem mudar o visual de cada opção. */
+.dropdown__menu {
+  max-height: 152px;
+  overflow-y: auto;
+}
+
+/* .avatar do pacote é só um bloco com iniciais — quando o usuário tem foto
+   de perfil enviada, a mesma bolha precisa mostrar a imagem em vez do texto. */
+.avatar { position: relative; overflow: hidden; }
+.avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* dashboard.css tenta centralizar o avatar do usuário quando a sidebar está
+   recolhida com a regra ".sidebar--compact .sidebar__user-btn" — mas o
+   toggle real marca ".sidebar[data-collapsed=\"true\"]" (é o seletor usado em
+   todas as outras regras do mesmo bloco), então essa classe nunca existe e o
+   botão fica com flex:1 esticado, jogando o avatar para a esquerda em vez de
+   centralizado. Repete a mesma regra com o seletor que de fato é usado. */
+.sidebar[data-collapsed="true"] .sidebar__user-btn {
+  flex: 0 0 auto;
+}
+
+/* ".sidebar__user" (regra antiga, de antes do popover existir) é um flex row
+   simples sem largura fixa. ".sidebar__user-row" (novo, envolve avatar+nome+
+   engrenagem) não herda nenhum "flex: 1" dela, então em vez de ocupar a
+   largura disponível e truncar o nome do usuário, ela cresce pelo tamanho
+   natural do conteúdo — e o botão de engrenagem acaba estourando o padding
+   da sidebar. Sem isso, ".sidebar__user-btn { flex:1; min-width:0 }" (que já
+   existe no pacote, pensado exatamente pra truncar o nome) nunca tem efeito,
+   porque o pai que deveria limitar a largura nunca é limitado ele mesmo. */
+.sidebar__user-row {
+  flex: 1;
+  min-width: 0;
+}

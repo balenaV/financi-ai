@@ -1,4 +1,4 @@
-const CACHE = 'financi-ai-shell-v2';
+const CACHE = 'financi-ai-shell-v4';
 const SHELL = [
     '/',
     '/manifest.webmanifest',
@@ -29,12 +29,12 @@ self.addEventListener('fetch', event => {
     }
 
     event.respondWith(
-        caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+        fetch(event.request).then(response => {
             if (response.ok && ['style', 'script', 'image', 'font'].includes(event.request.destination)) {
                 const copy = response.clone();
                 caches.open(CACHE).then(cache => cache.put(event.request, copy));
             }
             return response;
-        }))
+        }).catch(() => caches.match(event.request))
     );
 });

@@ -9,16 +9,10 @@
     "theme_color": "#090A0B",
     "icons": [
         {
-            "src": "/images/brand/financi-ai-symbol.svg",
-            "sizes": "any",
-            "type": "image/svg+xml",
-            "purpose": "any"
-        },
-        {
-            "src": "/images/brand/financi-ai-symbol.png",
-            "sizes": "512x512",
+            "src": "/design/assets/capi/capi-rosto.png",
+            "sizes": "657x639",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
         }
     ]
 }

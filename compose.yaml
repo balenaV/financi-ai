@@ -33,6 +33,26 @@ services:
     networks:
       - financeiro
 
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan queue:work --tries=3 --sleep=3
+    volumes:
+      - ./:/var/www/html
+      - vendor-data:/var/www/html/vendor
+      - node-modules:/var/www/html/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - financeiro
+
   db:
     image: postgres:17-alpine
     restart: unless-stopped

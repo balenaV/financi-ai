@@ -1,0 +1,331 @@
+/* financiaí — reset e primitivas compartilhadas entre telas */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  transition: background 240ms ease, color 240ms ease;
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+a:hover { color: var(--link-hover); }
+
+input::placeholder { color: #A3A199; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Marca ---------- */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: inherit;
+}
+
+.brand:hover { color: inherit; }
+
+.brand__mark {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.brand__name {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.brand__name-accent { color: var(--accent); }
+
+/* ---------- Botões ---------- */
+
+/* Sombra dura: primitiva de interação do design system.
+   Aplicada em botão primário, social e outline. */
+.btn-primary,
+.btn-social,
+.btn-outline-hard {
+  border: 1.5px solid var(--hard);
+  box-shadow: 0 0 0 var(--hard);
+  cursor: pointer;
+  font: inherit;
+  transition: background 160ms ease, color 180ms ease,
+              transform 140ms ease, box-shadow 140ms ease;
+}
+
+.btn-primary:hover,
+.btn-social:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 5px 5px 0 var(--hard);
+}
+
+.btn-primary {
+  font-size: 15.5px;
+  font-weight: 700;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn-primary:hover {
+  background: var(--accent-bright);
+  color: var(--accent-deep);
+}
+
+.btn-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--fg);
+  background: var(--field);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+}
+
+.btn-social__icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+.btn-outline-hard {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+  background: transparent;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+}
+
+.btn-outline-hard:hover {
+  background: var(--inv-bg);
+  color: var(--inv-fg);
+}
+
+.btn-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.btn-icon:hover {
+  background: var(--surface-2);
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+/* ---------- Campos ---------- */
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field__label {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.field__label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.input {
+  font: inherit;
+  font-size: 15px;
+  padding: 13px 15px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--field);
+  color: var(--fg);
+  width: 100%;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+/* Campo composto (senha + botão mostrar) */
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 0 15px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--field);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.input-group:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.input-group__input {
+  font: inherit;
+  font-size: 15px;
+  padding: 13px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--fg);
+  width: 100%;
+}
+
+.input-group__action {
+  flex-shrink: 0;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  padding: 8px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.input-group__action:hover { color: var(--fg); }
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.checkbox-row--top {
+  align-items: flex-start;
+  line-height: 1.45;
+}
+
+.checkbox {
+  width: 17px;
+  height: 17px;
+  accent-color: #137A4A;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkbox-row--top .checkbox { margin-top: 2px; }
+
+.link-sm {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ---------- Divisor ---------- */
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.divider__line {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.divider__label {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ---------- Tabs deslizantes ---------- */
+
+.tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+}
+
+.tabs__indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 6px);
+  border-radius: 9px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transform: translateX(0%);
+  transition: transform 320ms var(--ease-out-expo);
+}
+
+.tabs[data-active="registro"] .tabs__indicator {
+  transform: translateX(calc(100% + 4px));
+}
+
+.tabs__btn {
+  position: relative;
+  z-index: 1;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 220ms ease;
+}
+
+.tabs__btn[aria-selected="true"] { color: var(--fg); }

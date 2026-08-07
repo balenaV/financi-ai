@@ -23,44 +23,18 @@ class DashboardController extends Controller
         }
 
         $data = $dashboard->build($request->user(), $filters);
-        $chartConfigs = [
-            'cashflow' => [
-                'type' => 'bar',
-                'labels' => $data['charts']['labels'],
-                'datasets' => [
-                    ['label' => 'Receitas', 'data' => $data['charts']['income'], 'backgroundColor' => '#1d9e75'],
-                    ['label' => 'Despesas', 'data' => $data['charts']['expense'], 'backgroundColor' => '#dc2626'],
-                ],
-            ],
-            'balance' => [
-                'type' => 'line',
-                'labels' => $data['charts']['labels'],
-                'datasets' => [[
-                    'label' => 'Saldo',
-                    'data' => $data['charts']['balances'],
-                    'borderColor' => '#534ab7',
-                    'backgroundColor' => '#eeedfe',
-                    'fill' => true,
-                    'tension' => 0.35,
-                ]],
-            ],
-            'categories' => [
-                'type' => 'doughnut',
-                'labels' => $data['charts']['expense_categories']['labels'],
-                'datasets' => [['data' => $data['charts']['expense_categories']['values']]],
-            ],
-            'investments' => [
-                'type' => 'doughnut',
-                'labels' => $data['charts']['investments']['labels'],
-                'datasets' => [['data' => $data['charts']['investments']['values']]],
-            ],
-        ];
 
         return view('dashboard', [
             'dashboard' => $data,
-            'chartConfigs' => $chartConfigs,
-            'filterAccounts' => $request->user()->accounts()->active()->orderBy('name')->get(),
             'filters' => $filters,
+            'categories' => $request->user()->categories()->where('active', true)->orderBy('name')->get(),
+            'accountTypeTiles' => [
+                ['key' => 'corrente', 'type' => 'checking', 'icon' => 'bank', 'iconClass' => 'fa-solid fa-building-columns', 'label' => 'Conta corrente'],
+                ['key' => 'poupanca', 'type' => 'savings', 'icon' => 'bank', 'iconClass' => 'fa-solid fa-piggy-bank', 'label' => 'Poupança'],
+                ['key' => 'carteira', 'type' => 'cash', 'icon' => 'cash', 'iconClass' => 'fa-solid fa-wallet', 'label' => 'Dinheiro em espécie'],
+                ['key' => 'investimento', 'type' => 'investment', 'icon' => 'chart', 'iconClass' => 'fa-solid fa-chart-line', 'label' => 'Investimento'],
+                ['key' => 'outra', 'type' => 'other', 'icon' => 'wallet', 'iconClass' => 'fa-solid fa-circle-dot', 'label' => 'Outra'],
+            ],
         ]);
     }
 }

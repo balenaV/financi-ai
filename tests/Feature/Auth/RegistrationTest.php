@@ -28,6 +28,7 @@ class RegistrationTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'terms' => '1',
         ]);
 
         $this->assertAuthenticated();
@@ -35,6 +36,20 @@ class RegistrationTest extends TestCase
         $this->assertDatabaseHas('user_settings', ['user_id' => auth()->id()]);
         Notification::assertSentTo(User::whereEmail('test@example.com')->firstOrFail(), VerifyEmail::class);
         $this->assertDatabaseHas('categories', ['user_id' => auth()->id(), 'name' => 'Salário']);
+    }
+
+    public function test_registration_requires_accepting_the_terms(): void
+    {
+        $response = $this->post('/register', [
+            'name' => 'Test User',
+            'email' => 'no-terms@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $response->assertSessionHasErrorsIn('registro', ['terms']);
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['email' => 'no-terms@example.com']);
     }
 
     public function test_registration_can_be_disabled(): void

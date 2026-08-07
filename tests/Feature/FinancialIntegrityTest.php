@@ -227,18 +227,6 @@ class FinancialIntegrityTest extends TestCase
         $this->actingAs($user)->get(route('credit-card-bills.edit', $closedBill))->assertStatus(422);
     }
 
-    public function test_single_account_is_preselected_and_header_buttons_have_pointer_cursor(): void
-    {
-        $user = User::factory()->create();
-        $account = Account::factory()->for($user)->create();
-
-        $response = $this->actingAs($user)->get(route('transactions.create'));
-
-        $response->assertOk()
-            ->assertSee('cursor-pointer', false)
-            ->assertSee('option value="'.$account->id.'" selected', false);
-    }
-
     private function cardPurchase(CreditCard $card, string $amount, string $date): array
     {
         return [

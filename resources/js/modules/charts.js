@@ -48,8 +48,8 @@ const normalizeDatasetColors = (dataset, fallbackColor) => {
 
 export function initCharts() {
     const dark = document.documentElement.classList.contains('dark');
-    Chart.defaults.font.family = "'Instrument Sans', sans-serif";
-    Chart.defaults.color = cssColor('--text-secondary', dark ? '#c7cbd1' : '#475569');
+    Chart.defaults.font.family = "'Figtree', sans-serif";
+    Chart.defaults.color = cssColor('--text-secondary', dark ? '#a9a79c' : '#5b5a54');
 
     document.querySelectorAll('canvas[data-chart]').forEach((canvas) => {
         try {

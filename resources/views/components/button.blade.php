@@ -3,7 +3,8 @@
     $classes = match($variant) {
         'secondary' => 'btn-secondary',
         'danger' => 'btn-danger',
-        'ghost' => 'btn text-slate-600 hover:bg-slate-100',
+        'ghost' => 'btn-ghost',
+        'destaque', 'highlight' => 'btn-destaque',
         default => 'btn-primary',
     };
 @endphp

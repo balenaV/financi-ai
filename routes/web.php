@@ -31,11 +31,16 @@ Route::middleware(['auth', 'verified', 'audit'])->group(function () {
     Route::resource('accounts', AccountController::class);
     Route::resource('categories', CategoryController::class)->except(['create', 'show']);
     Route::get('transactions/export/csv', [TransactionController::class, 'export'])->name('transactions.export');
+    Route::get('transactions/export/ofx', [TransactionController::class, 'exportOfx'])->name('transactions.export.ofx');
     Route::get('transactions/import', [TransactionImportController::class, 'create'])->name('transactions.import.create');
     Route::post('transactions/import', [TransactionImportController::class, 'store'])->name('transactions.import.store');
+    Route::post('transactions/import/{batch}/preview', [TransactionImportController::class, 'preview'])->name('transactions.import.preview');
+    Route::get('transactions/import/{batch}', [TransactionImportController::class, 'show'])->name('transactions.import.show');
+    Route::post('transactions/import/{batch}/commit', [TransactionImportController::class, 'commit'])->name('transactions.import.commit');
+    Route::post('transactions/import/{batch}/revert', [TransactionImportController::class, 'revert'])->name('transactions.import.revert');
     Route::post('transactions/{transaction}/duplicate', [TransactionController::class, 'duplicate'])->name('transactions.duplicate');
     Route::patch('transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])->name('transactions.cancel');
-    Route::resource('transactions', TransactionController::class)->except('show');
+    Route::resource('transactions', TransactionController::class)->except(['show', 'create', 'edit']);
 
     Route::post('credit-cards/{credit_card}/bills', [CreditCardBillController::class, 'store'])->name('credit-cards.bills.store');
     Route::get('credit-card-bills/{bill}/edit', [CreditCardBillController::class, 'edit'])->name('credit-card-bills.edit');
@@ -61,6 +66,7 @@ Route::middleware(['auth', 'verified', 'audit'])->group(function () {
     Route::get('/profile/security-history', [AuditLogController::class, 'index'])->name('profile.audit-log');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::patch('/profile/sessions/logout-other', [ProfileController::class, 'logoutOtherSessions'])->name('profile.logout-other-sessions');
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
     Route::patch('/settings/toggle-values', [SettingsController::class, 'toggleValues'])->name('settings.toggle-values');

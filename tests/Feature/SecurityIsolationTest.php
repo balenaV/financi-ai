@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ImportBatchStatus;
+use App\Enums\ImportFormat;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\CreditCard;
@@ -89,5 +91,32 @@ class SecurityIsolationTest extends TestCase
             'user_id' => $user->id,
             'description' => 'Compra indevida',
         ]);
+    }
+
+    public function test_user_cannot_access_another_users_import_batch(): void
+    {
+        $owner = User::factory()->create();
+        $attacker = User::factory()->create();
+        $account = Account::factory()->for($owner)->create();
+        $batch = $owner->importBatches()->create([
+            'account_id' => $account->id,
+            'filename' => 'extrato.csv',
+            'format' => ImportFormat::Csv,
+            'status' => ImportBatchStatus::Parsed,
+        ]);
+        $row = $batch->rows()->create([
+            'posted_at' => today(),
+            'description_raw' => 'Mercado',
+            'description' => 'Mercado',
+            'type' => 'expense',
+            'amount' => '10.00',
+            'fingerprint' => 'x',
+            'status' => 'new',
+        ]);
+
+        $this->actingAs($attacker)->getJson(route('transactions.import.show', $batch))->assertForbidden();
+        $this->actingAs($attacker)->postJson(route('transactions.import.preview', $batch), [])->assertForbidden();
+        $this->actingAs($attacker)->postJson(route('transactions.import.commit', $batch), ['row_ids' => [$row->id]])->assertForbidden();
+        $this->actingAs($attacker)->post(route('transactions.import.revert', $batch))->assertForbidden();
     }
 }

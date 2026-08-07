@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Support\Money;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Collection;
 
 class DashboardService
 {
@@ -106,7 +107,78 @@ class DashboardService
             'goals' => $goals,
             'budgets' => $budgetRows,
             'charts' => $this->charts($user, $end, $start, $accountId),
+            'credit_cards' => $this->creditCardsOverview($user),
+            'transactions_by_day' => $this->transactionsByDay($user),
+            'forecast_months' => $this->forecastMonths($user),
+            'subscriptions' => $this->subscriptions($user),
         ];
+    }
+
+    private function subscriptions(User $user): Collection
+    {
+        return $user->transactions()
+            ->with(['account', 'category'])
+            ->where('type', TransactionType::Expense->value)
+            ->whereNotNull('recurrence_group_id')
+            ->whereIn('status', [TransactionStatus::Completed->value, TransactionStatus::Planned->value, TransactionStatus::Overdue->value])
+            ->orderByDesc('due_date')
+            ->get()
+            ->unique('recurrence_group_id')
+            ->sortBy('due_date')
+            ->values();
+    }
+
+    private function creditCardsOverview(User $user): array
+    {
+        $cards = $user->creditCards()->where('active', true)->get();
+
+        return $cards->map(function ($card) {
+            $summary = $this->creditCards->cardSummary($card);
+            $limitUsed = bcsub($card->credit_limit, $summary['available_limit'], 2);
+
+            return [
+                'card' => $card,
+                'outstanding' => $summary['outstanding'],
+                'available_limit' => $summary['available_limit'],
+                'next_bill' => $summary['next_bill'],
+                'limit_used_pct' => Money::percentage($limitUsed, $card->credit_limit),
+            ];
+        })->all();
+    }
+
+    private function transactionsByDay(User $user, int $limit = 40): Collection
+    {
+        return $user->transactions()
+            ->with(['account', 'category', 'destinationAccount'])
+            ->where('status', TransactionStatus::Completed->value)
+            ->latest('competence_date')->latest('id')
+            ->limit($limit)
+            ->get()
+            ->groupBy(fn ($transaction) => $transaction->competence_date->toDateString());
+    }
+
+    private function forecastMonths(User $user, int $months = 6): array
+    {
+        $rows = [];
+
+        for ($offset = 0; $offset < $months; $offset++) {
+            $month = now()->addMonthsNoOverflow($offset)->startOfMonth();
+            $query = $user->transactions()
+                ->whereIn('status', [TransactionStatus::Planned->value, TransactionStatus::Overdue->value])
+                ->whereBetween('due_date', [$month, $month->copy()->endOfMonth()]);
+
+            $income = (string) (clone $query)->where('type', TransactionType::Income->value)->sum('amount');
+            $expense = (string) (clone $query)->where('type', TransactionType::Expense->value)->sum('amount');
+
+            $rows[] = [
+                'month' => $month,
+                'income' => $income,
+                'expense' => $expense,
+                'result' => bcsub($income, $expense, 2),
+            ];
+        }
+
+        return $rows;
     }
 
     private function period(array $filters): array
