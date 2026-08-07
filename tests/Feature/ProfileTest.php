@@ -99,6 +99,27 @@ class ProfileTest extends TestCase
         $this->assertNull($user->fresh());
     }
 
+    public function test_deleting_account_removes_the_avatar_from_disk(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->patch('/profile', [
+            'name' => $user->name,
+            'email' => $user->email,
+            'avatar' => UploadedFile::fake()->create('foto.jpg', 10, 'image/jpeg'),
+        ])->assertSessionHasNoErrors();
+
+        $avatarPath = $user->refresh()->avatar_path;
+        Storage::disk('public')->assertExists($avatarPath);
+
+        $this->actingAs($user)->delete('/profile', ['password' => 'password'])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/');
+
+        Storage::disk('public')->assertMissing($avatarPath);
+    }
+
     public function test_correct_password_must_be_provided_to_delete_account(): void
     {
         $user = User::factory()->create();

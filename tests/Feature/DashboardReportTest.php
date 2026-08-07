@@ -49,6 +49,34 @@ class DashboardReportTest extends TestCase
         $this->actingAs($user)->get(route('transactions.export'))->assertOk()->assertDownload();
     }
 
+    public function test_csv_exports_neutralize_formula_injection_in_description(): void
+    {
+        $user = User::factory()->create();
+        $account = Account::factory()->for($user)->create();
+        $user->transactions()->create([
+            'account_id' => $account->id,
+            'category_id' => $user->categories()->where('name', 'Salário')->value('id'),
+            'type' => 'income',
+            'description' => '=cmd|"/c calc"!A1',
+            'amount' => '250.00',
+            'competence_date' => today(),
+            'paid_at' => today(),
+            'status' => 'completed',
+        ]);
+
+        $reportCsv = $this->actingAs($user)->get(route('reports.export', [
+            'start_date' => today()->startOfMonth()->toDateString(),
+            'end_date' => today()->endOfMonth()->toDateString(),
+        ]))->assertOk()->streamedContent();
+        $this->assertStringContainsString("'=cmd", $reportCsv);
+        $this->assertStringNotContainsString(';=cmd', $reportCsv);
+
+        $transactionsCsv = $this->actingAs($user)->get(route('transactions.export'))
+            ->assertOk()->streamedContent();
+        $this->assertStringContainsString("'=cmd", $transactionsCsv);
+        $this->assertStringNotContainsString(';=cmd', $transactionsCsv);
+    }
+
     public function test_dashboard_rejects_foreign_account_filter(): void
     {
         $user = User::factory()->create();

@@ -38,6 +38,38 @@ class ProductionReadinessTest extends TestCase
             ->assertSee('action="https://financiai.cloud/login"', false);
     }
 
+    public function test_forwarded_headers_from_an_untrusted_ip_are_ignored(): void
+    {
+        // Sem isso, trustProxies('*') deixava qualquer requisição (não só a Nginx
+        // real) ditar o IP visto pela aplicação via X-Forwarded-For — e a chave do
+        // rate limit de login usa exatamente esse IP, então bastava variar o header
+        // a cada tentativa pra nunca ser bloqueado.
+        $response = $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])
+            ->withHeaders(['X-Forwarded-For' => '10.10.10.10'])
+            ->get('/up');
+
+        $response->assertSuccessful();
+        $this->assertSame('203.0.113.9', request()->ip());
+    }
+
+    public function test_login_is_rate_limited_even_when_client_spoofs_forwarded_for(): void
+    {
+        $user = User::factory()->create();
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.7'])
+                ->withHeaders(['X-Forwarded-For' => (string) $i]) // muda a cada tentativa
+                ->post('/login', ['email' => $user->email, 'password' => 'senha-errada']);
+        }
+
+        $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.7'])
+            ->withHeaders(['X-Forwarded-For' => 'x'])
+            ->post('/login', ['email' => $user->email, 'password' => 'password'])
+            ->assertSessionHasErrorsIn('login', 'email');
+
+        $this->assertGuest();
+    }
+
     public function test_import_wizard_page_renders(): void
     {
         $user = User::factory()->create();
@@ -75,6 +107,25 @@ class ProductionReadinessTest extends TestCase
             ->assertStatus(422);
 
         $this->assertDatabaseCount('transactions', 2);
+    }
+
+    public function test_committing_an_import_batch_twice_does_not_duplicate_transactions(): void
+    {
+        $user = User::factory()->create();
+        $account = Account::factory()->for($user)->create();
+        $csv = "Data;Descrição;Valor\n25/07/2026;Mercado;-125,90\n";
+
+        $batchId = $this->createAndPreviewCsv($user, $account, $csv);
+        $rows = $this->getJson(route('transactions.import.show', $batchId))->json('rows');
+        $rowIds = collect($rows)->where('included', true)->pluck('id')->all();
+
+        $this->postJson(route('transactions.import.commit', $batchId), ['row_ids' => $rowIds])->assertSuccessful();
+        $this->assertDatabaseCount('transactions', 1);
+
+        // Reenviar o commit (duplo clique, retry de rede) não pode reimportar
+        // a mesma linha — o lote já não está mais "parsed" depois do primeiro commit.
+        $this->postJson(route('transactions.import.commit', $batchId), ['row_ids' => $rowIds])->assertStatus(500);
+        $this->assertDatabaseCount('transactions', 1);
     }
 
     public function test_reverting_an_import_batch_removes_its_transactions(): void

@@ -66,6 +66,18 @@ class SocialAuthenticationController extends Controller
             ]);
         }
 
+        // GitHub só devolve e-mail primário e verificado (Socialite filtra isso
+        // na própria chamada à API). O Google expõe "email_verified" no perfil e
+        // pode retornar false — sem essa checagem, um e-mail não verificado no
+        // Google bastaria pra vincular o login social a uma conta já existente
+        // de outro usuário dono de verdade daquele e-mail (account takeover).
+        $emailVerified = $providerUser->getRaw()['email_verified'] ?? true;
+        if ($emailVerified === false || $emailVerified === 'false') {
+            return redirect()->route('login')->withErrors([
+                'social' => 'Seu e-mail ainda não foi verificado no provedor. Verifique-o e tente novamente.',
+            ]);
+        }
+
         $socialAccount = SocialAccount::query()
             ->where('provider', $provider)
             ->where('provider_user_id', $providerUserId)
