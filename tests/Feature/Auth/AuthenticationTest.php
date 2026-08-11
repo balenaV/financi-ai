@@ -51,4 +51,17 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
         $response->assertRedirect('/');
     }
+
+    public function test_landing_page_shows_guest_cta_after_logout(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/')->assertSee('Abrir painel');
+
+        $this->post('/logout');
+
+        $this->get('/')
+            ->assertDontSee('Abrir painel')
+            ->assertSee('Entrar');
+    }
 }

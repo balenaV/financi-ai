@@ -332,6 +332,21 @@ class ProductionReadinessTest extends TestCase
         $this->assertMatchesRegularExpression('/const CACHE = \'financi-ai-shell-v\d+\';/', file_get_contents(public_path('service-worker.js')));
     }
 
+    public function test_pages_disable_browser_back_forward_cache(): void
+    {
+        // O 'no-cache, private' padrao que o Laravel ja adiciona por causa da sessao
+        // nao basta pra desativar o back-forward cache do navegador: sem 'no-store',
+        // o botao "voltar" depois de um logout podia reexibir a landing/dashboard
+        // autenticados direto da memoria, sem passar pelo servidor.
+        $guest = $this->get('/');
+        $this->assertStringContainsString('no-store', $guest->headers->get('Cache-Control'));
+        $this->assertSame('no-cache', $guest->headers->get('Pragma'));
+
+        $user = User::factory()->create();
+        $dashboard = $this->actingAs($user)->get('/dashboard');
+        $this->assertStringContainsString('no-store', $dashboard->headers->get('Cache-Control'));
+    }
+
     public function test_future_income_appears_in_forecast_and_projected_dashboard_totals(): void
     {
         $user = User::factory()->create();

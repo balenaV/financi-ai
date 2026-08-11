@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AuditUserAction;
 use App\Http\Middleware\EnsureRegistrationEnabled;
+use App\Http\Middleware\PreventResponseCaching;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -33,6 +34,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'audit' => AuditUserAction::class,
             'registration.enabled' => EnsureRegistrationEnabled::class,
+        ]);
+
+        $middleware->web(append: [
+            PreventResponseCaching::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -118,3 +118,6 @@ Regra crítica — NUNCA VIOLAR
 .env.example deve conter APENAS nomes de variáveis, todas vazias (campo=). NUNCA copiar valores de dentro de um .env real para o .env.example, mesmo como "exemplo" ou "referência". Se precisar mostrar formato, usar placeholder genérico tipo your-value-here, nunca um valor funcional.
 
 Isso vale para qualquer arquivo versionado, não só .env.example — nunca commitar segredos reais (senhas, chaves de API, tokens, client secrets) em nenhum arquivo do repositório.
+
+
+don't need to commit and push alone, just apply, validate and return the feedback, and if it's ready or not to raise the code
