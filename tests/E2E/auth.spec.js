@@ -12,10 +12,8 @@ test('usuário consegue entrar, navegar e sair', async ({ page }) => {
 
     await expect(page).toHaveURL(/dashboard/);
     await page.getByRole('button', { name: 'Sua conta', exact: true }).click();
-    // Sem "exact": o ícone do botão (sem aria-hidden, herdado 1:1 do pacote de
-    // design) entra no nome acessível calculado pelo Chromium junto do texto.
-    await expect(page.getByRole('button', { name: 'Sair da conta' })).toBeVisible();
-    await page.getByRole('button', { name: 'Sair da conta' }).click();
+    await expect(page.getByRole('button', { name: 'Sair da conta', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Sair da conta', exact: true }).click();
     await expect(page).toHaveURL('/');
 });
 
