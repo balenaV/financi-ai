@@ -6,6 +6,7 @@ use App\Services\BudgetService;
 use App\Services\DebtService;
 use App\Services\FinancialReportService;
 use App\Services\InvestmentService;
+use App\Support\Csv;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -73,7 +74,18 @@ class ReportController extends Controller
 
     public function export(Request $request, FinancialReportService $reports): StreamedResponse
     {
-        $transactions = $reports->transactions($request->user(), $request->only(['start_date', 'end_date', 'account_id', 'type']));
+        $filters = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'account_id' => ['nullable', 'integer'],
+            'type' => ['nullable', 'string'],
+        ]);
+
+        if (isset($filters['account_id'])) {
+            $request->user()->accounts()->findOrFail($filters['account_id']);
+        }
+
+        $transactions = $reports->transactions($request->user(), $filters);
 
         return response()->streamDownload(function () use ($transactions) {
             $output = fopen('php://output', 'w');
@@ -82,10 +94,10 @@ class ReportController extends Controller
             foreach ($transactions as $transaction) {
                 fputcsv($output, [
                     $transaction->competence_date->format('d/m/Y'),
-                    $transaction->description,
+                    Csv::safe($transaction->description),
                     $transaction->type->label(),
-                    $transaction->category?->name,
-                    $transaction->account?->name ?? $transaction->creditCard?->name ?? 'Sem conta',
+                    Csv::safe($transaction->category?->name),
+                    Csv::safe($transaction->account?->name ?? $transaction->creditCard?->name ?? 'Sem conta'),
                     $transaction->status->label(),
                     str_replace('.', ',', $transaction->amount),
                 ], ';');

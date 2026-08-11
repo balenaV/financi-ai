@@ -23,7 +23,14 @@ class NotificationController extends Controller
 
         $notification->markAsRead();
 
-        return redirect($notification->data['url'] ?? route('notifications.index'));
+        // Defesa em profundidade: hoje toda notificação usa uma URL interna
+        // gerada pelo backend, mas o redirect não deve confiar cegamente no
+        // valor armazenado — só segue caminhos relativos internos (bloqueia
+        // "https://..." e "//host" de virarem open redirect).
+        $url = $notification->data['url'] ?? null;
+        $isInternalPath = is_string($url) && str_starts_with($url, '/') && ! str_starts_with($url, '//');
+
+        return redirect($isInternalPath ? $url : route('notifications.index'));
     }
 
     public function readAll(Request $request): RedirectResponse

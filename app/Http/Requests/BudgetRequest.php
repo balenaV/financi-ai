@@ -28,7 +28,7 @@ class BudgetRequest extends FormRequest
             ],
             'month' => ['required', 'integer', 'between:1,12'],
             'year' => ['required', 'integer', 'between:2000,2100'],
-            'limit_amount' => ['required', 'regex:/^[\d.,\s]+$/'],
+            'limit_amount' => ['required', 'regex:/^[\d.,\s]{1,25}$/'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }

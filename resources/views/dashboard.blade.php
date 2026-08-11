@@ -58,24 +58,24 @@
     <div class="sidebar__brand-row">
       <div class="brand-swap">
         <img class="brand-swap__logo" src="{{ asset('design/assets/capi/capi-rosto.png') }}" alt="Capí">
-        <button class="brand-swap__btn" type="button" data-sidebar-toggle aria-label="Abrir barra lateral"><i class="fa-solid fa-table-columns"></i></button>
+        <button class="brand-swap__btn" type="button" data-sidebar-toggle aria-label="Abrir barra lateral"><i class="fa-solid fa-table-columns" aria-hidden="true"></i></button>
       </div>
       <span class="sidebar__brand-name sidebar__label">financi<span class="brand__name-accent">aí</span></span>
-      <button class="sidebar__collapse" type="button" data-sidebar-toggle aria-label="Recolher barra lateral"><i class="fa-solid fa-table-columns"></i></button>
+      <button class="sidebar__collapse" type="button" data-sidebar-toggle aria-label="Recolher barra lateral"><i class="fa-solid fa-table-columns" aria-hidden="true"></i></button>
     </div>
 
     <button class="sidebar__cta" type="button" data-goto="chat" title="Bater papo com o Capí">
-      <i class="fa-solid fa-comment-dots sidebar__icon"></i>
+      <i class="fa-solid fa-comment-dots sidebar__icon" aria-hidden="true"></i>
       <span class="sidebar__label">Bater papo com o Capí</span>
     </button>
 
     <nav class="sidebar__nav">
       <button class="nav-item" type="button" data-goto="agentes" title="Agentes">
-        <i class="fa-solid fa-user-group sidebar__icon"></i>
+        <i class="fa-solid fa-user-group sidebar__icon" aria-hidden="true"></i>
         <span class="sidebar__label">Agentes</span>
       </button>
       <button class="nav-item" type="button" data-goto="visao" title="Painel" aria-current="page">
-        <i class="fa-solid fa-chart-pie sidebar__icon"></i>
+        <i class="fa-solid fa-chart-pie sidebar__icon" aria-hidden="true"></i>
         <span class="sidebar__label">Painel</span>
       </button>
     </nav>
@@ -99,7 +99,7 @@
             <span class="sidebar__user-plan">Beta aberto</span>
           </span>
         </button>
-        <button class="sidebar__settings" type="button" aria-label="Configurações" data-goto="config"><i class="fa-solid fa-gear"></i></button>
+        <button class="sidebar__settings" type="button" aria-label="Configurações" data-goto="config"><i class="fa-solid fa-gear" aria-hidden="true"></i></button>
       </div>
 
       <div class="user-card" hidden data-user-card>
@@ -123,10 +123,10 @@
         </div>
 
         <div class="user-card__actions">
-          <button class="user-card__action" type="button" data-goto="config"><i class="fa-solid fa-gear"></i>Configurações</button>
+          <button class="user-card__action" type="button" data-goto="config"><i class="fa-solid fa-gear" aria-hidden="true"></i>Configurações</button>
           <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button class="user-card__action user-card__action--out" type="submit"><i class="fa-solid fa-arrow-right-from-bracket"></i>Sair da conta</button>
+            <button class="user-card__action user-card__action--out" type="submit"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>Sair da conta</button>
           </form>
         </div>
       </div>
@@ -139,24 +139,24 @@
       <div class="topbar__inner">
 
         <nav class="tabs-nav">
-          <button class="tab-btn" type="button" data-goto="visao" aria-current="page"><i class="fa-solid fa-gauge-high"></i>Visão geral</button>
-          <button class="tab-btn" type="button" data-goto="transacoes"><i class="fa-solid fa-arrow-right-arrow-left"></i>Transações</button>
-          <button class="tab-btn" type="button" data-goto="assinaturas"><i class="fa-solid fa-rotate"></i>Assinaturas</button>
-          <button class="tab-btn" type="button" data-goto="planejamento"><i class="fa-regular fa-calendar-days"></i>Planejamento</button>
-          <button class="tab-btn" type="button" data-goto="contas"><i class="fa-solid fa-building-columns"></i>Contas</button>
-          <button class="tab-btn" type="button" data-goto="cartoes"><i class="fa-regular fa-credit-card"></i>Cartões</button>
+          <button class="tab-btn" type="button" data-goto="visao" aria-current="page"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i>Visão geral</button>
+          <button class="tab-btn" type="button" data-goto="transacoes"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i>Transações</button>
+          <button class="tab-btn" type="button" data-goto="assinaturas"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Assinaturas</button>
+          <button class="tab-btn" type="button" data-goto="planejamento"><i class="fa-regular fa-calendar-days" aria-hidden="true"></i>Planejamento</button>
+          <button class="tab-btn" type="button" data-goto="contas"><i class="fa-solid fa-building-columns" aria-hidden="true"></i>Contas</button>
+          <button class="tab-btn" type="button" data-goto="cartoes"><i class="fa-regular fa-credit-card" aria-hidden="true"></i>Cartões</button>
         </nav>
 
         <div class="topbar__actions">
           <button class="icon-btn" type="button" data-notif-toggle aria-label="Notificações" aria-expanded="false">
-            <i class="fa-regular fa-bell"></i>
+            <i class="fa-regular fa-bell" aria-hidden="true"></i>
             @if($summary['overdue_count'] + $summary['overdue_bill_count'] + $summary['upcoming_count'] > 0)
               <span class="icon-btn__dot"></span>
             @endif
           </button>
-          <button class="icon-btn" type="button" data-theme-toggle data-toggle-url="{{ route('settings.toggle-theme') }}" aria-label="Alternar tema"><i class="fa-solid {{ $userSettings->theme === 'dark' ? 'fa-sun' : 'fa-moon' }}"></i></button>
-          <button class="icon-btn" type="button" data-toggle-money data-toggle-url="{{ route('settings.toggle-values') }}" aria-label="Mostrar ou ocultar valores" aria-pressed="{{ $hide ? 'true' : 'false' }}"><i class="fa-regular {{ $hide ? 'fa-eye-slash' : 'fa-eye' }}"></i></button>
-          <button class="btn-add" type="button" data-modal-open="transacao"><i class="fa-solid fa-plus"></i>Nova transação</button>
+          <button class="icon-btn" type="button" data-theme-toggle data-toggle-url="{{ route('settings.toggle-theme') }}" aria-label="Alternar tema"><i class="fa-solid {{ $userSettings->theme === 'dark' ? 'fa-sun' : 'fa-moon' }}" aria-hidden="true"></i></button>
+          <button class="icon-btn" type="button" data-toggle-money data-toggle-url="{{ route('settings.toggle-values') }}" aria-label="Mostrar ou ocultar valores" aria-pressed="{{ $hide ? 'true' : 'false' }}"><i class="fa-regular {{ $hide ? 'fa-eye-slash' : 'fa-eye' }}" aria-hidden="true"></i></button>
+          <button class="btn-add" type="button" data-modal-open="transacao"><i class="fa-solid fa-plus" aria-hidden="true"></i>Nova transação</button>
 
           <div class="notif-panel" data-notif-panel hidden>
             <div class="notif-panel__head">
@@ -166,7 +166,7 @@
             <div>
               @if($summary['overdue_bill_count'] > 0)
                 <button class="notif" type="button">
-                  <span class="notif__icon notif__icon--fg"><i class="fa-regular fa-credit-card"></i></span>
+                  <span class="notif__icon notif__icon--fg"><i class="fa-regular fa-credit-card" aria-hidden="true"></i></span>
                   <span class="notif__body">
                     <span class="notif__title">{{ $summary['overdue_bill_count'] }} fatura(s) de cartão vencida(s)</span>
                     <span class="notif__text">Revise em Cartões.</span>
@@ -175,7 +175,7 @@
               @endif
               @if($summary['overdue_count'] > 0)
                 <button class="notif" type="button">
-                  <span class="notif__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                  <span class="notif__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
                   <span class="notif__body">
                     <span class="notif__title">{{ $summary['overdue_count'] }} transação(ões) vencida(s)</span>
                     <span class="notif__text">Revise em Transações.</span>
@@ -184,7 +184,7 @@
               @endif
               @if($summary['upcoming_count'] > 0)
                 <button class="notif" type="button">
-                  <span class="notif__icon notif__icon--accent"><i class="fa-regular fa-clock"></i></span>
+                  <span class="notif__icon notif__icon--accent"><i class="fa-regular fa-clock" aria-hidden="true"></i></span>
                   <span class="notif__body">
                     <span class="notif__title">{{ $summary['upcoming_count'] }} compromisso(s) nos próximos 15 dias</span>
                     <span class="notif__text">Veja a lista na Visão geral.</span>
@@ -217,7 +217,7 @@
               <button class="period__btn" type="button" data-period-value="intervalo" aria-pressed="false">Intervalo</button>
             </div>
             <div class="date-range" data-date-range hidden>
-              <i class="fa-regular fa-calendar"></i>
+              <i class="fa-regular fa-calendar" aria-hidden="true"></i>
               <x-datepicker name="period_start" :value="$dashboard['period']['start']->toDateString()" label="Data inicial" inline bare />
               <span>até</span>
               <x-datepicker name="period_end" :value="$dashboard['period']['end']->toDateString()" label="Data final" inline right bare />
@@ -232,7 +232,7 @@
           <div class="grid-3">
             <article class="kpi kpi--hover" data-enter>
               <div class="kpi__head">
-                <span class="kpi__label"><i class="fa-solid fa-wallet"></i>Saldo atual</span>
+                <span class="kpi__label"><i class="fa-solid fa-wallet" aria-hidden="true"></i>Saldo atual</span>
                 <span class="kpi__delta kpi__delta--neutral">{{ $dashboard['accounts']->count() }} {{ Str::plural('conta', $dashboard['accounts']->count()) }}</span>
               </div>
               <div class="kpi__value" data-money>{{ Money::format($summary['balance_current'], $hide) }}</div>
@@ -240,7 +240,7 @@
             </article>
             <article class="kpi kpi--hover" data-enter>
               <div class="kpi__head">
-                <span class="kpi__label"><i class="fa-solid fa-arrow-trend-up"></i>Resultado do mês</span>
+                <span class="kpi__label"><i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i>Resultado do mês</span>
                 <span class="kpi__delta {{ bccomp($summary['result'], '0', 2) < 0 ? 'kpi__delta--neutral' : '' }}">{{ bccomp($summary['result'], '0', 2) >= 0 ? 'Positivo' : 'Negativo' }}</span>
               </div>
               <div class="kpi__value kpi__value--accent" data-money>{{ Money::format($summary['result'], $hide) }}</div>
@@ -248,7 +248,7 @@
             </article>
             <article class="kpi kpi--hover" data-enter>
               <div class="kpi__head">
-                <span class="kpi__label"><i class="fa-regular fa-clock"></i>Compromissos futuros</span>
+                <span class="kpi__label"><i class="fa-regular fa-clock" aria-hidden="true"></i>Compromissos futuros</span>
                 <span class="kpi__delta kpi__delta--neutral">{{ $summary['upcoming_count'] }} {{ Str::plural('item', $summary['upcoming_count']) }}</span>
               </div>
               <div class="kpi__value" data-money>{{ Money::format($upcomingTotal, $hide) }}</div>
@@ -314,7 +314,7 @@
                 @forelse($topCategories as $cat)
                   <div class="cat">
                     <div class="cat__row">
-                      <span class="cat__name"><i class="fa-solid {{ $categoryIcons[$cat['label']] ?? 'fa-tag' }}"></i>{{ $cat['label'] }}</span>
+                      <span class="cat__name"><i class="fa-solid {{ $categoryIcons[$cat['label']] ?? 'fa-tag' }}" aria-hidden="true"></i>{{ $cat['label'] }}</span>
                       <span class="cat__value" data-money>{{ Money::format((string) $cat['value'], $hide) }}</span>
                     </div>
                     <div class="track"><span class="track__fill" style="width:{{ max(4, round($cat['value'] / $maxCategory * 100)) }}%"></span></div>
@@ -332,7 +332,7 @@
                 <p class="capi-card__text">O assistente do Capí ainda está em desenvolvimento. Em breve ele vai analisar seus lançamentos e trazer sugestões por aqui.</p>
               </div>
               <div class="capi-card__foot">
-                <button class="btn-capi" type="button" data-goto="chat"><i class="fa-solid fa-comment-dots"></i>Conversar com o Capí</button>
+                <button class="btn-capi" type="button" data-goto="chat"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i>Conversar com o Capí</button>
                 <img class="capi-card__art" src="{{ asset('design/assets/capi/capi-apontando.png') }}" alt="">
               </div>
             </section>
@@ -344,8 +344,8 @@
 
           <div class="filters" data-enter>
             <label class="search-field">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              <input type="search" placeholder="Buscar por descrição">
+              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              <input type="search" placeholder="Buscar por descrição" aria-label="Buscar por descrição">
             </label>
             <x-dropdown name="_tipo_lancamento_display" icon="fa-solid fa-arrow-right-arrow-left" :block="false" :options="[
                 ['value' => 'todos', 'label' => 'Entradas e saídas'],
@@ -367,7 +367,7 @@
               </div>
               @foreach($items as $t)
                 <div class="row">
-                  <span class="row__icon"><i class="fa-solid {{ $categoryIcons[$t->category?->name] ?? ($t->type->value === 'income' ? 'fa-briefcase' : 'fa-receipt') }}"></i></span>
+                  <span class="row__icon"><i class="fa-solid {{ $categoryIcons[$t->category?->name] ?? ($t->type->value === 'income' ? 'fa-briefcase' : 'fa-receipt') }}" aria-hidden="true"></i></span>
                   <span class="row__body"><span class="row__name">{{ $t->description }}</span><span class="row__detail">{{ $t->category?->name ?? $t->type->label() }} · {{ $t->account?->name }}</span></span>
                   <span class="row__value {{ $t->type->value === 'income' ? 'row__value--accent' : '' }}" data-money>{{ $t->type->value === 'income' ? '+ ' : '− ' }}{{ Money::format($t->amount, $hide) }}</span>
                 </div>
@@ -385,17 +385,17 @@
 
           <div class="grid-3">
             <article class="kpi" data-enter>
-              <div class="kpi__label"><i class="fa-solid fa-rotate"></i>Total por mês</div>
+              <div class="kpi__label"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Total por mês</div>
               <div class="kpi__value kpi__value--sm" data-money>{{ Money::format($subscriptionsTotal, $hide) }}</div>
               <div class="kpi__note">{{ $dashboard['subscriptions']->count() }} {{ Str::plural('assinatura ativa', $dashboard['subscriptions']->count()) }}</div>
             </article>
             <article class="kpi" data-enter>
-              <div class="kpi__label"><i class="fa-solid fa-chart-pie"></i>Peso no orçamento</div>
+              <div class="kpi__label"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i>Peso no orçamento</div>
               <div class="kpi__value kpi__value--sm">{{ str_replace('.', ',', Money::percentage($subscriptionsTotal, $summary['expense'])) }}%</div>
               <div class="kpi__note">Das suas despesas do período</div>
             </article>
             <article class="kpi" data-enter>
-              <div class="kpi__label"><i class="fa-regular fa-clock"></i>Próxima cobrança</div>
+              <div class="kpi__label"><i class="fa-regular fa-clock" aria-hidden="true"></i>Próxima cobrança</div>
               @php
                 $next = $dashboard['subscriptions']->sortBy('due_date')->first();
               @endphp
@@ -412,7 +412,7 @@
 
             @forelse($dashboard['subscriptions'] as $sub)
               <div class="row row--tall">
-                <span class="row__icon row__icon--lg"><i class="fa-solid {{ $categoryIcons[$sub->category?->name] ?? 'fa-rotate' }}"></i></span>
+                <span class="row__icon row__icon--lg"><i class="fa-solid {{ $categoryIcons[$sub->category?->name] ?? 'fa-rotate' }}" aria-hidden="true"></i></span>
                 <span class="row__body"><span class="row__name row__name--bold">{{ $sub->description }}</span><span class="row__detail">{{ $sub->category?->name ?? 'Assinatura' }} · {{ $sub->account?->name }}</span></span>
                 <span class="row__right"><span class="row__value" data-money>{{ Money::format($sub->amount, $hide) }}</span><span class="row__next">{{ $sub->due_date?->format('d/m') }}</span></span>
               </div>
@@ -424,7 +424,7 @@
 
             <div class="list-card__foot">
               <span>Cancelar uma assinatura pouco usada é o ajuste mais rápido no seu mês.</span>
-              <button class="btn-outline" type="button" data-modal-open="assinatura"><i class="fa-solid fa-plus"></i>Adicionar assinatura</button>
+              <button class="btn-outline" type="button" data-modal-open="assinatura"><i class="fa-solid fa-plus" aria-hidden="true"></i>Adicionar assinatura</button>
             </div>
           </section>
         </section>
@@ -434,17 +434,17 @@
 
           <div class="grid-3">
             <article class="kpi" data-enter>
-              <div class="kpi__label"><i class="fa-solid fa-arrow-down-long"></i>Receitas previstas</div>
+              <div class="kpi__label"><i class="fa-solid fa-arrow-down-long" aria-hidden="true"></i>Receitas previstas</div>
               <div class="kpi__value kpi__value--sm kpi__value--accent" data-money>{{ Money::format($forecastIncomeTotal, $hide) }}</div>
               <div class="kpi__note">Próximos 6 meses</div>
             </article>
             <article class="kpi" data-enter>
-              <div class="kpi__label"><i class="fa-solid fa-arrow-up-long"></i>Despesas previstas</div>
+              <div class="kpi__label"><i class="fa-solid fa-arrow-up-long" aria-hidden="true"></i>Despesas previstas</div>
               <div class="kpi__value kpi__value--sm" data-money>{{ Money::format($forecastExpenseTotal, $hide) }}</div>
               <div class="kpi__note">Próximos 6 meses</div>
             </article>
             <article class="kpi" data-enter>
-              <div class="kpi__label"><i class="fa-solid fa-scale-balanced"></i>Resultado projetado</div>
+              <div class="kpi__label"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>Resultado projetado</div>
               <div class="kpi__value kpi__value--sm kpi__value--accent" data-money>{{ Money::format($forecastResultTotal, $hide) }}</div>
               <div class="kpi__note">Se o planejado se confirmar</div>
             </article>
@@ -474,15 +474,15 @@
                 <h2 class="panel__title">Trazer seus lançamentos</h2>
                 <p class="import-card__text">Baixe o extrato no seu banco e importe aqui. O financiaí lê o arquivo, identifica as categorias e mostra tudo para você conferir antes de salvar.</p>
               </div>
-              <span class="chip-shield"><i class="fa-solid fa-shield-halved"></i>Sem acesso ao seu banco</span>
+              <span class="chip-shield"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>Sem acesso ao seu banco</span>
             </div>
 
             <div class="import-card__body">
               <a class="import-drop" href="{{ route('transactions.import.create') }}">
-                <i class="fa-solid fa-file-arrow-up import-drop__icon"></i>
+                <i class="fa-solid fa-file-arrow-up import-drop__icon" aria-hidden="true"></i>
                 <span class="import-drop__title">Importar extrato</span>
                 <span class="import-drop__hint">OFX ou CSV · até 12 meses por arquivo</span>
-                <span class="import-drop__cta">Começar<i class="fa-solid fa-arrow-right"></i></span>
+                <span class="import-drop__cta">Começar<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
               </a>
 
               <div class="import-steps">
@@ -515,7 +515,7 @@
             @foreach($dashboard['accounts'] as $row)
               <article class="account-card" data-enter>
                 <div class="account-card__head">
-                  <span class="row__icon row__icon--lg"><i class="fa-solid fa-building-columns"></i></span>
+                  <span class="row__icon row__icon--lg"><i class="fa-solid fa-building-columns" aria-hidden="true"></i></span>
                   <span class="account-card__info">
                     <span class="account-card__name">{{ $row['account']->name }}</span>
                     <span class="account-card__type">{{ $row['account']->type->label() }}</span>
@@ -527,7 +527,7 @@
             @endforeach
 
             <button class="add-card" type="button" data-goto="novaConta">
-              <i class="fa-solid fa-plus"></i>
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>
               <span>Adicionar conta manual</span>
             </button>
           </div>
@@ -539,12 +539,12 @@
           @if(count($dashboard['credit_cards']) > 0)
               <div class="grid-3">
                 <article class="kpi" data-enter>
-                  <div class="kpi__label"><i class="fa-regular fa-credit-card"></i>Faturas em aberto</div>
+                  <div class="kpi__label"><i class="fa-regular fa-credit-card" aria-hidden="true"></i>Faturas em aberto</div>
                   <div class="kpi__value kpi__value--sm" data-money>{{ Money::format($cardsOutstandingTotal, $hide) }}</div>
                   <div class="kpi__note">{{ count($dashboard['credit_cards']) }} {{ Str::plural('cartão ativo', count($dashboard['credit_cards'])) }}</div>
                 </article>
                 <article class="kpi" data-enter>
-                  <div class="kpi__label"><i class="fa-solid fa-gauge-high"></i>Limite disponível</div>
+                  <div class="kpi__label"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i>Limite disponível</div>
                   <div class="kpi__value kpi__value--sm kpi__value--accent" data-money>{{ Money::format($cardsLimitTotal, $hide) }}</div>
                   <div class="kpi__note">Somado entre os cartões ativos</div>
                 </article>
@@ -555,7 +555,7 @@
                   <article class="credit-card" data-enter>
                     <div class="credit-card__top">
                       <div class="credit-card__brand-row">
-                        <span class="credit-card__brand"><i class="fa-regular fa-credit-card"></i>{{ $row['card']->issuer }}</span>
+                        <span class="credit-card__brand"><i class="fa-regular fa-credit-card" aria-hidden="true"></i>{{ $row['card']->issuer }}</span>
                         <span class="credit-card__state">Ativo</span>
                       </div>
                       <div class="credit-card__name">{{ $row['card']->name }}</div>
@@ -580,7 +580,7 @@
                 @endforeach
 
                 <button class="add-card add-card--tall" type="button" data-modal-open="cartao">
-                  <i class="fa-solid fa-plus"></i>
+                  <i class="fa-solid fa-plus" aria-hidden="true"></i>
                   <span>Adicionar cartão</span>
                 </button>
               </div>
@@ -646,7 +646,7 @@
                 <span class="field__label">Cor da conta</span>
                 <div class="swatches" data-account-colors>
                   @foreach(['#137A4A' => 'Verde escuro', '#38C172' => 'Verde', '#2F6FEB' => 'Azul', '#E0A21C' => 'Amarelo', '#B3261E' => 'Vermelho', '#6C4BD6' => 'Roxo'] as $hex => $label)
-                    <button class="swatch {{ $loop->first ? 'is-selected' : '' }}" type="button" style="--swatch:{{ $hex }}" data-value="{{ $hex }}" aria-label="{{ $label }}"><i class="fa-solid fa-check"></i></button>
+                    <button class="swatch {{ $loop->first ? 'is-selected' : '' }}" type="button" style="--swatch:{{ $hex }}" data-value="{{ $hex }}" aria-label="{{ $label }}"><i class="fa-solid fa-check" aria-hidden="true"></i></button>
                   @endforeach
                 </div>
                 <input type="hidden" name="color" value="#137A4A" id="novaConta-color">
@@ -670,7 +670,7 @@
 
               <div class="form-foot">
                 <button class="btn-ghost" type="button" data-goto="contas">Cancelar</button>
-                <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar conta</button>
+                <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar conta</button>
               </div>
             </section>
 
@@ -691,7 +691,7 @@
               <article class="tip-card">
                 <span class="tip-card__title"><img src="{{ asset('design/assets/capi/capi-rosto.png') }}" alt="">Dica do Capí</span>
                 <p class="tip-card__text">Use o saldo que está na conta hoje, não o do começo do mês. A partir dessa data eu passo a somar e subtrair só o que você lançar.</p>
-                <a class="tip-card__link" href="{{ route('transactions.import.create') }}">Prefere importar um extrato?<i class="fa-solid fa-arrow-right"></i></a>
+                <a class="tip-card__link" href="{{ route('transactions.import.create') }}">Prefere importar um extrato?<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
               </article>
             </div>
           </form>
@@ -706,7 +706,7 @@
 
             <div class="composer">
               <textarea rows="1" placeholder="Pergunte ao Capí…"></textarea>
-              <button class="composer__send" type="button" aria-label="Enviar"><i class="fa-solid fa-arrow-up"></i></button>
+              <button class="composer__send" type="button" aria-label="Enviar"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
             </div>
 
             <div class="chat__chips">
@@ -726,7 +726,7 @@
           <section class="agents-hero" data-enter>
             <span class="agents-hero__ring" aria-hidden="true"></span>
             <div class="agents-hero__body">
-              <span class="agents-hero__badge"><i class="fa-solid fa-lightbulb"></i>Bízu do Capí</span>
+              <span class="agents-hero__badge"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i>Bízu do Capí</span>
               <h2 class="agents-hero__title">Esses são os agentes recomendados pelo próprio Capí.</h2>
               <p class="agents-hero__text">Cada um cuida de uma área específica da sua vida financeira. Comece pelo que mais pesa no seu mês — o Capí te avisa quando fizer sentido acionar os outros.</p>
             </div>
@@ -780,11 +780,11 @@
           <div class="settings" data-enter>
 
             <nav class="settings__nav">
-              <a href="#cfg-perfil"><i class="fa-regular fa-user"></i>Perfil</a>
-              <a href="#cfg-preferencias"><i class="fa-solid fa-sliders"></i>Preferências</a>
-              <a href="#cfg-notificacoes"><i class="fa-regular fa-bell"></i>Notificações</a>
-              <a href="#cfg-seguranca"><i class="fa-solid fa-shield-halved"></i>Segurança</a>
-              <a href="#cfg-conta"><i class="fa-solid fa-gear"></i>Conta</a>
+              <a href="#cfg-perfil"><i class="fa-regular fa-user" aria-hidden="true"></i>Perfil</a>
+              <a href="#cfg-preferencias"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Preferências</a>
+              <a href="#cfg-notificacoes"><i class="fa-regular fa-bell" aria-hidden="true"></i>Notificações</a>
+              <a href="#cfg-seguranca"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>Segurança</a>
+              <a href="#cfg-conta"><i class="fa-solid fa-gear" aria-hidden="true"></i>Conta</a>
             </nav>
 
             <div class="settings__body">
@@ -831,7 +831,7 @@
                     </label>
                   </div>
                   <div class="form-foot form-foot--bare">
-                    <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar perfil</button>
+                    <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar perfil</button>
                   </div>
                 </section>
               </form>
@@ -851,8 +851,8 @@
                   <div class="field">
                     <span class="field__label">Tema</span>
                     <div class="chip-row" data-chip-group>
-                      <button class="chip {{ $userSettings->theme === 'light' ? 'is-selected' : '' }}" type="button" data-theme-set="light"><i class="fa-solid fa-sun"></i>Claro</button>
-                      <button class="chip {{ $userSettings->theme === 'dark' ? 'is-selected' : '' }}" type="button" data-theme-set="dark"><i class="fa-solid fa-moon"></i>Escuro</button>
+                      <button class="chip {{ $userSettings->theme === 'light' ? 'is-selected' : '' }}" type="button" data-theme-set="light"><i class="fa-solid fa-sun" aria-hidden="true"></i>Claro</button>
+                      <button class="chip {{ $userSettings->theme === 'dark' ? 'is-selected' : '' }}" type="button" data-theme-set="dark"><i class="fa-solid fa-moon" aria-hidden="true"></i>Escuro</button>
                     </div>
                     <input type="hidden" name="theme" value="{{ $userSettings->theme }}" data-theme-input>
                   </div>
@@ -871,7 +871,7 @@
                     </div>
                   </div>
                   <div class="form-foot form-foot--bare">
-                    <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar preferências</button>
+                    <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar preferências</button>
                   </div>
                 </section>
               </form>
@@ -946,7 +946,7 @@
                       <span class="settings__row-title">Exportar dados</span>
                       <span class="settings__row-text">Todos os lançamentos em CSV</span>
                     </span>
-                    <a class="btn-outline btn-outline--sm" href="{{ route('transactions.export') }}"><i class="fa-solid fa-download"></i>Baixar CSV</a>
+                    <a class="btn-outline btn-outline--sm" href="{{ route('transactions.export') }}"><i class="fa-solid fa-download" aria-hidden="true"></i>Baixar CSV</a>
                   </div>
                   <div class="settings__row settings__row--danger">
                     <span class="settings__row-body">
@@ -982,16 +982,16 @@
           <h2 class="modal__title" id="modal-transacao-titulo">Nova transação</h2>
           <p class="modal__sub">Um lançamento avulso, que não veio de extrato.</p>
         </div>
-        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark"></i></button>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
 
       <div class="modal__body">
         <div class="field">
           <span class="field__label">Tipo</span>
           <div class="chip-row" data-chip-group>
-            <button class="chip" type="button" data-value="income"><i class="fa-solid fa-arrow-down-long"></i>Entrada</button>
-            <button class="chip is-selected" type="button" data-value="expense"><i class="fa-solid fa-arrow-up-long"></i>Saída</button>
-            <button class="chip" type="button" data-value="transfer"><i class="fa-solid fa-arrow-right-arrow-left"></i>Transferência</button>
+            <button class="chip" type="button" data-value="income"><i class="fa-solid fa-arrow-down-long" aria-hidden="true"></i>Entrada</button>
+            <button class="chip is-selected" type="button" data-value="expense"><i class="fa-solid fa-arrow-up-long" aria-hidden="true"></i>Saída</button>
+            <button class="chip" type="button" data-value="transfer"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i>Transferência</button>
           </div>
           <input type="hidden" name="type" value="expense" data-chip-input>
         </div>
@@ -1028,16 +1028,16 @@
             <span class="field__label">Conta ou cartão</span>
             <div class="dropdown dropdown--block dropdown--up" data-dropdown data-account-or-card>
               <button class="dropdown__btn" type="button" aria-haspopup="listbox" aria-expanded="false" data-dropdown-btn>
-                <i class="fa-solid fa-building-columns"></i>
+                <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
                 <span data-dropdown-label>{{ $dashboard['accounts']->first()['account']->name ?? 'Selecione' }}</span>
-                <i class="fa-solid fa-chevron-down dropdown__chevron"></i>
+                <i class="fa-solid fa-chevron-down dropdown__chevron" aria-hidden="true"></i>
               </button>
               <div class="dropdown__menu" role="listbox" hidden>
                 @foreach($dashboard['accounts'] as $row)
-                  <button class="dropdown__opt {{ $loop->first ? 'is-selected' : '' }}" type="button" role="option" data-account-id="{{ $row['account']->id }}">{{ $row['account']->name }}<i class="fa-solid fa-check"></i></button>
+                  <button class="dropdown__opt {{ $loop->first ? 'is-selected' : '' }}" type="button" role="option" data-account-id="{{ $row['account']->id }}">{{ $row['account']->name }}<i class="fa-solid fa-check" aria-hidden="true"></i></button>
                 @endforeach
                 @foreach($dashboard['credit_cards'] as $row)
-                  <button class="dropdown__opt" type="button" role="option" data-credit-card-id="{{ $row['card']->id }}">{{ $row['card']->name }} (cartão)<i class="fa-solid fa-check"></i></button>
+                  <button class="dropdown__opt" type="button" role="option" data-credit-card-id="{{ $row['card']->id }}">{{ $row['card']->name }} (cartão)<i class="fa-solid fa-check" aria-hidden="true"></i></button>
                 @endforeach
               </div>
             </div>
@@ -1053,7 +1053,7 @@
 
       <div class="modal__foot">
         <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
-        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar transação</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar transação</button>
       </div>
     </form>
   </div>
@@ -1070,7 +1070,7 @@
           <h2 class="modal__title" id="modal-cartao-titulo">Novo cartão</h2>
           <p class="modal__sub">Só o essencial para calcular fatura e limite. Os lançamentos entram depois.</p>
         </div>
-        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark"></i></button>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
 
       <div class="modal__body">
@@ -1123,7 +1123,7 @@
 
       <div class="modal__foot">
         <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
-        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar cartão</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar cartão</button>
       </div>
     </form>
   </div>
@@ -1146,7 +1146,7 @@
           <h2 class="modal__title" id="modal-assinatura-titulo">Nova assinatura</h2>
           <p class="modal__sub">Cadastre uma cobrança que se repete, para ela aparecer nos próximos meses.</p>
         </div>
-        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark"></i></button>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
 
       <div class="modal__body">
@@ -1193,7 +1193,7 @@
 
       <div class="modal__foot">
         <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
-        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar assinatura</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar assinatura</button>
       </div>
     </form>
   </div>
@@ -1211,7 +1211,7 @@
           <h2 class="modal__title" id="modal-senha-titulo">Alterar senha</h2>
           <p class="modal__sub">Use uma senha que você ainda não usou em outro lugar.</p>
         </div>
-        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark"></i></button>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
 
       <div class="modal__body">
@@ -1233,7 +1233,7 @@
 
       <div class="modal__foot">
         <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
-        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Salvar senha</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar senha</button>
       </div>
     </form>
   </div>
@@ -1251,7 +1251,7 @@
           <h2 class="modal__title" id="modal-encerrar-sessoes-titulo">Encerrar as outras sessões</h2>
           <p class="modal__sub">Todos os outros dispositivos conectados à sua conta vão precisar entrar de novo.</p>
         </div>
-        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark"></i></button>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
 
       <div class="modal__body">
@@ -1264,7 +1264,7 @@
 
       <div class="modal__foot">
         <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
-        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check"></i>Encerrar as outras</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Encerrar as outras</button>
       </div>
     </form>
   </div>
@@ -1282,7 +1282,7 @@
           <h2 class="modal__title" id="modal-encerrar-conta-titulo">Encerrar conta</h2>
           <p class="modal__sub">Isso apaga sua conta e todos os seus dados. Não dá para desfazer.</p>
         </div>
-        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark"></i></button>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
 
       <div class="modal__body">

@@ -49,7 +49,7 @@ class TransactionRequest extends FormRequest
             ],
             'type' => ['required', Rule::enum(TransactionType::class)],
             'description' => ['required', 'string', 'max:180'],
-            'amount' => ['required', 'regex:/^[\d.,\s]+$/', 'not_in:0,0.00,0,00'],
+            'amount' => ['required', 'regex:/^[\d.,\s]{1,25}$/', 'not_in:0,0.00,0,00'],
             'competence_date' => ['required', 'date'],
             'due_date' => ['nullable', 'date'],
             'paid_at' => ['nullable', 'date'],

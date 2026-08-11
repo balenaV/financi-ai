@@ -65,8 +65,8 @@ Route::middleware(['auth', 'verified', 'audit'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::get('/profile/security-history', [AuditLogController::class, 'index'])->name('profile.audit-log');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::patch('/profile/sessions/logout-other', [ProfileController::class, 'logoutOtherSessions'])->name('profile.logout-other-sessions');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->middleware('throttle:5,1')->name('profile.destroy');
+    Route::patch('/profile/sessions/logout-other', [ProfileController::class, 'logoutOtherSessions'])->middleware('throttle:5,1')->name('profile.logout-other-sessions');
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
     Route::patch('/settings/toggle-values', [SettingsController::class, 'toggleValues'])->name('settings.toggle-values');

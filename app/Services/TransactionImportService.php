@@ -38,7 +38,7 @@ class TransactionImportService
 
         $batch = $user->importBatches()->create([
             'account_id' => $account->id,
-            'filename' => $file->getClientOriginalName(),
+            'filename' => Str::limit($file->getClientOriginalName(), 250, ''),
             'format' => $format,
             'status' => ImportBatchStatus::Pending,
             'stored_path' => $storedPath,
@@ -67,7 +67,14 @@ class TransactionImportService
             throw new RuntimeException('Arquivo desta importação não está mais disponível.');
         }
 
-        $batch->update(['status' => ImportBatchStatus::Parsing]);
+        DB::transaction(function () use ($batch) {
+            $locked = ImportBatch::whereKey($batch->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status !== ImportBatchStatus::Pending) {
+                throw new RuntimeException('Esta importação já está sendo processada.');
+            }
+
+            $batch->update(['status' => ImportBatchStatus::Parsing]);
+        });
 
         ParseImportBatchJob::dispatch($batch, $storedPath, $columnMap, $dateFormat, $decimalSeparator);
     }
@@ -172,13 +179,14 @@ class TransactionImportService
      *  @return array{imported:int,skipped:int,auto_categorized:int} */
     public function commit(ImportBatch $batch, array $includedRowIds, array $categoryOverrides = []): array
     {
-        if ($batch->status !== ImportBatchStatus::Parsed) {
-            throw new RuntimeException('Este lote não está pronto para ser confirmado.');
-        }
-
         $result = ['imported' => 0, 'skipped' => 0, 'auto_categorized' => 0];
 
         DB::transaction(function () use ($batch, $includedRowIds, $categoryOverrides, &$result) {
+            $locked = ImportBatch::whereKey($batch->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status !== ImportBatchStatus::Parsed) {
+                throw new RuntimeException('Este lote não está pronto para ser confirmado.');
+            }
+
             $rows = $batch->rows()->whereIn('id', $includedRowIds)->where('status', '!=', ImportRowStatus::Invalid)->get();
 
             foreach ($rows as $row) {
@@ -229,11 +237,12 @@ class TransactionImportService
 
     public function revert(ImportBatch $batch): void
     {
-        if ($batch->status !== ImportBatchStatus::Committed) {
-            throw new RuntimeException('Este lote não pode ser desfeito.');
-        }
-
         DB::transaction(function () use ($batch) {
+            $locked = ImportBatch::whereKey($batch->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status !== ImportBatchStatus::Committed) {
+                throw new RuntimeException('Este lote não pode ser desfeito.');
+            }
+
             $batch->transactions()->delete();
             $batch->update(['status' => ImportBatchStatus::Reverted]);
         });
@@ -293,7 +302,7 @@ class TransactionImportService
             }
 
             $values = str_getcsv($line, $delimiter) ?: [];
-            $record = array_combine($headers, array_pad($values, count($headers), ''));
+            $record = array_combine($headers, array_slice(array_pad($values, count($headers), ''), 0, count($headers)));
             if (! is_array($record)) {
                 continue;
             }
@@ -319,7 +328,10 @@ class TransactionImportService
     {
         $contents = $this->normalizeOfxEncoding($contents);
 
-        preg_match_all('/<STMTTRN>(.*?)(?:<\/STMTTRN>|(?=<STMTTRN>|<\/BANKTRANLIST>))/is', $contents, $matches);
+        $matchCount = preg_match_all('/<STMTTRN>(.*?)(?:<\/STMTTRN>|(?=<STMTTRN>|<\/BANKTRANLIST>))/is', $contents, $matches);
+        if (! $matchCount) {
+            return [];
+        }
 
         return array_map(function (string $block) {
             $field = fn (string $name): string => preg_match('/<'.$name.'>([^<\r\n]+)/i', $block, $match)
@@ -351,9 +363,7 @@ class TransactionImportService
             };
         }
 
-        $converted = @iconv($encoding, 'UTF-8//IGNORE', $contents);
-
-        return $converted !== false ? $converted : $contents;
+        return mb_convert_encoding($contents, 'UTF-8', $encoding);
     }
 
     private function stripBom(string $contents): string
