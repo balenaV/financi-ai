@@ -31,14 +31,17 @@ jobs:
             ls -t /var/www/backups/*.dump | tail -n +11 | xargs -r rm --
 
       - name: Copy backup file to runner
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: deploy
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "/var/www/backups/*.dump"
-          target: "./downloaded-backup"
-          strip_components: 3
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          set -e
+          mkdir -p downloaded-backup
+          echo "$VPS_SSH_KEY" > deploy_key
+          chmod 600 deploy_key
+          scp -o StrictHostKeyChecking=no -i deploy_key \
+            deploy@"$VPS_HOST":/var/www/backups/*.dump ./downloaded-backup/
+          rm -f deploy_key
 
       - uses: actions/upload-artifact@v4
         with:
