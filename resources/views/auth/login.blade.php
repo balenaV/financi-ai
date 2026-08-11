@@ -13,6 +13,10 @@
 @endphp
 <x-auth-layout :title="$mode === 'registro' ? 'Criar conta' : 'Entrar'">
 
+@if(config('features.registration'))
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+@endif
+
 <div class="auth">
 
   <section class="auth__form-side">
@@ -137,6 +141,9 @@
                   <span>Li e aceito os <a href="#termos">termos de uso</a> e a <a href="#privacidade">política de privacidade</a>.</span>
                 </label>
                 @error('terms', 'registro') <span class="field-error">{{ $message }}</span> @enderror
+
+                <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}"></div>
+                @error('cf-turnstile-response', 'registro') <span class="field-error">{{ $message }}</span> @enderror
 
                 <button class="btn-primary" type="submit">Criar minha conta</button>
               </form>

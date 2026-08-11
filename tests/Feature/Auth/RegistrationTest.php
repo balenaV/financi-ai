@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -50,6 +51,48 @@ class RegistrationTest extends TestCase
         $response->assertSessionHasErrorsIn('registro', ['terms']);
         $this->assertGuest();
         $this->assertDatabaseMissing('users', ['email' => 'no-terms@example.com']);
+    }
+
+    public function test_registration_is_blocked_when_turnstile_verification_fails(): void
+    {
+        config(['services.turnstile.secret' => 'test-secret']);
+        Http::fake([
+            'challenges.cloudflare.com/*' => Http::response(['success' => false]),
+        ]);
+
+        $response = $this->post('/register', [
+            'name' => 'Test User',
+            'email' => 'robot@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'terms' => '1',
+            'cf-turnstile-response' => 'invalid-token',
+        ]);
+
+        $response->assertSessionHasErrorsIn('registro', ['cf-turnstile-response']);
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['email' => 'robot@example.com']);
+    }
+
+    public function test_registration_succeeds_when_turnstile_verification_passes(): void
+    {
+        config(['services.turnstile.secret' => 'test-secret']);
+        Http::fake([
+            'challenges.cloudflare.com/*' => Http::response(['success' => true]),
+        ]);
+        Notification::fake();
+
+        $response = $this->post('/register', [
+            'name' => 'Test User',
+            'email' => 'verified-human@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'terms' => '1',
+            'cf-turnstile-response' => 'valid-token',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('dashboard', absolute: false));
     }
 
     public function test_registration_can_be_disabled(): void

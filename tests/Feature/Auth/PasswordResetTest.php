@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -69,6 +70,25 @@ class PasswordResetTest extends TestCase
 
             return true;
         });
+    }
+
+    public function test_reset_password_link_request_is_blocked_when_turnstile_verification_fails(): void
+    {
+        config(['services.turnstile.secret' => 'test-secret']);
+        Http::fake([
+            'challenges.cloudflare.com/*' => Http::response(['success' => false]),
+        ]);
+        Notification::fake();
+
+        $user = User::factory()->create();
+
+        $response = $this->post('/forgot-password', [
+            'email' => $user->email,
+            'cf-turnstile-response' => 'invalid-token',
+        ]);
+
+        $response->assertSessionHasErrors(['cf-turnstile-response']);
+        Notification::assertNothingSent();
     }
 
     public function test_password_reset_email_uses_the_financiai_brand(): void
