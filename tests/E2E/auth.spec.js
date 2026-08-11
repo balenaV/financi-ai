@@ -11,8 +11,9 @@ test('usuário consegue entrar, navegar e sair', async ({ page }) => {
     await loginForm.getByRole('button', { name: 'Entrar na minha conta' }).click();
 
     await expect(page).toHaveURL(/dashboard/);
-    await expect(page.getByRole('button', { name: 'Sair', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Sair', exact: true }).click();
+    await page.getByRole('button', { name: 'Sua conta', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Sair da conta', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Sair da conta', exact: true }).click();
     await expect(page).toHaveURL('/');
 });
 

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CommitImportRequest;
 use App\Http\Requests\PreviewImportRequest;
 use App\Http\Requests\StoreImportRequest;
-use App\Models\Account;
 use App\Models\ImportBatch;
 use App\Services\TransactionImportService;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +24,7 @@ class TransactionImportController extends Controller
 
     public function store(StoreImportRequest $request, TransactionImportService $service): JsonResponse
     {
-        $account = Account::query()->findOrFail($request->validated('account_id'));
+        $account = $request->user()->accounts()->findOrFail($request->validated('account_id'));
         $result = $service->createBatch($request->user(), $account, $request->file('file'));
 
         return response()->json([

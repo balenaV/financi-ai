@@ -7,6 +7,7 @@ use Illuminate\Auth\Events\Verified;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
@@ -69,5 +70,32 @@ class EmailVerificationTest extends TestCase
         $this->assertStringContainsString('clareza para suas finanças', $html);
         $this->assertStringContainsString('Organize hoje. Decida melhor amanhã.', $html);
         $this->assertStringContainsString('#22bf77', strtolower($html));
+    }
+
+    public function test_verification_notification_resend_is_throttled_per_email_address(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->unverified()->create(['email' => 'vitima@example.com']);
+
+        $this->actingAs($user)->post('/email/verification-notification')->assertStatus(302);
+        $this->actingAs($user)->post('/email/verification-notification')->assertStatus(302);
+
+        Notification::assertSentToTimes($user, VerifyEmail::class, 1);
+    }
+
+    public function test_verification_notification_can_be_resent_after_cooldown_expires(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->unverified()->create(['email' => 'vitima@example.com']);
+
+        $this->actingAs($user)->post('/email/verification-notification');
+
+        $this->travel(6)->minutes();
+
+        $this->actingAs($user)->post('/email/verification-notification');
+
+        Notification::assertSentToTimes($user, VerifyEmail::class, 2);
     }
 }

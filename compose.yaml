@@ -57,7 +57,7 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     ports:
-      - "${DB_FORWARD_PORT:-5432}:5432"
+      - "127.0.0.1:${DB_FORWARD_PORT:-5432}:5432"
     environment:
       POSTGRES_DB: ${DB_DATABASE:-meu_financeiro}
       POSTGRES_USER: ${DB_USERNAME:-financeiro}

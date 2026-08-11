@@ -76,10 +76,15 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+        $avatarPath = $user->avatar_path;
 
         Auth::logout();
 
         $user->delete();
+
+        if ($avatarPath) {
+            Storage::disk('public')->delete($avatarPath);
+        }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

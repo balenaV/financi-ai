@@ -7,6 +7,7 @@ use App\Enums\TransactionType;
 use App\Http\Requests\TransactionRequest;
 use App\Models\Transaction;
 use App\Services\TransactionService;
+use App\Support\Csv;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -114,9 +115,9 @@ class TransactionController extends Controller
                 fputcsv($output, [
                     $transaction->competence_date->format('d/m/Y'),
                     $transaction->type->label(),
-                    $this->csvSafe($transaction->description),
-                    $this->csvSafe($transaction->account?->name ?? $transaction->creditCard?->name ?? 'Sem conta'),
-                    $this->csvSafe($transaction->category?->name ?? ''),
+                    Csv::safe($transaction->description),
+                    Csv::safe($transaction->account?->name ?? $transaction->creditCard?->name ?? 'Sem conta'),
+                    Csv::safe($transaction->category?->name ?? ''),
                     $transaction->status->label(),
                     str_replace('.', ',', $transaction->amount),
                 ], ';');
@@ -151,10 +152,5 @@ class TransactionController extends Controller
     private function ofxSafe(string $value): string
     {
         return str_replace(['&', '<', '>'], ['&amp;', '&lt;', '&gt;'], $value);
-    }
-
-    private function csvSafe(string $value): string
-    {
-        return preg_match('/^[=+\-@]/', $value) ? "'".$value : $value;
     }
 }
