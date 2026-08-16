@@ -64,6 +64,61 @@ class AccountBalanceService
         );
     }
 
+    /**
+     * Movimentações mais recentes da conta, mais novas primeiro, com o saldo
+     * acumulado após cada uma — calculado de trás para frente a partir do
+     * saldo atual, já que o recorte é sempre um bloco contíguo mais recente.
+     *
+     * @return array<int, array{date: CarbonInterface, description: string, amount: string, balance_after: string}>
+     */
+    public function history(Account $account, int $limit = 30): array
+    {
+        $outgoing = $account->transactions()
+            ->where('status', TransactionStatus::Completed->value)
+            ->latest('competence_date')->latest('id')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($transaction) => [
+                'date' => $transaction->competence_date,
+                'id' => $transaction->id,
+                'description' => $transaction->description,
+                'amount' => $transaction->type === TransactionType::Income
+                    ? (string) $transaction->amount
+                    : bcmul((string) $transaction->amount, '-1', 2),
+            ]);
+
+        $incoming = $account->incomingTransfers()
+            ->where('status', TransactionStatus::Completed->value)
+            ->latest('competence_date')->latest('id')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($transaction) => [
+                'date' => $transaction->competence_date,
+                'id' => $transaction->id,
+                'description' => $transaction->description,
+                'amount' => (string) $transaction->amount,
+            ]);
+
+        $movements = $outgoing->concat($incoming)
+            ->sortBy([['date', 'desc'], ['id', 'desc']])
+            ->take($limit)
+            ->values();
+
+        $balance = $this->current($account);
+        $rows = [];
+        foreach ($movements as $movement) {
+            $rows[] = [
+                'date' => $movement['date'],
+                'description' => $movement['description'],
+                'amount' => $movement['amount'],
+                'balance_after' => $balance,
+            ];
+            $balance = bcsub($balance, $movement['amount'], 2);
+        }
+
+        return $rows;
+    }
+
     public function totalsFor(User $user, ?CarbonInterface $until = null): array
     {
         $current = '0.00';

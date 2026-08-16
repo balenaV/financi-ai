@@ -55,7 +55,7 @@ class TransactionController extends Controller
     {
         $created = $service->create($request->user(), $request->validated());
 
-        return to_route('transactions.index')->with('success', $created->count() > 1
+        return redirect(route('dashboard').'#transacoes')->with('success', $created->count() > 1
             ? "{$created->count()} transações criadas com sucesso."
             : 'Transação criada com sucesso.');
     }
@@ -65,7 +65,7 @@ class TransactionController extends Controller
         $this->authorize('update', $transaction);
         $service->update($transaction, $request->validated(), $request->boolean('update_future'));
 
-        return to_route('transactions.index')->with('success', 'Transação atualizada.');
+        return redirect(route('dashboard').'#transacoes')->with('success', 'Transação atualizada.');
     }
 
     public function duplicate(Request $request, Transaction $transaction, TransactionService $service): RedirectResponse

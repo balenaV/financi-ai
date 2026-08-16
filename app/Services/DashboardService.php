@@ -101,6 +101,11 @@ class DashboardService
                 'account' => $account,
                 'current' => $this->balances->current($account),
                 'projected' => $this->balances->projected($account),
+                'history' => $this->balances->history($account),
+            ]),
+            'archived_accounts' => $user->accounts()->where('active', false)->get()->map(fn (Account $account) => [
+                'account' => $account,
+                'current' => $this->balances->current($account),
             ]),
             'recent' => $recent,
             'upcoming' => $upcoming,
@@ -142,6 +147,7 @@ class DashboardService
                 'available_limit' => $summary['available_limit'],
                 'next_bill' => $summary['next_bill'],
                 'limit_used_pct' => Money::percentage($limitUsed, $card->credit_limit),
+                'bills' => $card->bills()->with('purchases')->limit(12)->get(),
             ];
         })->all();
     }

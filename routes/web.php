@@ -28,6 +28,8 @@ Route::middleware(['auth', 'verified', 'audit'])->group(function () {
     Route::patch('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
     Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
 
+    Route::patch('accounts/{account}/archive', [AccountController::class, 'archive'])->name('accounts.archive');
+    Route::patch('accounts/{account}/restore', [AccountController::class, 'restore'])->name('accounts.restore');
     Route::resource('accounts', AccountController::class);
     Route::resource('categories', CategoryController::class)->except(['create', 'show']);
     Route::get('transactions/export/csv', [TransactionController::class, 'export'])->name('transactions.export');

@@ -16,17 +16,28 @@ class DashboardController extends Controller
             'account_id' => ['nullable', 'integer'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'edit_account' => ['nullable', 'integer'],
+            'edit_card' => ['nullable', 'integer'],
         ]);
 
         if (isset($filters['account_id'])) {
             $request->user()->accounts()->findOrFail($filters['account_id']);
         }
 
+        $editAccount = isset($filters['edit_account'])
+            ? $request->user()->accounts()->find($filters['edit_account'])
+            : null;
+        $editCard = isset($filters['edit_card'])
+            ? $request->user()->creditCards()->find($filters['edit_card'])
+            : null;
+
         $data = $dashboard->build($request->user(), $filters);
 
         return view('dashboard', [
             'dashboard' => $data,
             'filters' => $filters,
+            'editAccount' => $editAccount,
+            'editCard' => $editCard,
             'categories' => $request->user()->categories()->where('active', true)->orderBy('name')->get(),
             'accountTypeTiles' => [
                 ['key' => 'corrente', 'type' => 'checking', 'icon' => 'bank', 'iconClass' => 'fa-solid fa-building-columns', 'label' => 'Conta corrente'],

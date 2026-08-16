@@ -40,9 +40,9 @@ class CreditCardController extends Controller
         $data = $request->validated();
         $data['credit_limit'] = Money::normalize($data['credit_limit']);
         $data['active'] = $request->boolean('active');
-        $creditCard = $request->user()->creditCards()->create($data);
+        $request->user()->creditCards()->create($data);
 
-        return to_route('credit-cards.show', $creditCard)->with('success', 'Cartão cadastrado.');
+        return redirect(route('dashboard').'#cartoes')->with('success', 'Cartão cadastrado.');
     }
 
     public function show(Request $request, CreditCard $creditCard, CreditCardService $service): View
@@ -76,7 +76,7 @@ class CreditCardController extends Controller
         $data['active'] = $request->boolean('active');
         $creditCard->update($data);
 
-        return to_route('credit-cards.show', $creditCard)->with('success', 'Cartão atualizado.');
+        return redirect(route('dashboard').'#cartoes')->with('success', 'Cartão atualizado.');
     }
 
     public function destroy(CreditCard $creditCard): RedirectResponse

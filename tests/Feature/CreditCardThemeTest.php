@@ -92,7 +92,7 @@ class CreditCardThemeTest extends TestCase
             'active' => '1',
         ]);
         $card = $user->creditCards()->firstOrFail();
-        $response->assertRedirect(route('credit-cards.show', $card));
+        $response->assertRedirect(route('dashboard').'#cartoes');
 
         $this->actingAs($user)->post(route('credit-cards.bills.store', $card), [
             'reference_month' => now()->format('Y-m'),

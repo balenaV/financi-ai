@@ -469,3 +469,185 @@
     ler(e.dataTransfer.files && e.dataTransfer.files[0]);
   });
 })();
+
+/* ======================================================================
+   Menus de três pontos (contas, cartões, transações...) — genérico.
+   ====================================================================== */
+(function () {
+  document.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('[data-menu-btn]');
+    document.querySelectorAll('[data-menu]').forEach(function (m) {
+      var aberto = btn && m.contains(btn) && m.querySelector('[data-menu-list]').hidden;
+      m.querySelector('[data-menu-list]').hidden = !aberto;
+      m.querySelector('[data-menu-btn]').setAttribute('aria-expanded', String(!!aberto));
+      m.style.zIndex = aberto ? '30' : '';
+    });
+  });
+})();
+
+/* ======================================================================
+   Contas — histórico e lista de arquivadas.
+   Diferente do protótipo estático: os dados já vêm renderizados pelo
+   servidor (um painel por conta, o histórico já calculado). O JS só
+   decide qual painel mostrar — não busca nem monta HTML.
+   ====================================================================== */
+(function () {
+  document.addEventListener('click', function (ev) {
+    var ver = ev.target.closest('[data-account-history]');
+    if (ver) {
+      var id = ver.dataset.accountHistory;
+      document.querySelectorAll('[data-account-panel]').forEach(function (p) {
+        p.hidden = p.dataset.accountPanel !== id;
+      });
+      document.querySelectorAll('[data-account]').forEach(function (card) {
+        card.classList.toggle('is-selected', card.dataset.account === id);
+      });
+      var painel = document.querySelector('[data-account-panel="' + id + '"]');
+      if (painel) painel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    if (ev.target.closest('[data-account-close]')) {
+      document.querySelectorAll('[data-account-panel]').forEach(function (p) { p.hidden = true; });
+      document.querySelectorAll('[data-account]').forEach(function (card) { card.classList.remove('is-selected'); });
+    }
+  });
+
+  var alternar = document.querySelector('[data-archived-toggle]');
+  var lista = document.querySelector('[data-archived-list]');
+  if (alternar && lista) {
+    alternar.addEventListener('click', function () {
+      lista.hidden = !lista.hidden;
+      alternar.textContent = lista.hidden ? 'Mostrar' : 'Ocultar';
+    });
+  }
+})();
+
+/* ======================================================================
+   Cartões — faturas mensais e pagamento.
+   Cada fatura já vem renderizada como um "slide" oculto dentro do painel
+   do cartão (data-bill-slide); navegar entre meses é só trocar qual
+   slide está visível e copiar os dados dele para o cabeçalho comum.
+   ====================================================================== */
+(function () {
+  var paineis = document.querySelectorAll('[data-invoices-panel]');
+  if (!paineis.length) return;
+
+  function painelDoCartao(id) {
+    return document.querySelector('[data-invoices-panel="' + id + '"]');
+  }
+
+  function slideVisivel(painel) {
+    return painel.querySelector('[data-bill-slide]:not([hidden])');
+  }
+
+  function moeda(v) {
+    return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function sincronizarCabecalho(painel) {
+    var slide = slideVisivel(painel);
+    var todos = painel.querySelectorAll('[data-bill-slide]');
+    var indice = slide ? Array.prototype.indexOf.call(todos, slide) : -1;
+
+    var mes = painel.querySelector('[data-invoice-month]');
+    var due = painel.querySelector('[data-invoice-due]');
+    var count = painel.querySelector('[data-invoice-count]');
+    var total = painel.querySelector('[data-invoice-total]');
+    var estado = painel.querySelector('[data-invoice-state]');
+    var pagar = painel.querySelector('[data-invoice-pay]');
+    var prev = painel.querySelector('[data-invoice-prev]');
+    var next = painel.querySelector('[data-invoice-next]');
+
+    if (!slide) {
+      if (mes) mes.textContent = '—';
+      return;
+    }
+
+    if (mes) mes.textContent = slide.dataset.month;
+    if (due) due.textContent = slide.dataset.due;
+    if (count) count.textContent = slide.dataset.count;
+    var paga = slide.dataset.paid === '1';
+    if (total) {
+      total.dataset.moneyValor = moeda(slide.dataset.total);
+      total.textContent = window.__valoresOcultos ? '••••••' : moeda(slide.dataset.total);
+    }
+    if (estado) {
+      estado.classList.toggle('is-paid', paga);
+      estado.innerHTML = paga ? '<i class="fa-solid fa-check" aria-hidden="true"></i>Paga' : '<i class="fa-regular fa-clock" aria-hidden="true"></i>Em aberto';
+    }
+    if (pagar) pagar.hidden = paga;
+    if (prev) prev.style.opacity = indice >= todos.length - 1 ? '0.4' : '';
+    if (next) next.style.opacity = indice <= 0 ? '0.4' : '';
+
+    if (window.aplicarOcultarValores) window.aplicarOcultarValores();
+  }
+
+  function abrirPainel(cardId) {
+    paineis.forEach(function (p) { p.hidden = p.dataset.invoicesPanel !== cardId; });
+    var painel = painelDoCartao(cardId);
+    if (!painel) return null;
+    var slides = painel.querySelectorAll('[data-bill-slide]');
+    slides.forEach(function (s, i) { s.hidden = i !== 0; });
+    document.querySelectorAll('[data-card]').forEach(function (card) {
+      card.classList.toggle('is-selected', card.dataset.card === cardId);
+    });
+    sincronizarCabecalho(painel);
+    return painel;
+  }
+
+  function abrirPagamento(painel) {
+    var slide = slideVisivel(painel);
+    var modal = document.querySelector('[data-modal="pagamento"]');
+    if (!slide || !modal) return;
+    var tituloEl = painel.querySelector('.invoices__title');
+    var titulo = tituloEl ? tituloEl.textContent : '';
+    var form = modal.querySelector('[data-pay-form]');
+    if (form) form.action = slide.dataset.payUrl;
+    var card = modal.querySelector('[data-pay-card]');
+    if (card) card.textContent = titulo.replace(/^Faturas · /, '') + ' · ' + slide.dataset.month;
+    var due = modal.querySelector('[data-pay-due]');
+    if (due) due.textContent = slide.dataset.due;
+    var valor = modal.querySelector('[data-pay-amount]');
+    if (valor) valor.value = Number(slide.dataset.total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    modal.hidden = false;
+  }
+
+  document.addEventListener('click', function (ev) {
+    var ver = ev.target.closest('[data-card-invoices]');
+    if (ver) abrirPainel(ver.dataset.cardInvoices);
+
+    var pagarCartao = ev.target.closest('[data-card-pay]');
+    if (pagarCartao) {
+      var painelAberto = abrirPainel(pagarCartao.dataset.cardPay);
+      if (painelAberto) abrirPagamento(painelAberto);
+    }
+
+    var fechar = ev.target.closest('[data-invoice-close]');
+    if (fechar) {
+      var painelAtual = fechar.closest('[data-invoices-panel]');
+      if (painelAtual) painelAtual.hidden = true;
+      document.querySelectorAll('[data-card]').forEach(function (card) { card.classList.remove('is-selected'); });
+    }
+
+    var pagarFatura = ev.target.closest('[data-invoice-pay]');
+    if (pagarFatura) {
+      var painelDaFatura = pagarFatura.closest('[data-invoices-panel]');
+      if (painelDaFatura) abrirPagamento(painelDaFatura);
+    }
+
+    var anterior = ev.target.closest('[data-invoice-prev]');
+    var proxima = ev.target.closest('[data-invoice-next]');
+    if (anterior || proxima) {
+      var painelNav = (anterior || proxima).closest('[data-invoices-panel]');
+      if (!painelNav) return;
+      var slides = painelNav.querySelectorAll('[data-bill-slide]');
+      var atualIdx = Array.prototype.indexOf.call(slides, slideVisivel(painelNav));
+      if (atualIdx === -1) return;
+      var novoIdx = anterior ? Math.min(slides.length - 1, atualIdx + 1) : Math.max(0, atualIdx - 1);
+      if (novoIdx === atualIdx) return;
+      slides[atualIdx].hidden = true;
+      slides[novoIdx].hidden = false;
+      sincronizarCabecalho(painelNav);
+    }
+  });
+})();

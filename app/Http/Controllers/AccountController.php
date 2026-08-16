@@ -38,7 +38,7 @@ class AccountController extends Controller
         $data['active'] = $request->boolean('active', true);
         $request->user()->accounts()->create($data);
 
-        return to_route('accounts.index')->with('success', 'Conta criada com sucesso.');
+        return redirect(route('dashboard').'#contas')->with('success', 'Conta criada com sucesso.');
     }
 
     public function show(Account $account, AccountBalanceService $balances): View
@@ -68,7 +68,7 @@ class AccountController extends Controller
         $data['active'] = $request->boolean('active');
         $account->update($data);
 
-        return to_route('accounts.index')->with('success', 'Conta atualizada com sucesso.');
+        return redirect(route('dashboard').'#contas')->with('success', 'Conta atualizada com sucesso.');
     }
 
     public function destroy(Account $account): RedirectResponse
@@ -82,5 +82,21 @@ class AccountController extends Controller
         $account->delete();
 
         return to_route('accounts.index')->with('success', 'Conta excluída.');
+    }
+
+    public function archive(Account $account): RedirectResponse
+    {
+        $this->authorize('update', $account);
+        $account->update(['active' => false]);
+
+        return redirect(route('dashboard').'#contas')->with('success', 'Conta arquivada.');
+    }
+
+    public function restore(Account $account): RedirectResponse
+    {
+        $this->authorize('update', $account);
+        $account->update(['active' => true]);
+
+        return redirect(route('dashboard').'#contas')->with('success', 'Conta reativada.');
     }
 }

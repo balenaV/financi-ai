@@ -66,9 +66,59 @@ class AccountBalanceTest extends TestCase
             'icon' => 'bank',
             'currency' => 'BRL',
             'active' => '1',
-        ])->assertRedirect(route('accounts.index'));
+        ])->assertRedirect(route('dashboard').'#contas');
 
         $this->assertDatabaseHas('accounts', ['user_id' => $user->id, 'name' => 'Banco principal', 'initial_balance' => '1500.25']);
+    }
+
+    public function test_history_lists_movements_newest_first_with_running_balance(): void
+    {
+        $user = User::factory()->create();
+        $account = Account::factory()->for($user)->create(['initial_balance' => '100.00']);
+        $other = Account::factory()->for($user)->create(['initial_balance' => '0.00']);
+
+        $this->transaction($user, $account, TransactionType::Income, TransactionStatus::Completed, '50.00');
+        $user->transactions()->create([
+            'account_id' => $account->id,
+            'destination_account_id' => $other->id,
+            'type' => TransactionType::Transfer->value,
+            'description' => 'Transferência para reserva',
+            'amount' => '30.00',
+            'competence_date' => today(),
+            'status' => TransactionStatus::Completed->value,
+        ]);
+
+        $history = app(AccountBalanceService::class)->history($account);
+
+        $this->assertCount(2, $history);
+        $this->assertSame('-30.00', $history[0]['amount']);
+        $this->assertSame('120.00', $history[0]['balance_after']);
+        $this->assertSame('50.00', $history[1]['amount']);
+        $this->assertSame('150.00', $history[1]['balance_after']);
+    }
+
+    public function test_user_can_archive_and_restore_an_account(): void
+    {
+        $user = User::factory()->create();
+        $account = Account::factory()->for($user)->create(['active' => true]);
+
+        $this->actingAs($user)->patch(route('accounts.archive', $account))
+            ->assertRedirect(route('dashboard').'#contas');
+        $this->assertFalse($account->fresh()->active);
+
+        $this->actingAs($user)->patch(route('accounts.restore', $account))
+            ->assertRedirect(route('dashboard').'#contas');
+        $this->assertTrue($account->fresh()->active);
+    }
+
+    public function test_user_cannot_archive_another_users_account(): void
+    {
+        $owner = User::factory()->create();
+        $attacker = User::factory()->create();
+        $account = Account::factory()->for($owner)->create(['active' => true]);
+
+        $this->actingAs($attacker)->patch(route('accounts.archive', $account))->assertForbidden();
+        $this->assertTrue($account->fresh()->active);
     }
 
     private function transaction(User $user, Account $account, TransactionType $type, TransactionStatus $status, string $amount): void

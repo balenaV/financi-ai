@@ -112,7 +112,7 @@ class FinancialIntegrityTest extends TestCase
         $this->actingAs($user)->post(route('transactions.store'), [
             ...$this->cardPurchase($card, '75,90', '2026-07-11'),
             'category_id' => $category->id,
-        ])->assertRedirect(route('transactions.index'));
+        ])->assertRedirect(route('dashboard').'#transacoes');
 
         $transaction = $user->transactions()->sole();
         $this->assertSame('credit_card', $transaction->payment_channel);
@@ -144,7 +144,7 @@ class FinancialIntegrityTest extends TestCase
         $this->actingAs($user)->put(route('transactions.update', $transaction), [
             ...$this->cardPurchase($card, '150.00', '2026-07-11'),
             'category_id' => $category->id,
-        ])->assertRedirect(route('transactions.index'));
+        ])->assertRedirect(route('dashboard').'#transacoes');
 
         $transaction->refresh();
         $this->assertSame('0.00', $originalBill->refresh()->total_amount);

@@ -23,7 +23,7 @@ class TransactionWorkflowTest extends TestCase
 
         foreach ([[TransactionType::Income, $income], [TransactionType::Expense, $expense]] as [$type, $category]) {
             $this->actingAs($user)->post(route('transactions.store'), $this->payload($account, $type, $category->id))
-                ->assertRedirect(route('transactions.index'));
+                ->assertRedirect(route('dashboard').'#transacoes');
         }
 
         $this->assertDatabaseHas('transactions', ['user_id' => $user->id, 'type' => 'income']);

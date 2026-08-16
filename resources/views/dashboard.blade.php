@@ -513,15 +513,38 @@
 
           <div class="grid-accounts">
             @foreach($dashboard['accounts'] as $row)
-              <article class="account-card" data-enter>
+              @php $variacao = bcsub($row['current'], (string) $row['account']->initial_balance, 2); @endphp
+              <article class="account-card" data-enter data-account="{{ $row['account']->id }}">
                 <div class="account-card__head">
                   <span class="row__icon row__icon--lg"><i class="fa-solid fa-building-columns" aria-hidden="true"></i></span>
                   <span class="account-card__info">
                     <span class="account-card__name">{{ $row['account']->name }}</span>
-                    <span class="account-card__type">{{ $row['account']->type->label() }}</span>
+                    <span class="account-card__type">{{ $row['account']->type->label() }}{{ $row['account']->institution ? ' · '.$row['account']->institution : '' }}</span>
                   </span>
+                  <div class="menu" data-menu>
+                    <button class="btn-icon btn-icon--sm" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Ações da conta" data-menu-btn><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+                    <div class="menu__list" role="menu" hidden data-menu-list>
+                      <button class="menu__item" type="button" role="menuitem" data-account-history="{{ $row['account']->id }}"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>Ver histórico</button>
+                      <a class="menu__item" role="menuitem" href="{{ route('dashboard', array_merge($filters, ['edit_account' => $row['account']->id])) }}#novaConta"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i>Editar conta</a>
+                      <form method="POST" action="{{ route('accounts.archive', $row['account']) }}">
+                        @csrf @method('PATCH')
+                        <button class="menu__item menu__item--danger menu__item--sep" type="submit" role="menuitem"><i class="fa-solid fa-box-archive" aria-hidden="true"></i>Arquivar conta</button>
+                      </form>
+                    </div>
+                  </div>
                 </div>
                 <div class="account-card__balance" data-money>{{ Money::format($row['current'], $hide) }}</div>
+                <div class="account-card__caption">Saldo atual</div>
+                <div class="account-card__split">
+                  <span class="account-card__figure">
+                    <span class="account-card__figure-label">Saldo inicial</span>
+                    <span class="account-card__figure-value" data-money>{{ Money::format($row['account']->initial_balance, $hide) }}</span>
+                  </span>
+                  <span class="account-card__figure account-card__figure--right">
+                    <span class="account-card__figure-label">Variação</span>
+                    <span class="account-card__figure-value {{ bccomp($variacao, '0', 2) >= 0 ? 'is-positive' : 'is-negative' }}" data-money>{{ bccomp($variacao, '0', 2) >= 0 ? '+' : '' }}{{ Money::format($variacao, $hide) }}</span>
+                  </span>
+                </div>
                 <div class="account-card__note">Saldo calculado a partir das suas movimentações</div>
               </article>
             @endforeach
@@ -531,6 +554,74 @@
               <span>Adicionar conta manual</span>
             </button>
           </div>
+
+          @foreach($dashboard['accounts'] as $row)
+            <section class="panel history" data-enter hidden data-account-panel="{{ $row['account']->id }}">
+              <div class="history__head">
+                <span class="history__title-wrap">
+                  <span class="history__title">Histórico · {{ $row['account']->name }}</span>
+                  <span class="history__sub">{{ $row['account']->type->label() }} · {{ count($row['history']) }} {{ Str::plural('movimentação', count($row['history'])) }}</span>
+                </span>
+                <span class="history__figures">
+                  <span class="account-card__figure">
+                    <span class="account-card__figure-label">Inicial</span>
+                    <span class="account-card__figure-value" data-money>{{ Money::format($row['account']->initial_balance, $hide) }}</span>
+                  </span>
+                  <span class="account-card__figure">
+                    <span class="account-card__figure-label">Atual</span>
+                    <span class="account-card__figure-value" data-money>{{ Money::format($row['current'], $hide) }}</span>
+                  </span>
+                  <button class="btn-icon btn-icon--sm" type="button" aria-label="Fechar histórico" data-account-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                </span>
+              </div>
+              <div class="history__row history__row--head">
+                <span>Data</span><span>Movimentação</span><span class="is-right">Valor</span><span class="is-right">Saldo após</span>
+              </div>
+              @forelse($row['history'] as $movimento)
+                <div class="history__row">
+                  <span class="history__date">{{ $movimento['date']->format('d/m') }}</span>
+                  <span class="history__desc">{{ $movimento['description'] }}</span>
+                  <span class="history__value {{ bccomp($movimento['amount'], '0', 2) > 0 ? 'is-in' : '' }}" data-money>{{ Money::format($movimento['amount'], $hide) }}</span>
+                  <span class="history__after" data-money>{{ Money::format($movimento['balance_after'], $hide) }}</span>
+                </div>
+              @empty
+                <p class="history__empty">Nenhuma movimentação ainda.</p>
+              @endforelse
+            </section>
+          @endforeach
+
+          @if(count($dashboard['archived_accounts']) > 0)
+            <section class="archived" data-enter data-archived>
+              <div class="archived__bar">
+                <span class="archived__label"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span data-archived-count>{{ count($dashboard['archived_accounts']) }} {{ Str::plural('conta arquivada', count($dashboard['archived_accounts'])) }}</span></span>
+                <button class="btn-outline-hard btn-outline--sm" type="button" data-archived-toggle>Mostrar</button>
+              </div>
+              <div class="grid-accounts" hidden data-archived-list>
+                @foreach($dashboard['archived_accounts'] as $row)
+                  <article class="account-card is-archived" data-enter data-account="{{ $row['account']->id }}">
+                    <div class="account-card__head">
+                      <span class="row__icon row__icon--lg"><i class="fa-solid fa-building-columns" aria-hidden="true"></i></span>
+                      <span class="account-card__info">
+                        <span class="account-card__name">{{ $row['account']->name }}</span>
+                        <span class="account-card__type">{{ $row['account']->type->label() }}</span>
+                      </span>
+                      <div class="menu" data-menu>
+                        <button class="btn-icon btn-icon--sm" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Ações da conta" data-menu-btn><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+                        <div class="menu__list" role="menu" hidden data-menu-list>
+                          <form method="POST" action="{{ route('accounts.restore', $row['account']) }}">
+                            @csrf @method('PATCH')
+                            <button class="menu__item" type="submit" role="menuitem"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i>Reativar conta</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="account-card__balance" data-money>{{ Money::format($row['current'], $hide) }}</div>
+                    <div class="account-card__note">Arquivada · fora do saldo total</div>
+                  </article>
+                @endforeach
+              </div>
+            </section>
+          @endif
         </section>
 
         <!-- ============ Cartões ============ -->
@@ -552,11 +643,21 @@
 
               <div class="grid-cards">
                 @foreach($dashboard['credit_cards'] as $row)
-                  <article class="credit-card" data-enter>
+                  <article class="credit-card" data-enter data-card="{{ $row['card']->id }}">
                     <div class="credit-card__top">
                       <div class="credit-card__brand-row">
                         <span class="credit-card__brand"><i class="fa-regular fa-credit-card" aria-hidden="true"></i>{{ $row['card']->issuer }}</span>
-                        <span class="credit-card__state">Ativo</span>
+                        <span class="credit-card__actions">
+                          <span class="credit-card__state" data-card-state="{{ $row['card']->id }}">Ativo</span>
+                          <div class="menu menu--on-dark" data-menu>
+                            <button class="btn-icon btn-icon--sm btn-icon--on-dark" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Ações do cartão" data-menu-btn><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+                            <div class="menu__list" role="menu" hidden data-menu-list>
+                              <button class="menu__item" type="button" role="menuitem" data-card-invoices="{{ $row['card']->id }}"><i class="fa-solid fa-receipt" aria-hidden="true"></i>Ver faturas</button>
+                              <button class="menu__item" type="button" role="menuitem" data-card-pay="{{ $row['card']->id }}"><i class="fa-solid fa-money-check-dollar" aria-hidden="true"></i>Registrar pagamento</button>
+                              <a class="menu__item menu__item--sep" role="menuitem" href="{{ route('dashboard', array_merge($filters, ['edit_card' => $row['card']->id])) }}#cartoes"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i>Editar cartão</a>
+                            </div>
+                          </div>
+                        </span>
                       </div>
                       <div class="credit-card__name">{{ $row['card']->name }}</div>
                     </div>
@@ -584,6 +685,55 @@
                   <span>Adicionar cartão</span>
                 </button>
               </div>
+
+              @foreach($dashboard['credit_cards'] as $row)
+                <section class="panel invoices" data-enter hidden data-invoices-panel="{{ $row['card']->id }}">
+                  <div class="invoices__head">
+                    <span class="invoices__title-wrap">
+                      <span class="invoices__title">Faturas · {{ $row['card']->name }} · {{ $row['card']->issuer }}</span>
+                      <span class="invoices__sub"><span data-invoice-count>—</span> · <span data-invoice-due>—</span></span>
+                    </span>
+                    <span class="invoices__nav">
+                      <button class="btn-icon btn-icon--sm" type="button" aria-label="Fatura anterior" data-invoice-prev><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+                      <span class="invoices__month" data-invoice-month>—</span>
+                      <button class="btn-icon btn-icon--sm" type="button" aria-label="Fatura seguinte" data-invoice-next><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+                      <button class="btn-icon btn-icon--sm invoices__close" type="button" aria-label="Fechar faturas" data-invoice-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                    </span>
+                  </div>
+                  <div class="invoices__summary">
+                    <span class="invoices__figures">
+                      <span class="invoices__total" data-money data-invoice-total>R$ 0,00</span>
+                      <span class="badge-state" data-invoice-state><i class="fa-regular fa-clock" aria-hidden="true"></i>Em aberto</span>
+                    </span>
+                    <button class="btn-primary btn-primary--sm" type="button" data-invoice-pay><i class="fa-solid fa-money-check-dollar" aria-hidden="true"></i>Registrar pagamento</button>
+                  </div>
+                  @forelse($row['bills'] as $i => $bill)
+                    <div class="invoices__slide" {{ $i === 0 ? '' : 'hidden' }}
+                         data-bill-slide
+                         data-bill-id="{{ $bill->id }}"
+                         data-month="{{ ucfirst($bill->reference_month->translatedFormat('F Y')) }}"
+                         data-due="Vence em {{ $bill->due_date->format('d/m/Y') }}"
+                         data-count="{{ $bill->purchases->count() }} {{ Str::plural('lançamento', $bill->purchases->count()) }}"
+                         data-total="{{ $bill->total_amount }}"
+                         data-paid="{{ $bill->status->value === 'paid' ? '1' : '0' }}"
+                         data-pay-url="{{ route('credit-card-bills.pay', $bill) }}">
+                      <div data-invoice-rows>
+                        @forelse($bill->purchases as $purchase)
+                          <div class="invoices__row">
+                            <span class="history__date">{{ $purchase->competence_date->format('d/m') }}</span>
+                            <span class="history__desc">{{ $purchase->description }}</span>
+                            <span class="is-right" data-money>{{ Money::format($purchase->amount, $hide) }}</span>
+                          </div>
+                        @empty
+                          <p class="history__empty">Nenhum lançamento nesta fatura.</p>
+                        @endforelse
+                      </div>
+                    </div>
+                  @empty
+                    <p class="history__empty" style="padding: 20px 22px;">Nenhuma fatura registrada ainda.</p>
+                  @endforelse
+                </section>
+              @endforeach
           @else
               <section class="empty-state" data-enter data-cards-empty>
                 <p>Nenhum cartão cadastrado. <button class="link-btn" type="button" data-modal-open="cartao">Adicionar cartão.</button></p>
@@ -593,12 +743,18 @@
 
         <!-- ============ Nova conta manual ============ -->
         <section class="page" data-page="novaConta" hidden>
-          <form class="new-account" data-enter method="POST" action="{{ route('accounts.store') }}">
+          @php
+              $accountTypeKey = fn ($type) => collect($accountTypeTiles)->firstWhere('type', $type)['key'] ?? $accountTypeTiles[0]['key'];
+              $accountTypeIcon = fn ($type) => collect($accountTypeTiles)->firstWhere('type', $type)['iconClass'] ?? $accountTypeTiles[0]['iconClass'];
+              $selectedTypeKey = old('type') ? $accountTypeKey(old('type')) : ($editAccount ? $accountTypeKey($editAccount->type->value) : $accountTypeTiles[0]['key']);
+          @endphp
+          <form class="new-account" data-enter method="POST" action="{{ $editAccount ? route('accounts.update', $editAccount) : route('accounts.store') }}">
             @csrf
+            @if($editAccount) @method('PATCH') @endif
 
             <section class="panel new-account__form">
               <div>
-                <h2 class="panel__title">Dados da conta</h2>
+                <h2 class="panel__title new-account__title">{{ $editAccount ? 'Editar conta' : 'Dados da conta' }}</h2>
                 <p class="panel__sub">Contas manuais servem para dinheiro que não vem de extrato: carteira, cofrinho, conta de outro banco. Você registra o saldo de partida e segue lançando por aqui.</p>
               </div>
 
@@ -606,23 +762,23 @@
                 <span class="field__label">Tipo de conta</span>
                 <div class="option-grid" data-account-type>
                   @foreach($accountTypeTiles as $tile)
-                    <button class="option-tile {{ $loop->first ? 'is-selected' : '' }}" type="button" data-value="{{ $tile['key'] }}" data-type="{{ $tile['type'] }}" data-icon-key="{{ $tile['icon'] }}" data-icon="{{ $tile['iconClass'] }}"><i class="{{ $tile['iconClass'] }}"></i>{{ $tile['label'] }}</button>
+                    <button class="option-tile {{ $tile['key'] === $selectedTypeKey ? 'is-selected' : '' }}" type="button" data-value="{{ $tile['key'] }}" data-type="{{ $tile['type'] }}" data-icon-key="{{ $tile['icon'] }}" data-icon="{{ $tile['iconClass'] }}"><i class="{{ $tile['iconClass'] }}"></i>{{ $tile['label'] }}</button>
                   @endforeach
                 </div>
-                <input type="hidden" name="type" value="{{ $accountTypeTiles[0]['type'] }}" id="novaConta-type">
-                <input type="hidden" name="icon" value="{{ $accountTypeTiles[0]['icon'] }}" id="novaConta-icon">
+                <input type="hidden" name="type" value="{{ old('type', $editAccount?->type?->value ?? $accountTypeTiles[0]['type']) }}" id="novaConta-type">
+                <input type="hidden" name="icon" value="{{ $accountTypeIcon(old('type', $editAccount?->type?->value ?? $accountTypeTiles[0]['type'])) }}" id="novaConta-icon">
                 @error('type')<span class="field-error">{{ $message }}</span>@enderror
               </div>
 
               <div class="field-row">
                 <label class="field">
                   <span class="field__label">Nome da conta</span>
-                  <input class="input" type="text" name="name" placeholder="Ex.: Carteira do dia a dia" value="{{ old('name') }}" data-account-name required>
+                  <input class="input" type="text" name="name" placeholder="Ex.: Carteira do dia a dia" value="{{ old('name', $editAccount?->name ?? '') }}" data-account-name required>
                   @error('name')<span class="field-error">{{ $message }}</span>@enderror
                 </label>
                 <label class="field">
                   <span class="field__label">Instituição <span class="field__hint">· opcional</span></span>
-                  <input class="input" type="text" name="institution" placeholder="Ex.: Nubank, Caixa, dinheiro em espécie" value="{{ old('institution') }}" data-account-bank>
+                  <input class="input" type="text" name="institution" placeholder="Ex.: Nubank, Caixa, dinheiro em espécie" value="{{ old('institution', $editAccount?->institution ?? '') }}" data-account-bank>
                 </label>
               </div>
 
@@ -631,13 +787,13 @@
                   <span class="field__label">Saldo de partida</span>
                   <span class="input-group">
                     <span class="input-group__prefix">R$</span>
-                    <input class="input-group__input input-group__input--num" type="text" inputmode="decimal" name="initial_balance" placeholder="0,00" value="{{ old('initial_balance') }}" data-account-balance>
+                    <input class="input-group__input input-group__input--num" type="text" inputmode="decimal" name="initial_balance" placeholder="0,00" value="{{ old('initial_balance', $editAccount ? number_format((float) $editAccount->initial_balance, 2, ',', '.') : '') }}" data-account-balance>
                   </span>
                   @error('initial_balance')<span class="field-error">{{ $message }}</span>@enderror
                 </label>
                 <div class="field">
                   <span class="field__label">Saldo nesta data</span>
-                  <x-datepicker name="initial_balance_date" :value="old('initial_balance_date', now()->toDateString())" data-account-date />
+                  <x-datepicker name="initial_balance_date" :value="old('initial_balance_date', $editAccount?->initial_balance_date?->toDateString() ?? now()->toDateString())" data-account-date />
                   @error('initial_balance_date')<span class="field-error">{{ $message }}</span>@enderror
                 </div>
               </div>
@@ -646,31 +802,31 @@
                 <span class="field__label">Cor da conta</span>
                 <div class="swatches" data-account-colors>
                   @foreach(['#137A4A' => 'Verde escuro', '#38C172' => 'Verde', '#2F6FEB' => 'Azul', '#E0A21C' => 'Amarelo', '#B3261E' => 'Vermelho', '#6C4BD6' => 'Roxo'] as $hex => $label)
-                    <button class="swatch {{ $loop->first ? 'is-selected' : '' }}" type="button" style="--swatch:{{ $hex }}" data-value="{{ $hex }}" aria-label="{{ $label }}"><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                    <button class="swatch {{ strtoupper(old('color', $editAccount?->color ?? '#137A4A')) === $hex ? 'is-selected' : '' }}" type="button" style="--swatch:{{ $hex }}" data-value="{{ $hex }}" aria-label="{{ $label }}"><i class="fa-solid fa-check" aria-hidden="true"></i></button>
                   @endforeach
                 </div>
-                <input type="hidden" name="color" value="#137A4A" id="novaConta-color">
+                <input type="hidden" name="color" value="{{ old('color', $editAccount?->color ?? '#137A4A') }}" id="novaConta-color">
                 @error('color')<span class="field-error">{{ $message }}</span>@enderror
               </div>
 
               <div class="switch-row">
-                <button class="switch is-on" type="button" role="switch" aria-checked="true" data-account-total><span class="switch__pin"></span></button>
+                <button class="switch {{ old('active', $editAccount?->active ?? true) ? 'is-on' : '' }}" type="button" role="switch" aria-checked="{{ old('active', $editAccount?->active ?? true) ? 'true' : 'false' }}" data-account-total><span class="switch__pin"></span></button>
                 <span class="switch-row__body">
                   <span class="switch-row__title">Somar no saldo total</span>
                   <span class="switch-row__text">Deixe desligado para acompanhar a conta separadamente, sem afetar os números do painel.</span>
                 </span>
               </div>
-              <input type="hidden" name="active" value="1" id="novaConta-active">
+              <input type="hidden" name="active" value="{{ old('active', $editAccount?->active ?? true) ? '1' : '0' }}" id="novaConta-active">
               <input type="hidden" name="currency" value="BRL">
 
               <label class="field">
                 <span class="field__label">Observação <span class="field__hint">· opcional</span></span>
-                <textarea class="input input--area" rows="2" name="notes" placeholder="Para que serve essa conta">{{ old('notes') }}</textarea>
+                <textarea class="input input--area" rows="2" name="notes" placeholder="Para que serve essa conta">{{ old('notes', $editAccount?->notes ?? '') }}</textarea>
               </label>
 
               <div class="form-foot">
                 <button class="btn-ghost" type="button" data-goto="contas">Cancelar</button>
-                <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar conta</button>
+                <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ $editAccount ? 'Salvar alterações' : 'Salvar conta' }}</button>
               </div>
             </section>
 
@@ -678,14 +834,14 @@
               <article class="panel preview-card">
                 <span class="preview-card__label">Prévia</span>
                 <div class="account-card__head preview-card__head">
-                  <span class="row__icon row__icon--lg preview-card__icon" data-preview-icon><i class="{{ $accountTypeTiles[0]['iconClass'] }}"></i></span>
+                  <span class="row__icon row__icon--lg preview-card__icon" data-preview-icon><i class="{{ $accountTypeIcon(old('type', $editAccount?->type?->value ?? $accountTypeTiles[0]['type'])) }}"></i></span>
                   <span class="account-card__info">
-                    <span class="account-card__name" data-preview-name>Nome da conta</span>
-                    <span class="account-card__type" data-preview-type>{{ $accountTypeTiles[0]['label'] }}</span>
+                    <span class="account-card__name" data-preview-name>{{ $editAccount?->name ?? 'Nome da conta' }}</span>
+                    <span class="account-card__type" data-preview-type>{{ collect($accountTypeTiles)->firstWhere('key', $selectedTypeKey)['label'] ?? $accountTypeTiles[0]['label'] }}</span>
                   </span>
                 </div>
-                <div class="account-card__balance" data-preview-balance>R$ 0,00</div>
-                <div class="account-card__note" data-preview-note>Saldo informado em {{ now()->format('d/m/Y') }}</div>
+                <div class="account-card__balance" data-preview-balance>{{ $editAccount ? Money::format($editAccount->initial_balance, false) : 'R$ 0,00' }}</div>
+                <div class="account-card__note" data-preview-note>Saldo informado em {{ $editAccount?->initial_balance_date?->format('d/m/Y') ?? now()->format('d/m/Y') }}</div>
               </article>
 
               <article class="tip-card">
@@ -1060,36 +1216,36 @@
 </div>
 
 <!-- ============ Modal: novo cartão ============ -->
-<div class="modal" data-modal="cartao" hidden>
+<div class="modal" data-modal="cartao" @unless($editCard) hidden @endunless>
   <div class="modal__veil" data-modal-close></div>
   <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-cartao-titulo">
-    <form method="POST" action="{{ route('credit-cards.store') }}">
+    <form method="POST" action="{{ $editCard ? route('credit-cards.update', $editCard) : route('credit-cards.store') }}">
       @csrf
+      @if($editCard) @method('PATCH') @endif
       <div class="modal__head">
         <div>
-          <h2 class="modal__title" id="modal-cartao-titulo">Novo cartão</h2>
+          <h2 class="modal__title" id="modal-cartao-titulo">{{ $editCard ? 'Editar cartão' : 'Novo cartão' }}</h2>
           <p class="modal__sub">Só o essencial para calcular fatura e limite. Os lançamentos entram depois.</p>
         </div>
         <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
 
       <div class="modal__body">
+        @php $bandeiras = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Outra']; $issuerAtual = old('issuer', $editCard->issuer ?? 'Visa'); @endphp
         <div class="field">
           <span class="field__label">Bandeira</span>
           <div class="chip-row" data-chip-group>
-            <button class="chip is-selected" type="button" data-value="Visa">Visa</button>
-            <button class="chip" type="button" data-value="Mastercard">Mastercard</button>
-            <button class="chip" type="button" data-value="Elo">Elo</button>
-            <button class="chip" type="button" data-value="Amex">Amex</button>
-            <button class="chip" type="button" data-value="Outra">Outra</button>
+            @foreach($bandeiras as $bandeira)
+              <button class="chip {{ $issuerAtual === $bandeira || (! in_array($issuerAtual, $bandeiras, true) && $bandeira === 'Outra') ? 'is-selected' : '' }}" type="button" data-value="{{ $bandeira }}">{{ $bandeira }}</button>
+            @endforeach
           </div>
-          <input type="hidden" name="issuer" value="Visa" data-chip-input>
+          <input type="hidden" name="issuer" value="{{ $issuerAtual }}" data-chip-input>
           @error('issuer')<span class="field-error">{{ $message }}</span>@enderror
         </div>
 
         <label class="field">
           <span class="field__label">Apelido do cartão</span>
-          <input class="input" type="text" name="name" placeholder="Ex.: Cartão do mercado" required>
+          <input class="input" type="text" name="name" placeholder="Ex.: Cartão do mercado" value="{{ old('name', $editCard->name ?? '') }}" required>
           @error('name')<span class="field-error">{{ $message }}</span>@enderror
         </label>
 
@@ -1098,21 +1254,22 @@
             <span class="field__label">Limite</span>
             <span class="input-group">
               <span class="input-group__prefix">R$</span>
-              <input class="input-group__input input-group__input--num" type="text" inputmode="decimal" name="credit_limit" placeholder="0,00" required>
+              <input class="input-group__input input-group__input--num" type="text" inputmode="decimal" name="credit_limit" placeholder="0,00" value="{{ old('credit_limit', $editCard ? number_format((float) $editCard->credit_limit, 2, ',', '.') : '') }}" required>
             </span>
             @error('credit_limit')<span class="field-error">{{ $message }}</span>@enderror
           </label>
           <label class="field">
             <span class="field__label">Fecha no dia</span>
-            <input class="input input--num" type="number" min="1" max="31" name="closing_day" value="28">
+            <input class="input input--num" type="number" min="1" max="31" name="closing_day" value="{{ old('closing_day', $editCard->closing_day ?? 28) }}">
           </label>
           <label class="field">
             <span class="field__label">Vence no dia</span>
-            <input class="input input--num" type="number" min="1" max="31" name="due_day" value="5">
+            <input class="input input--num" type="number" min="1" max="31" name="due_day" value="{{ old('due_day', $editCard->due_day ?? 5) }}">
           </label>
         </div>
 
-        <input type="hidden" name="color" value="#137A4A">
+        <input type="hidden" name="color" value="{{ old('color', $editCard->color ?? '#137A4A') }}">
+        <input type="hidden" name="active" value="1">
 
         <div class="field">
           <span class="field__label">Conta que paga a fatura <span class="field__hint">· opcional</span></span>
@@ -1123,7 +1280,60 @@
 
       <div class="modal__foot">
         <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
-        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar cartão</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ $editCard ? 'Salvar alterações' : 'Salvar cartão' }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: registrar pagamento de fatura ============ -->
+<div class="modal" data-modal="pagamento" hidden>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-pagamento-titulo">
+    <form method="POST" action="" data-pay-form>
+      @csrf
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-pagamento-titulo">Registrar pagamento</h2>
+          <p class="modal__sub">A fatura é marcada como paga e a despesa entra na conta escolhida.</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <div class="pay-summary">
+          <span class="row__icon row__icon--lg"><i class="fa-regular fa-credit-card" aria-hidden="true"></i></span>
+          <span class="pay-summary__body">
+            <span class="pay-summary__title" data-pay-card>—</span>
+            <span class="pay-summary__text" data-pay-due>—</span>
+          </span>
+        </div>
+
+        <label class="field">
+          <span class="field__label">Valor da fatura</span>
+          <span class="input-money">
+            <span class="input-money__prefix">R$</span>
+            <input class="input-money__input" type="text" inputmode="decimal" data-pay-amount disabled>
+          </span>
+        </label>
+
+        <div class="field-row">
+          <div class="field">
+            <span class="field__label">Data do pagamento</span>
+            <x-datepicker name="paid_at" :value="now()->toDateString()" />
+          </div>
+          <div class="field">
+            <span class="field__label">Conta de origem</span>
+            <x-dropdown name="account_id" icon="fa-solid fa-building-columns"
+                :options="$dashboard['accounts']->map(fn ($row) => ['value' => $row['account']->id, 'label' => $row['account']->name])" />
+            @error('account_id')<span class="field-error">{{ $message }}</span>@enderror
+          </div>
+        </div>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Confirmar pagamento</button>
       </div>
     </form>
   </div>
