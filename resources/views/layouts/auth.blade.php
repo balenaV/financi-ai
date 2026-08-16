@@ -30,6 +30,5 @@
 
 <script src="{{ asset('design/js/auth.js') }}"></script>
 <script src="{{ asset('design/js/auth-url-sync.js') }}"></script>
-<script src="{{ asset('design/js/password-strength.js') }}"></script>
 </body>
 </html>

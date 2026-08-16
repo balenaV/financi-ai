@@ -1,5 +1,6 @@
 @php
-    $mode = ($mode ?? 'login') === 'registro' ? 'registro' : 'login';
+    $modes = ['login', 'registro', 'recuperar', 'redefinir', 'verificar'];
+    $mode = in_array($mode ?? null, $modes, true) ? $mode : 'login';
     $copy = [
         'login' => [
             'titulo' => 'Bem-vindo de volta.',
@@ -9,9 +10,27 @@
             'titulo' => 'Comece a organizar hoje.',
             'subtitulo' => 'Crie sua conta gratuita e registre sua realidade financeira em poucos minutos.',
         ],
+        'recuperar' => session('status')
+            ? ['titulo' => 'Confira seu e-mail.', 'subtitulo' => 'Mandamos um link de redefinição. Ele vale por 60 minutos e só pode ser usado uma vez.']
+            : ['titulo' => 'Recuperar acesso.', 'subtitulo' => 'Informe o e-mail da sua conta e enviamos um link para você criar uma senha nova.'],
+        'redefinir' => [
+            'titulo' => 'Defina uma nova senha.',
+            'subtitulo' => 'Escolha uma senha que você não use em outro serviço. Os critérios abaixo precisam estar todos verdes.',
+        ],
+        'verificar' => [
+            'titulo' => 'Falta confirmar seu e-mail.',
+            'subtitulo' => 'Enviamos um link de confirmação para o e-mail cadastrado. Depois de confirmar, seu painel fica liberado.',
+        ],
+    ];
+    $titulos = [
+        'login' => 'Entrar',
+        'registro' => 'Criar conta',
+        'recuperar' => 'Recuperar acesso',
+        'redefinir' => 'Redefinir senha',
+        'verificar' => 'Verificar e-mail',
     ];
 @endphp
-<x-auth-layout :title="$mode === 'registro' ? 'Criar conta' : 'Entrar'">
+<x-auth-layout :title="$titulos[$mode]">
 
 @if(config('features.registration'))
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -38,7 +57,7 @@
         <h1 class="auth__title" data-auth-title>{{ $copy[$mode]['titulo'] }}</h1>
         <p class="auth__subtitle" data-auth-subtitle>{{ $copy[$mode]['subtitulo'] }}</p>
 
-        @if(config('features.registration'))
+        @if(config('features.registration') && in_array($mode, ['login', 'registro'], true))
             <div class="tabs auth__tabs" role="tablist" data-tabs data-active="{{ $mode }}">
                 <span class="tabs__indicator" aria-hidden="true"></span>
                 <button class="tabs__btn" type="button" role="tab" data-tab="login" data-url="{{ route('login') }}" aria-selected="{{ $mode === 'login' ? 'true' : 'false' }}">Entrar</button>
@@ -46,7 +65,7 @@
             </div>
         @endif
 
-        @if (session('status'))
+        @if ($mode === 'login' && session('status'))
             <p class="form-status">{{ session('status') }}</p>
         @endif
 
@@ -121,19 +140,17 @@
                 <label class="field">
                   <span class="field__label">Senha</span>
                   <span class="input-group">
-                    <input class="input-group__input" type="password" name="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" data-password-strength-input>
+                    <input class="input-group__input" type="password" name="password" id="regPassword" autocomplete="new-password" placeholder="Mínimo de 8 caracteres">
                     <button class="input-group__action" type="button" data-password-toggle aria-label="Mostrar ou ocultar senha">Mostrar</button>
                   </span>
-                  <div class="password-strength" data-password-strength hidden>
-                    <div class="password-strength__track"><span class="password-strength__fill" data-password-strength-fill></span></div>
-                    <span class="password-strength__label" data-password-strength-label></span>
-                  </div>
+                  <x-auth.password-meter prefix="reg" />
                   @error('password', 'registro') <span class="field-error">{{ $message }}</span> @enderror
                 </label>
 
                 <label class="field">
                   <span class="field__label">Confirmar senha</span>
-                  <input class="input" type="password" name="password_confirmation" autocomplete="new-password" placeholder="Repita a senha">
+                  <input class="input" type="password" name="password_confirmation" id="regConfirm" autocomplete="new-password" placeholder="Repita a senha">
+                  <span class="pw-confirm" id="regConfirmMsg" hidden></span>
                 </label>
 
                 <label class="checkbox-row checkbox-row--top">
@@ -145,8 +162,93 @@
                 <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}"></div>
                 @error('cf-turnstile-response', 'registro') <span class="field-error">{{ $message }}</span> @enderror
 
-                <button class="btn-primary" type="submit">Criar minha conta</button>
+                <button class="btn-primary" type="submit" id="regSubmit" disabled aria-disabled="true">Criar minha conta</button>
               </form>
+          @endif
+
+          @if($mode === 'recuperar')
+              <form class="auth-form auth-form--recuperar" data-pane="recuperar" data-state="active" method="post" action="{{ route('password.email') }}">
+                @csrf
+
+                @if(! session('status'))
+                    <div class="auth-step" data-step="pedir">
+                      <label class="field">
+                        <span class="field__label">E-mail da conta</span>
+                        <input class="input" type="email" name="email" id="recEmail" value="{{ old('email') }}" autocomplete="email" placeholder="voce@email.com">
+                        @error('email') <span class="field-error">{{ $message }}</span> @enderror
+                      </label>
+                      <button class="btn-primary" type="submit" id="recSubmit" disabled aria-disabled="true">Enviar link de redefinição</button>
+                      <a class="link-back" href="{{ route('login') }}"><span aria-hidden="true">&#8592;</span>Voltar para o login</a>
+                    </div>
+                @else
+                    <div class="auth-step" data-step="enviado">
+                      <div class="notice">
+                        <span class="notice__icon" aria-hidden="true">&#10003;</span>
+                        <span class="notice__body">
+                          <span class="notice__title">Link enviado para <span data-email-echo>{{ session('sentEmail') }}</span></span>
+                          <span class="notice__text">Não chegou? Confira a caixa de spam antes de pedir outro.</span>
+                        </span>
+                      </div>
+                      <div class="auth-actions">
+                        <button class="btn-outline-hard" type="submit" data-resend name="email" value="{{ session('sentEmail') }}">Reenviar e-mail</button>
+                      </div>
+                      <a class="link-back" href="{{ route('login') }}"><span aria-hidden="true">&#8592;</span>Voltar para o login</a>
+                    </div>
+                @endif
+              </form>
+          @endif
+
+          @if($mode === 'redefinir')
+              <form class="auth-form auth-form--redefinir" data-pane="redefinir" data-state="active" method="post" action="{{ route('password.store') }}">
+                @csrf
+                <input type="hidden" name="token" value="{{ $token }}">
+                <input type="hidden" name="email" value="{{ $email }}">
+                <label class="field">
+                  <span class="field__label">Nova senha</span>
+                  <span class="input-group">
+                    <input class="input-group__input" type="password" name="password" id="rstPassword" autocomplete="new-password" placeholder="Mínimo de 8 caracteres">
+                    <button class="input-group__action" type="button" data-password-toggle aria-label="Mostrar ou ocultar senha">Mostrar</button>
+                  </span>
+                  <x-auth.password-meter prefix="rst" />
+                  @error('password') <span class="field-error">{{ $message }}</span> @enderror
+                </label>
+                <label class="field">
+                  <span class="field__label">Confirmar nova senha</span>
+                  <input class="input" type="password" name="password_confirmation" id="rstConfirm" autocomplete="new-password" placeholder="Repita a senha">
+                  <span class="pw-confirm" id="rstConfirmMsg" hidden></span>
+                </label>
+                @error('email') <span class="field-error">{{ $message }}</span> @enderror
+                <button class="btn-primary" type="submit" id="rstSubmit" disabled aria-disabled="true">Salvar nova senha</button>
+                <a class="link-back" href="{{ route('login') }}"><span aria-hidden="true">&#8592;</span>Voltar para o login</a>
+              </form>
+          @endif
+
+          @if($mode === 'verificar')
+              <div class="auth-form auth-form--verificar" data-pane="verificar" data-state="active">
+                <div class="notice">
+                  <span class="notice__icon" aria-hidden="true">&#9993;</span>
+                  <span class="notice__body">
+                    <span class="notice__title">Confirmação enviada para <span data-email-echo>{{ auth()->user()->email }}</span></span>
+                    <span class="notice__text">O link expira em 24 horas. Enquanto isso, sua conta fica com acesso limitado.</span>
+                  </span>
+                </div>
+                <ol class="auth-steps">
+                  <li class="auth-steps__item"><span class="auth-steps__num" aria-hidden="true">1</span>Abra a mensagem do financiaí na sua caixa de entrada.</li>
+                  <li class="auth-steps__item"><span class="auth-steps__num" aria-hidden="true">2</span>Toque em confirmar e-mail. Você volta direto para o painel.</li>
+                  <li class="auth-steps__item"><span class="auth-steps__num" aria-hidden="true">3</span>Se não encontrar, confira o spam ou peça o reenvio abaixo.</li>
+                </ol>
+                <div class="auth-actions">
+                  <form method="POST" action="{{ route('verification.send') }}">
+                    @csrf
+                    <button class="btn-primary" type="submit" data-resend>{{ session('status') === 'verification-link-sent' ? 'E-mail reenviado' : 'Reenviar e-mail' }}</button>
+                  </form>
+                  <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button class="btn-outline-hard" type="submit">Sair da conta</button>
+                  </form>
+                </div>
+                <p class="auth__note">E-mail errado? <a href="{{ route('profile.edit') }}">Corrigir cadastro</a>.</p>
+              </div>
           @endif
 
         </div>

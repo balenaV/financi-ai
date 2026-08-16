@@ -27,8 +27,8 @@ class RegistrationTest extends TestCase
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'SenhaForte@123',
+            'password_confirmation' => 'SenhaForte@123',
             'terms' => '1',
         ]);
 
@@ -44,8 +44,8 @@ class RegistrationTest extends TestCase
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'no-terms@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'SenhaForte@123',
+            'password_confirmation' => 'SenhaForte@123',
         ]);
 
         $response->assertSessionHasErrorsIn('registro', ['terms']);
@@ -63,8 +63,8 @@ class RegistrationTest extends TestCase
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'robot@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'SenhaForte@123',
+            'password_confirmation' => 'SenhaForte@123',
             'terms' => '1',
             'cf-turnstile-response' => 'invalid-token',
         ]);
@@ -85,8 +85,8 @@ class RegistrationTest extends TestCase
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'verified-human@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'SenhaForte@123',
+            'password_confirmation' => 'SenhaForte@123',
             'terms' => '1',
             'cf-turnstile-response' => 'valid-token',
         ]);
@@ -103,8 +103,8 @@ class RegistrationTest extends TestCase
         $this->post('/register', [
             'name' => 'Blocked User',
             'email' => 'blocked@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'SenhaForte@123',
+            'password_confirmation' => 'SenhaForte@123',
         ])->assertNotFound();
 
         $this->assertDatabaseMissing('users', ['email' => 'blocked@example.com']);

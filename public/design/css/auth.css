@@ -282,3 +282,48 @@
   color: rgba(255, 246, 230, 0.6);
   margin-top: 3px;
 }
+
+/* ---------- Medidor de senha forte ---------- */
+.pw-meter { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 2px; }
+.pw-meter[hidden] { display: none; }
+.pw-meter__bars { display: flex; gap: 5px; flex: 1; }
+.pw-meter__bar { height: 5px; flex: 1; border-radius: 3px; background: var(--line); transition: background 220ms ease; }
+.pw-meter__label { flex-shrink: 0; font-size: 12.5px; font-weight: 800; letter-spacing: 0.02em; }
+
+.pw-rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 14px; margin: 4px 0 0; padding: 0; list-style: none; }
+.pw-rules[hidden] { display: none; }
+.pw-rule { display: flex; align-items: center; gap: 8px; font-size: 12.5px; line-height: 1.35; font-weight: 600; color: var(--muted); transition: color 200ms ease; }
+.pw-rule__mark { flex-shrink: 0; width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 800; border: 1.5px solid var(--line); background: transparent; color: var(--muted); transition: background 200ms ease, border-color 200ms ease, color 200ms ease; }
+.pw-rule.is-ok { color: var(--fg); }
+.pw-rule.is-ok .pw-rule__mark { color: #fff; }
+
+.pw-error { font-size: 12.5px; line-height: 1.4; font-weight: 600; color: #C0392B; margin: 2px 0 0; }
+.pw-error[hidden] { display: none; }
+.pw-confirm { font-size: 12.5px; line-height: 1.4; font-weight: 600; }
+.pw-confirm[hidden] { display: none; }
+.pw-confirm.is-ok { color: #137A4A; }
+.pw-confirm.is-bad { color: #C0392B; }
+.input.is-ok { border-color: #2E9E5B; }
+.input.is-bad { border-color: #C0392B; }
+.btn-primary[disabled] { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: 0 0 0 var(--hard); }
+
+/* ---------- Telas de recuperação / verificação ---------- */
+.auth-step { display: grid; gap: 16px; }
+.auth-step[hidden] { display: none; }
+.auth-form--verificar { display: grid; gap: 16px; }
+.auth-form--verificar[data-state="hidden"] { display: none; }
+
+.notice { display: flex; align-items: flex-start; gap: 13px; padding: 16px 18px; border: 1.5px solid var(--hard); border-radius: 13px; background: var(--surface-2); }
+.notice__icon { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(56,193,114,0.16); color: #137A4A; font-size: 15px; font-weight: 800; }
+.notice__body { display: grid; gap: 3px; min-width: 0; }
+.notice__title { font-size: 14.5px; font-weight: 700; }
+.notice__text { font-size: 13px; line-height: 1.5; color: var(--muted); }
+
+.auth-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.auth-actions > * { flex: 1; min-width: 150px; }
+
+.auth-steps { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.auth-steps__item { display: flex; align-items: flex-start; gap: 11px; font-size: 13.5px; line-height: 1.5; color: var(--muted); }
+.auth-steps__num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--line); font-size: 11.5px; font-weight: 800; color: var(--fg); }
+
+.link-back { display: inline-flex; align-items: center; gap: 8px; justify-self: start; font-size: 13.5px; font-weight: 700; }
