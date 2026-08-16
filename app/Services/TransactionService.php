@@ -10,6 +10,8 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Support\Money;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -21,6 +23,39 @@ class TransactionService
         private readonly TransferService $transfers,
         private readonly CreditCardService $creditCards,
     ) {}
+
+    /**
+     * Lançamentos filtrados e paginados — usada tanto pela página dedicada
+     * de Transações quanto pela aba equivalente dentro do painel.
+     *
+     * @param  array{start_date?: string, end_date?: string, type?: string, status?: string, category_id?: int, account_id?: int, min_amount?: string, max_amount?: string, search?: string, sort?: string}  $filters
+     */
+    public function filtered(User $user, array $filters, int $perPage = 8, string $pageName = 'page'): LengthAwarePaginator
+    {
+        $query = $user->transactions()->with([
+            'account', 'destinationAccount', 'category', 'creditCard', 'creditCardBill',
+        ]);
+
+        $query
+            ->when($filters['start_date'] ?? null, fn (Builder $q, $date) => $q->whereDate('competence_date', '>=', $date))
+            ->when($filters['end_date'] ?? null, fn (Builder $q, $date) => $q->whereDate('competence_date', '<=', $date))
+            ->when($filters['type'] ?? null, fn (Builder $q, $type) => $q->where('type', $type))
+            ->when($filters['status'] ?? null, fn (Builder $q, $status) => is_array($status) ? $q->whereIn('status', $status) : $q->where('status', $status))
+            ->when($filters['category_id'] ?? null, fn (Builder $q, $id) => $q->where('category_id', $id))
+            ->when($filters['account_id'] ?? null, fn (Builder $q, $id) => $q->where(fn ($inner) => $inner->where('account_id', $id)->orWhere('destination_account_id', $id)))
+            ->when($filters['min_amount'] ?? null, fn (Builder $q, $value) => $q->where('amount', '>=', $value))
+            ->when($filters['max_amount'] ?? null, fn (Builder $q, $value) => $q->where('amount', '<=', $value))
+            ->when($filters['search'] ?? null, fn (Builder $q, $search) => $q->whereRaw('LOWER(description) LIKE ?', ['%'.mb_strtolower($search).'%']));
+
+        match ($filters['sort'] ?? 'newest') {
+            'oldest' => $query->oldest('competence_date'),
+            'amount_desc' => $query->orderByDesc('amount'),
+            'amount_asc' => $query->orderBy('amount'),
+            default => $query->latest('competence_date')->latest('id'),
+        };
+
+        return $query->paginate($perPage, pageName: $pageName)->withQueryString();
+    }
 
     public function create(User $user, array $data): Collection
     {

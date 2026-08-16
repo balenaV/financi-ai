@@ -1,4 +1,5 @@
 @php
+    use App\Enums\DashboardSection;
     use App\Support\Money;
     use Illuminate\Support\Str;
 
@@ -7,6 +8,10 @@
     $hide = (bool) $userSettings->hide_values;
     $summary = $dashboard['summary'];
     $charts = $dashboard['charts'];
+
+    $activeSectionKeys = count($userSettings->sections ?? []) === 5 ? $userSettings->sections : DashboardSection::defaults();
+    $activeSections = collect($activeSectionKeys)->map(fn ($key) => DashboardSection::tryFrom($key))->filter()->values();
+    $moreSections = collect(DashboardSection::cases())->reject(fn ($section) => $activeSections->contains($section))->values();
 
     $categoryIcons = [
         'Alimentação' => 'fa-utensils', 'Moradia' => 'fa-house', 'Transporte' => 'fa-car',
@@ -138,13 +143,25 @@
     <header class="topbar">
       <div class="topbar__inner">
 
-        <nav class="tabs-nav">
+        <nav class="tabs-nav" data-tabs-nav>
           <button class="tab-btn" type="button" data-goto="visao" aria-current="page"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i>Visão geral</button>
-          <button class="tab-btn" type="button" data-goto="transacoes"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i>Transações</button>
-          <button class="tab-btn" type="button" data-goto="assinaturas"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Assinaturas</button>
-          <button class="tab-btn" type="button" data-goto="planejamento"><i class="fa-regular fa-calendar-days" aria-hidden="true"></i>Planejamento</button>
-          <button class="tab-btn" type="button" data-goto="contas"><i class="fa-solid fa-building-columns" aria-hidden="true"></i>Contas</button>
-          <button class="tab-btn" type="button" data-goto="cartoes"><i class="fa-regular fa-credit-card" aria-hidden="true"></i>Cartões</button>
+          <span data-tabs-slot>
+            @foreach($activeSections as $section)
+              <button class="tab-btn" type="button" data-goto="{{ $section->value }}"><i class="{{ $section->icon() }}" aria-hidden="true"></i>{{ $section->label() }}</button>
+            @endforeach
+          </span>
+          @if(count($moreSections) > 0)
+            <div class="dropdown tabs-more" data-dropdown>
+              <button class="tab-btn tab-btn--more" type="button" aria-haspopup="menu" aria-expanded="false" data-dropdown-btn>
+                <i class="fa-solid fa-ellipsis" aria-hidden="true"></i>Mais opções<i class="fa-solid fa-chevron-down dropdown__chevron" aria-hidden="true"></i>
+              </button>
+              <div class="dropdown__menu dropdown__menu--right" role="menu" hidden>
+                @foreach($moreSections as $section)
+                  <button class="dropdown__opt" type="button" role="menuitem" data-goto="{{ $section->value }}"><i class="{{ $section->icon() }}" aria-hidden="true"></i>{{ $section->label() }}</button>
+                @endforeach
+              </div>
+            </div>
+          @endif
         </nav>
 
         <div class="topbar__actions">
@@ -341,43 +358,120 @@
 
         <!-- ============ Transações ============ -->
         <section class="page stack" data-page="transacoes" hidden>
+          @php
+              $txFiltrosAtivos = collect($filters)->only(['tx_search', 'tx_type', 'tx_category', 'tx_account', 'tx_status'])->filter()->isNotEmpty();
+              $txPersistFilters = collect($filters)->only(['month', 'year', 'account_id', 'start_date', 'end_date'])->all();
+          @endphp
 
-          <div class="filters" data-enter>
-            <label class="search-field">
-              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-              <input type="search" placeholder="Buscar por descrição" aria-label="Buscar por descrição">
-            </label>
-            <x-dropdown name="_tipo_lancamento_display" icon="fa-solid fa-arrow-right-arrow-left" :block="false" :options="[
-                ['value' => 'todos', 'label' => 'Entradas e saídas'],
-                ['value' => 'entradas', 'label' => 'Somente entradas'],
-                ['value' => 'saidas', 'label' => 'Somente saídas'],
-                ['value' => 'pendentes', 'label' => 'Pendentes'],
-            ]" />
-            <x-dropdown name="_categoria_display" icon="fa-solid fa-tag" :block="false" :options="collect([['value' => '', 'label' => 'Todas as categorias']])->concat($categories->map(fn ($category) => ['value' => $category->id, 'label' => $category->name]))" />
-          </div>
+          <form method="GET" action="{{ route('dashboard') }}#transacoes" data-tx-filters>
+            @foreach($txPersistFilters as $key => $value)
+              <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+            @endforeach
 
-          @forelse($dashboard['transactions_by_day'] as $date => $items)
-            <section class="list-card" data-enter>
-              @php
-                $dayTotal = $items->reduce(fn ($t, $i) => $i->type->value === 'income' ? bcadd($t, $i->amount, 2) : bcsub($t, $i->amount, 2), '0.00');
-              @endphp
-              <div class="list-card__head">
-                <span class="list-card__title">{{ \Illuminate\Support\Carbon::parse($date)->isToday() ? 'Hoje · ' : (\Illuminate\Support\Carbon::parse($date)->isYesterday() ? 'Ontem · ' : '') }}{{ \Illuminate\Support\Carbon::parse($date)->translatedFormat('j \d\e F') }}</span>
-                <span class="list-card__total" data-money>{{ bccomp($dayTotal, '0', 2) >= 0 ? '+ ' : '− ' }}{{ Money::format(ltrim($dayTotal, '-'), $hide) }}</span>
-              </div>
-              @foreach($items as $t)
-                <div class="row">
-                  <span class="row__icon"><i class="fa-solid {{ $categoryIcons[$t->category?->name] ?? ($t->type->value === 'income' ? 'fa-briefcase' : 'fa-receipt') }}" aria-hidden="true"></i></span>
-                  <span class="row__body"><span class="row__name">{{ $t->description }}</span><span class="row__detail">{{ $t->category?->name ?? $t->type->label() }} · {{ $t->account?->name }}</span></span>
-                  <span class="row__value {{ $t->type->value === 'income' ? 'row__value--accent' : '' }}" data-money>{{ $t->type->value === 'income' ? '+ ' : '− ' }}{{ Money::format($t->amount, $hide) }}</span>
+            <div class="filters" data-enter>
+              <label class="search-field">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" name="tx_search" value="{{ $filters['tx_search'] ?? '' }}" placeholder="Buscar por descrição ou categoria" aria-label="Buscar por descrição ou categoria" data-tx-search>
+              </label>
+              <x-dropdown name="tx_type" icon="fa-solid fa-arrow-right-arrow-left" :block="false" :selected="$filters['tx_type'] ?? ''" :options="[
+                  ['value' => '', 'label' => 'Entradas e saídas'],
+                  ['value' => 'income', 'label' => 'Somente entradas'],
+                  ['value' => 'expense', 'label' => 'Somente saídas'],
+                  ['value' => 'pending', 'label' => 'Pendentes'],
+              ]" />
+              <x-dropdown name="tx_category" icon="fa-solid fa-tag" :block="false" :selected="$filters['tx_category'] ?? ''" :options="collect([['value' => '', 'label' => 'Todas as categorias']])->concat($categories->map(fn ($category) => ['value' => $category->id, 'label' => $category->name]))" />
+            </div>
+
+            <div class="filters filters--second" data-enter>
+              <x-dropdown name="tx_account" icon="fa-solid fa-building-columns" :block="false" :selected="$filters['tx_account'] ?? ''" :options="collect([['value' => '', 'label' => 'Todas as contas']])->concat($dashboard['accounts']->map(fn ($row) => ['value' => $row['account']->id, 'label' => $row['account']->name]))" />
+              <x-dropdown name="tx_status" icon="fa-regular fa-circle-check" :block="false" :selected="$filters['tx_status'] ?? ''" :options="[
+                  ['value' => '', 'label' => 'Todos os status'],
+                  ['value' => 'completed', 'label' => 'Efetivada'],
+                  ['value' => 'pending', 'label' => 'Pendente'],
+                  ['value' => 'cancelled', 'label' => 'Cancelada'],
+              ]" />
+              @if($txFiltrosAtivos)
+                <a class="link-clear" href="{{ route('dashboard', array_merge($txPersistFilters, [])) }}#transacoes"><i class="fa-solid fa-xmark" aria-hidden="true"></i>Limpar filtros</a>
+              @endif
+              <span class="filters__spacer"></span>
+              <a class="btn-outline-hard btn-outline--sm" href="{{ route('transactions.export', array_filter(['start_date' => $dashboard['period']['start']->toDateString(), 'end_date' => $dashboard['period']['end']->toDateString()])) }}"><i class="fa-solid fa-file-csv" aria-hidden="true"></i>Exportar CSV</a>
+              <button class="btn-primary btn-primary--sm" type="button" data-modal-open="transacao"><i class="fa-solid fa-plus" aria-hidden="true"></i>Nova transação</button>
+            </div>
+          </form>
+
+          <section class="tx-table" data-enter>
+            <div class="tx-row tx-row--head">
+              <span>Data</span>
+              <span>Descrição</span>
+              <span>Status</span>
+              <span class="is-right">Valor</span>
+              <span></span>
+            </div>
+
+            <div>
+              @foreach($transactionsPage as $t)
+                <div class="tx-row">
+                  <span class="tx-date"><span class="tx-date__day">{{ $t->competence_date->format('d') }}</span><span class="tx-date__month">{{ $t->competence_date->translatedFormat('M') }}</span></span>
+                  <span class="tx-desc">
+                    <span class="row__icon"><i class="fa-solid {{ $categoryIcons[$t->category?->name] ?? ($t->type->value === 'income' ? 'fa-briefcase' : 'fa-receipt') }}" aria-hidden="true"></i></span>
+                    <span class="tx-desc__body">
+                      <span class="tx-desc__name {{ $t->status->value === 'cancelled' ? 'is-void' : '' }}">{{ $t->description }}</span>
+                      <span class="tx-desc__detail">{{ $t->category?->name ?? $t->type->label() }} · {{ $t->account?->name ?? $t->creditCard?->name }}</span>
+                    </span>
+                  </span>
+                  <span>
+                    @if($t->status->value === 'cancelled')
+                      <span class="tx-badge is-void"><i class="fa-solid fa-ban" aria-hidden="true"></i>Cancelada</span>
+                    @elseif($t->status->value === 'completed')
+                      <span class="tx-badge is-done"><i class="fa-solid fa-check" aria-hidden="true"></i>Efetivada</span>
+                    @else
+                      <span class="tx-badge is-pending"><i class="fa-regular fa-clock" aria-hidden="true"></i>Pendente</span>
+                    @endif
+                  </span>
+                  <span class="tx-value {{ $t->type->value === 'income' ? 'is-in' : '' }}" data-money>{{ $t->type->value === 'income' ? '+ ' : '− ' }}{{ Money::format($t->amount, $hide) }}</span>
+                  <span class="menu" data-menu>
+                    <button class="btn-icon btn-icon--sm" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Ações da transação" data-menu-btn><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+                    <div class="menu__list" role="menu" hidden data-menu-list>
+                      <a class="menu__item" role="menuitem" href="{{ route('dashboard', array_merge($filters, ['edit_transaction' => $t->id])) }}#transacoes"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i>Editar</a>
+                      <form method="POST" action="{{ route('transactions.duplicate', $t) }}">
+                        @csrf
+                        <button class="menu__item" type="submit" role="menuitem"><i class="fa-regular fa-copy" aria-hidden="true"></i>Duplicar</button>
+                      </form>
+                      <a class="menu__item" role="menuitem" href="{{ route('transactions.export', ['id' => $t->id]) }}"><i class="fa-solid fa-file-csv" aria-hidden="true"></i>Exportar CSV</a>
+                      @if($t->status->value !== 'cancelled')
+                        <form method="POST" action="{{ route('transactions.cancel', $t) }}">
+                          @csrf @method('PATCH')
+                          <button class="menu__item menu__item--danger menu__item--sep" type="submit" role="menuitem"><i class="fa-solid fa-ban" aria-hidden="true"></i>Cancelar</button>
+                        </form>
+                      @endif
+                    </div>
+                  </span>
                 </div>
               @endforeach
-            </section>
-          @empty
-            <section class="empty-state" data-enter>
-              <p>Nenhuma transação efetivada ainda. <button class="link-btn" type="button" data-modal-open="transacao">Registrar a primeira.</button></p>
-            </section>
-          @endforelse
+            </div>
+
+            <div class="tx-empty" @unless($transactionsPage->isEmpty()) hidden @endunless>
+              <p>Nenhuma transação encontrada com esses filtros.</p>
+              @if($txFiltrosAtivos)
+                <a class="btn-outline-hard btn-outline--sm" href="{{ route('dashboard', array_merge($txPersistFilters, [])) }}#transacoes">Limpar filtros</a>
+              @endif
+            </div>
+
+            @if($transactionsPage->total() > 0)
+              <div class="tx-foot">
+                <span class="tx-foot__summary">Mostrando {{ $transactionsPage->firstItem() }}–{{ $transactionsPage->lastItem() }} de {{ $transactionsPage->total() }} {{ $transactionsPage->total() === 1 ? 'transação' : 'transações' }}</span>
+                <span class="tx-pager">
+                  <a class="btn-icon btn-icon--sm" aria-label="Página anterior" href="{{ $transactionsPage->previousPageUrl() ?? '#transacoes' }}#transacoes" style="{{ $transactionsPage->onFirstPage() ? 'opacity:.4;pointer-events:none;' : '' }}"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a>
+                  <span>
+                    @for($p = 1; $p <= $transactionsPage->lastPage(); $p++)
+                      <a class="tx-page {{ $p === $transactionsPage->currentPage() ? 'is-current' : '' }}" href="{{ $transactionsPage->url($p) }}#transacoes">{{ $p }}</a>
+                    @endfor
+                  </span>
+                  <a class="btn-icon btn-icon--sm" aria-label="Próxima página" href="{{ $transactionsPage->nextPageUrl() ?? '#transacoes' }}#transacoes" style="{{ $transactionsPage->hasMorePages() ? '' : 'opacity:.4;pointer-events:none;' }}"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
+                </span>
+              </div>
+            @endif
+          </section>
         </section>
 
         <!-- ============ Assinaturas ============ -->
@@ -560,7 +654,7 @@
               <div class="history__head">
                 <span class="history__title-wrap">
                   <span class="history__title">Histórico · {{ $row['account']->name }}</span>
-                  <span class="history__sub">{{ $row['account']->type->label() }} · {{ count($row['history']) }} {{ Str::plural('movimentação', count($row['history'])) }}</span>
+                  <span class="history__sub">{{ $row['account']->type->label() }} · {{ count($row['history']) }} {{ count($row['history']) === 1 ? 'movimentação' : 'movimentações' }}</span>
                 </span>
                 <span class="history__figures">
                   <span class="account-card__figure">
@@ -937,6 +1031,7 @@
 
             <nav class="settings__nav">
               <a href="#cfg-perfil"><i class="fa-regular fa-user" aria-hidden="true"></i>Perfil</a>
+              <a href="#cfg-secoes"><i class="fa-solid fa-table-columns" aria-hidden="true"></i>Seções</a>
               <a href="#cfg-preferencias"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Preferências</a>
               <a href="#cfg-notificacoes"><i class="fa-regular fa-bell" aria-hidden="true"></i>Notificações</a>
               <a href="#cfg-seguranca"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>Segurança</a>
@@ -988,6 +1083,50 @@
                   </div>
                   <div class="form-foot form-foot--bare">
                     <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar perfil</button>
+                  </div>
+                </section>
+              </form>
+
+              <form method="POST" action="{{ route('settings.sections') }}" data-sections-form>
+                @csrf
+                @method('PATCH')
+                <section class="panel settings__block" id="cfg-secoes">
+                  <div>
+                    <h2 class="settings__title">Seções da barra</h2>
+                    <p class="settings__sub">Escolha as 5 seções que ficam visíveis na barra do painel. As demais continuam acessíveis em "Mais opções".</p>
+                  </div>
+
+                  <div class="sections-head">
+                    <span class="sections-count" data-sections-count>{{ $activeSections->count() }} de 5 escolhidas</span>
+                    <span class="sections-hint" data-sections-hint>Barra completa. Desmarque uma para trocar.</span>
+                  </div>
+
+                  <div class="sections-grid" data-sections-grid>
+                    <label class="section-opt is-on is-locked">
+                      <i class="fa-solid fa-gauge-high section-opt__icon" aria-hidden="true"></i>
+                      <span class="section-opt__body">
+                        <span class="section-opt__title">Visão geral</span>
+                        <span class="section-opt__text">Sempre visível — é a tela inicial do painel.</span>
+                      </span>
+                      <input class="checkbox" type="checkbox" checked disabled>
+                    </label>
+                    @foreach(\App\Enums\DashboardSection::cases() as $section)
+                      @php $ligado = in_array($section->value, $activeSectionKeys, true); @endphp
+                      <label class="section-opt {{ $ligado ? 'is-on' : '' }}" data-section-opt>
+                        <i class="{{ $section->icon() }} section-opt__icon" aria-hidden="true"></i>
+                        <span class="section-opt__body">
+                          <span class="section-opt__title">{{ $section->label() }}</span>
+                          <span class="section-opt__text" data-section-text>{{ $ligado ? 'Aparece na barra de seções.' : 'Fica em "Mais opções".' }}</span>
+                        </span>
+                        <input class="checkbox" type="checkbox" name="sections[]" value="{{ $section->value }}" {{ $ligado ? 'checked' : '' }} data-section>
+                      </label>
+                    @endforeach
+                  </div>
+                  @error('sections')<span class="field-error">{{ $message }}</span>@enderror
+
+                  <div class="form-foot">
+                    <button class="btn-ghost" type="reset" hidden data-sections-undo>Desfazer</button>
+                    <button class="btn-primary btn-primary--sm" type="submit" data-sections-save><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar seções</button>
                   </div>
                 </section>
               </form>
@@ -1128,14 +1267,23 @@
 @endphp
 
 <!-- ============ Modal: nova transação ============ -->
-<div class="modal" data-modal="transacao" hidden>
+<div class="modal" data-modal="transacao" @unless($editTransaction) hidden @endunless>
   <div class="modal__veil" data-modal-close></div>
   <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-transacao-titulo">
-    <form method="POST" action="{{ route('transactions.store') }}">
+    @php
+      $txTipoAtual = old('type', $editTransaction->type->value ?? 'expense');
+      $txContaAtual = $editTransaction?->payment_channel === 'credit_card' ? null : ($editTransaction?->account_id ?? $dashboard['accounts']->first()['account']->id ?? null);
+      $txCartaoAtual = $editTransaction?->payment_channel === 'credit_card' ? $editTransaction->credit_card_id : null;
+      $txContaLabel = $editTransaction
+        ? ($editTransaction->payment_channel === 'credit_card' ? $editTransaction->creditCard?->name.' (cartão)' : $editTransaction->account?->name)
+        : ($dashboard['accounts']->first()['account']->name ?? 'Selecione');
+    @endphp
+    <form method="POST" action="{{ $editTransaction ? route('transactions.update', $editTransaction) : route('transactions.store') }}">
       @csrf
+      @if($editTransaction) @method('PATCH') @endif
       <div class="modal__head">
         <div>
-          <h2 class="modal__title" id="modal-transacao-titulo">Nova transação</h2>
+          <h2 class="modal__title" id="modal-transacao-titulo">{{ $editTransaction ? 'Editar transação' : 'Nova transação' }}</h2>
           <p class="modal__sub">Um lançamento avulso, que não veio de extrato.</p>
         </div>
         <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
@@ -1145,11 +1293,11 @@
         <div class="field">
           <span class="field__label">Tipo</span>
           <div class="chip-row" data-chip-group>
-            <button class="chip" type="button" data-value="income"><i class="fa-solid fa-arrow-down-long" aria-hidden="true"></i>Entrada</button>
-            <button class="chip is-selected" type="button" data-value="expense"><i class="fa-solid fa-arrow-up-long" aria-hidden="true"></i>Saída</button>
-            <button class="chip" type="button" data-value="transfer"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i>Transferência</button>
+            <button class="chip {{ $txTipoAtual === 'income' ? 'is-selected' : '' }}" type="button" data-value="income"><i class="fa-solid fa-arrow-down-long" aria-hidden="true"></i>Entrada</button>
+            <button class="chip {{ $txTipoAtual === 'expense' ? 'is-selected' : '' }}" type="button" data-value="expense"><i class="fa-solid fa-arrow-up-long" aria-hidden="true"></i>Saída</button>
+            <button class="chip {{ $txTipoAtual === 'transfer' ? 'is-selected' : '' }}" type="button" data-value="transfer"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i>Transferência</button>
           </div>
-          <input type="hidden" name="type" value="expense" data-chip-input>
+          <input type="hidden" name="type" value="{{ $txTipoAtual }}" data-chip-input>
         </div>
 
         <div class="field-row">
@@ -1157,26 +1305,26 @@
             <span class="field__label">Valor</span>
             <span class="input-group">
               <span class="input-group__prefix">R$</span>
-              <input class="input-group__input input-group__input--num" type="text" inputmode="decimal" name="amount" placeholder="0,00" required>
+              <input class="input-group__input input-group__input--num" type="text" inputmode="decimal" name="amount" placeholder="0,00" value="{{ old('amount', $editTransaction ? number_format((float) $editTransaction->amount, 2, ',', '.') : '') }}" required>
             </span>
             @error('amount')<span class="field-error">{{ $message }}</span>@enderror
           </label>
           <div class="field">
             <span class="field__label">Data</span>
-            <x-datepicker name="competence_date" :value="now()->toDateString()" />
+            <x-datepicker name="competence_date" :value="old('competence_date', $editTransaction?->competence_date?->toDateString() ?? now()->toDateString())" />
           </div>
         </div>
 
         <label class="field">
           <span class="field__label">Descrição</span>
-          <input class="input" type="text" name="description" placeholder="Ex.: Mercado da esquina" required>
+          <input class="input" type="text" name="description" placeholder="Ex.: Mercado da esquina" value="{{ old('description', $editTransaction?->description ?? '') }}" required>
           @error('description')<span class="field-error">{{ $message }}</span>@enderror
         </label>
 
         <div class="field-row">
           <div class="field">
             <span class="field__label">Categoria</span>
-            <x-dropdown name="category_id" icon="fa-solid fa-tag" up
+            <x-dropdown name="category_id" icon="fa-solid fa-tag" up :selected="old('category_id', $editTransaction?->category_id)"
                 :options="$categories->map(fn ($c) => ['value' => $c->id, 'label' => $c->name])" />
             @error('category_id')<span class="field-error">{{ $message }}</span>@enderror
           </div>
@@ -1185,31 +1333,31 @@
             <div class="dropdown dropdown--block dropdown--up" data-dropdown data-account-or-card>
               <button class="dropdown__btn" type="button" aria-haspopup="listbox" aria-expanded="false" data-dropdown-btn>
                 <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
-                <span data-dropdown-label>{{ $dashboard['accounts']->first()['account']->name ?? 'Selecione' }}</span>
+                <span data-dropdown-label>{{ $txContaLabel }}</span>
                 <i class="fa-solid fa-chevron-down dropdown__chevron" aria-hidden="true"></i>
               </button>
               <div class="dropdown__menu" role="listbox" hidden>
                 @foreach($dashboard['accounts'] as $row)
-                  <button class="dropdown__opt {{ $loop->first ? 'is-selected' : '' }}" type="button" role="option" data-account-id="{{ $row['account']->id }}">{{ $row['account']->name }}<i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                  <button class="dropdown__opt {{ $txContaAtual === $row['account']->id ? 'is-selected' : '' }}" type="button" role="option" data-account-id="{{ $row['account']->id }}">{{ $row['account']->name }}<i class="fa-solid fa-check" aria-hidden="true"></i></button>
                 @endforeach
                 @foreach($dashboard['credit_cards'] as $row)
-                  <button class="dropdown__opt" type="button" role="option" data-credit-card-id="{{ $row['card']->id }}">{{ $row['card']->name }} (cartão)<i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                  <button class="dropdown__opt {{ $txCartaoAtual === $row['card']->id ? 'is-selected' : '' }}" type="button" role="option" data-credit-card-id="{{ $row['card']->id }}">{{ $row['card']->name }} (cartão)<i class="fa-solid fa-check" aria-hidden="true"></i></button>
                 @endforeach
               </div>
             </div>
-            <input type="hidden" name="payment_channel" value="account" data-payment-channel>
-            <input type="hidden" name="account_id" value="{{ $defaultAccountId }}" data-account-id-field>
-            <input type="hidden" name="credit_card_id" value="" data-credit-card-id-field>
+            <input type="hidden" name="payment_channel" value="{{ $editTransaction->payment_channel ?? 'account' }}" data-payment-channel>
+            <input type="hidden" name="account_id" value="{{ $txContaAtual }}" data-account-id-field>
+            <input type="hidden" name="credit_card_id" value="{{ $txCartaoAtual }}" data-credit-card-id-field>
             @error('account_id')<span class="field-error">{{ $message }}</span>@enderror
             @error('credit_card_id')<span class="field-error">{{ $message }}</span>@enderror
           </div>
         </div>
-        <input type="hidden" name="status" value="completed">
+        <input type="hidden" name="status" value="{{ $editTransaction->status->value ?? 'completed' }}">
       </div>
 
       <div class="modal__foot">
         <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
-        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar transação</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ $editTransaction ? 'Salvar alterações' : 'Salvar transação' }}</button>
       </div>
     </form>
   </div>

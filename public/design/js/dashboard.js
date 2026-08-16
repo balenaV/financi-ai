@@ -19,13 +19,20 @@
     visao: ['Visão geral', 'Seu panorama financeiro, sem ruído.'],
     config: ['Configurações', 'Perfil, preferências e segurança da sua conta.'],
     novaConta: ['Nova conta manual', 'Uma conta que você controla por aqui, sem extrato.'],
-    transacoes: ['Transações', 'Tudo o que entrou e saiu, agrupado por dia.'],
+    transacoes: ['Transações', 'Tudo o que entrou e saiu, com busca e filtros.'],
     assinaturas: ['Assinaturas', 'O que se repete todo mês, mesmo sem você lembrar.'],
     planejamento: ['Planejamento', 'O que você espera receber e pagar adiante.'],
     contas: ['Contas', 'Saldos calculados a partir das suas movimentações.'],
     cartoes: ['Cartões', 'Faturas e limite, em um lugar só.'],
     chat: ['Capí', 'Seu assistente financeiro.'],
-    agentes: ['Agentes', 'Personagens temáticos para cada área da sua vida.']
+    agentes: ['Agentes', 'Personagens temáticos para cada área da sua vida.'],
+    dividas: ['Dívidas', 'Parcelas e faturas que ainda vão pesar no bolso.'],
+    investimentos: ['Investimentos', 'Onde o seu dinheiro está rendendo.'],
+    orcamentos: ['Orçamentos', 'Quanto você planejou gastar em cada categoria.'],
+    metas: ['Metas', 'O que você está guardando para conquistar.'],
+    relatorios: ['Relatórios', 'Seus números, mês a mês.'],
+    categorias: ['Categorias', 'Como você organiza receitas e despesas.'],
+    previsao: ['Previsão', 'Os próximos meses, projetados a partir do que você já sabe.']
   };
 
   var COM_PERIODO = ['visao', 'transacoes', 'assinaturas'];
@@ -42,8 +49,9 @@
       if (b.dataset.goto === aba) b.setAttribute('aria-current', 'page');
       else b.removeAttribute('aria-current');
     });
-    if (titulo) titulo.textContent = META[aba][0];
-    if (subtitulo) subtitulo.textContent = META[aba][1];
+    var meta = META[aba] || ['', ''];
+    if (titulo) titulo.textContent = meta[0];
+    if (subtitulo) subtitulo.textContent = meta[1];
     if (periodo) periodo.hidden = COM_PERIODO.indexOf(aba) === -1;
     animarEntrada();
   }
@@ -650,4 +658,86 @@
       sincronizarCabecalho(painelNav);
     }
   });
+})();
+
+/* ======================================================================
+   Configurações › Seções — trava de exatamente 5 escolhidas.
+   As caixas já são inputs reais de um <form> (data-sections-form); o envio
+   em si é um POST normal. O JS só cuida da trava visual: desabilita as
+   não marcadas ao atingir 5 e libera o botão Salvar só quando há
+   exatamente 5 marcadas e a seleção mudou em relação à salva no servidor.
+   ====================================================================== */
+(function () {
+  var form = document.querySelector('[data-sections-form]');
+  if (!form) return;
+
+  var MAX = 5;
+  var caixas = Array.prototype.slice.call(form.querySelectorAll('[data-section]'));
+  var iniciais = caixas.filter(function (c) { return c.checked; }).map(function (c) { return c.value; }).sort().join('|');
+
+  var contagem = form.querySelector('[data-sections-count]');
+  var dica = form.querySelector('[data-sections-hint]');
+  var salvar = form.querySelector('[data-sections-save]');
+  var desfazer = form.querySelector('[data-sections-undo]');
+
+  function atualizar() {
+    var marcadas = caixas.filter(function (c) { return c.checked; });
+    var cheio = marcadas.length >= MAX;
+
+    caixas.forEach(function (c) {
+      var opt = c.closest('[data-section-opt]');
+      if (!c.checked) c.disabled = cheio;
+      if (!opt) return;
+      opt.classList.toggle('is-on', c.checked);
+      opt.classList.toggle('is-locked', !c.checked && cheio);
+      var texto = opt.querySelector('[data-section-text]');
+      if (texto) {
+        texto.textContent = c.checked
+          ? 'Aparece na barra de seções.'
+          : cheio ? 'Barra cheia — desmarque outra para liberar.' : 'Fica em "Mais opções".';
+      }
+    });
+
+    if (contagem) contagem.textContent = marcadas.length + ' de ' + MAX + ' escolhidas';
+    if (contagem) contagem.classList.toggle('is-full', cheio);
+    if (dica) {
+      dica.textContent = cheio
+        ? 'Barra completa. Desmarque uma para trocar.'
+        : 'Escolha ' + (MAX - marcadas.length) + ' seção(ões) para poder salvar.';
+    }
+
+    var atual = marcadas.map(function (c) { return c.value; }).sort().join('|');
+    var mudou = atual !== iniciais;
+    if (salvar) salvar.disabled = !(marcadas.length === MAX && mudou);
+    if (desfazer) desfazer.hidden = !mudou;
+  }
+
+  form.addEventListener('change', function (ev) {
+    if (ev.target.closest('[data-section]')) atualizar();
+  });
+  form.addEventListener('reset', function () {
+    setTimeout(atualizar, 0);
+  });
+
+  atualizar();
+})();
+
+/* ======================================================================
+   Transações — filtros submetem de verdade (GET), sem array de exemplo:
+   trocar um dropdown já reenvia o formulário; a busca envia no Enter.
+   ====================================================================== */
+(function () {
+  var form = document.querySelector('[data-tx-filters]');
+  if (!form) return;
+
+  form.querySelectorAll('[data-dropdown] [data-dropdown-input]').forEach(function (hidden) {
+    hidden.addEventListener('change', function () { form.submit(); });
+  });
+
+  var busca = form.querySelector('[data-tx-search]');
+  if (busca) {
+    busca.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') { ev.preventDefault(); form.submit(); }
+    });
+  }
 })();

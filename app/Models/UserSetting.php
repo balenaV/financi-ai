@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['currency', 'timezone', 'financial_month_start_day', 'view_preference', 'theme', 'hide_values', 'confirm_deletion'])]
+#[Fillable(['currency', 'timezone', 'financial_month_start_day', 'view_preference', 'theme', 'hide_values', 'confirm_deletion', 'sections'])]
 class UserSetting extends Model
 {
     protected function casts(): array
@@ -15,6 +15,7 @@ class UserSetting extends Model
             'hide_values' => 'boolean',
             'confirm_deletion' => 'boolean',
             'financial_month_start_day' => 'integer',
+            'sections' => 'array',
         ];
     }
 

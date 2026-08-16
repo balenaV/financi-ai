@@ -71,6 +71,7 @@ Route::middleware(['auth', 'verified', 'audit'])->group(function () {
     Route::patch('/profile/sessions/logout-other', [ProfileController::class, 'logoutOtherSessions'])->middleware('throttle:5,1')->name('profile.logout-other-sessions');
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
+    Route::patch('/settings/sections', [SettingsController::class, 'updateSections'])->name('settings.sections');
     Route::patch('/settings/toggle-values', [SettingsController::class, 'toggleValues'])->name('settings.toggle-values');
     Route::patch('/settings/toggle-theme', [SettingsController::class, 'toggleTheme'])->name('settings.toggle-theme');
 });

@@ -8,7 +8,6 @@ use App\Http\Requests\TransactionRequest;
 use App\Models\Transaction;
 use App\Services\TransactionService;
 use App\Support\Csv;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -16,33 +15,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TransactionController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, TransactionService $service): View
     {
         $filters = $request->only(['start_date', 'end_date', 'type', 'status', 'category_id', 'account_id', 'min_amount', 'max_amount', 'search', 'sort']);
-        $query = $request->user()->transactions()->with([
-            'account', 'destinationAccount', 'category', 'creditCard', 'creditCardBill',
-        ]);
-
-        $query
-            ->when($filters['start_date'] ?? null, fn (Builder $q, $date) => $q->whereDate('competence_date', '>=', $date))
-            ->when($filters['end_date'] ?? null, fn (Builder $q, $date) => $q->whereDate('competence_date', '<=', $date))
-            ->when($filters['type'] ?? null, fn (Builder $q, $type) => $q->where('type', $type))
-            ->when($filters['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
-            ->when($filters['category_id'] ?? null, fn (Builder $q, $id) => $q->where('category_id', $id))
-            ->when($filters['account_id'] ?? null, fn (Builder $q, $id) => $q->where(fn ($inner) => $inner->where('account_id', $id)->orWhere('destination_account_id', $id)))
-            ->when($filters['min_amount'] ?? null, fn (Builder $q, $value) => $q->where('amount', '>=', $value))
-            ->when($filters['max_amount'] ?? null, fn (Builder $q, $value) => $q->where('amount', '<=', $value))
-            ->when($filters['search'] ?? null, fn (Builder $q, $search) => $q->whereRaw('LOWER(description) LIKE ?', ['%'.mb_strtolower($search).'%']));
-
-        match ($filters['sort'] ?? 'newest') {
-            'oldest' => $query->oldest('competence_date'),
-            'amount_desc' => $query->orderByDesc('amount'),
-            'amount_asc' => $query->orderBy('amount'),
-            default => $query->latest('competence_date')->latest('id'),
-        };
 
         return view('transactions.index', [
-            'transactions' => $query->paginate(20)->withQueryString(),
+            'transactions' => $service->filtered($request->user(), $filters, perPage: 8),
             'accounts' => $request->user()->accounts()->orderBy('name')->get(),
             'categories' => $request->user()->categories()->orderBy('name')->get(),
             'filters' => $filters,
@@ -103,6 +81,7 @@ class TransactionController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $transactions = $request->user()->transactions()->with(['account', 'destinationAccount', 'category', 'creditCard'])
+            ->when($request->integer('id'), fn ($q, $id) => $q->where('id', $id))
             ->when($request->start_date, fn ($q, $date) => $q->whereDate('competence_date', '>=', $date))
             ->when($request->end_date, fn ($q, $date) => $q->whereDate('competence_date', '<=', $date))
             ->orderBy('competence_date')->get();

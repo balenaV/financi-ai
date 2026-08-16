@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SettingsRequest;
+use App\Http\Requests\UpdateSectionsRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,6 +27,15 @@ class SettingsController extends Controller
         ]);
 
         return back()->with('success', 'Preferências atualizadas.');
+    }
+
+    public function updateSections(UpdateSectionsRequest $request): RedirectResponse
+    {
+        $request->user()->settings()->updateOrCreate([], [
+            'sections' => $request->validated('sections'),
+        ]);
+
+        return redirect(route('dashboard').'#config')->with('success', 'Seções da barra atualizadas.');
     }
 
     public function toggleValues(Request $request): JsonResponse
