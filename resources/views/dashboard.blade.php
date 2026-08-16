@@ -585,7 +585,7 @@
                 </button>
               </div>
           @else
-              <section class="empty-state" data-enter>
+              <section class="empty-state" data-enter data-cards-empty>
                 <p>Nenhum cartão cadastrado. <button class="link-btn" type="button" data-modal-open="cartao">Adicionar cartão.</button></p>
               </section>
           @endif
