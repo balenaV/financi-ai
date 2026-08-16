@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified', 'audit'])->group(function () {
 
     Route::post('budgets/copy-previous', [BudgetController::class, 'copy'])->name('budgets.copy');
     Route::resource('budgets', BudgetController::class)->except(['create', 'show']);
+    Route::post('goals/{goal}/contribute', [FinancialGoalController::class, 'contribute'])->name('goals.contribute');
     Route::resource('goals', FinancialGoalController::class)->except('show');
 
     Route::get('reports/export/csv', [ReportController::class, 'export'])->name('reports.export');

@@ -38,7 +38,7 @@ class DebtController extends Controller
     {
         $service->create($request->user(), $request->validated());
 
-        return to_route('debts.index')->with('success', 'Dívida e parcelas criadas com sucesso.');
+        return redirect(route('dashboard').'#dividas')->with('success', 'Dívida e parcelas criadas com sucesso.');
     }
 
     public function show(Debt $debt, DebtService $service): View
@@ -68,7 +68,7 @@ class DebtController extends Controller
         unset($data['first_due_date']);
         $debt->update($data);
 
-        return to_route('debts.show', $debt)->with('success', 'Dívida atualizada.');
+        return redirect(route('dashboard').'#dividas')->with('success', 'Dívida atualizada.');
     }
 
     public function pay(Request $request, DebtInstallment $installment, DebtService $service): RedirectResponse

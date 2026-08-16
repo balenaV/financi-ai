@@ -172,7 +172,7 @@
             @endif
           </button>
           <button class="icon-btn" type="button" data-theme-toggle data-toggle-url="{{ route('settings.toggle-theme') }}" aria-label="Alternar tema"><i class="fa-solid {{ $userSettings->theme === 'dark' ? 'fa-sun' : 'fa-moon' }}" aria-hidden="true"></i></button>
-          <button class="icon-btn" type="button" data-toggle-money data-toggle-url="{{ route('settings.toggle-values') }}" aria-label="Mostrar ou ocultar valores" aria-pressed="{{ $hide ? 'true' : 'false' }}"><i class="fa-regular {{ $hide ? 'fa-eye-slash' : 'fa-eye' }}" aria-hidden="true"></i></button>
+          <button class="icon-btn" type="button" data-toggle-money data-toggle-url="{{ route('settings.toggle-values') }}" @if($hide) data-money-reload-on-reveal @endif aria-label="Mostrar ou ocultar valores" aria-pressed="{{ $hide ? 'true' : 'false' }}"><i class="fa-regular {{ $hide ? 'fa-eye-slash' : 'fa-eye' }}" aria-hidden="true"></i></button>
           <button class="btn-add" type="button" data-modal-open="transacao"><i class="fa-solid fa-plus" aria-hidden="true"></i>Nova transação</button>
 
           <div class="notif-panel" data-notif-panel hidden>
@@ -835,6 +835,565 @@
           @endif
         </section>
 
+        <!-- ============ Categorias ============ -->
+        <section class="page stack" data-page="categorias" hidden>
+          @php
+              $catIncomeCount = $dashboard['categories_overview']->where('type', \App\Enums\CategoryType::Income)->count();
+          @endphp
+          <div class="page-bar" data-enter>
+            <span class="page-bar__note">{{ $dashboard['categories_overview']->count() }} {{ $dashboard['categories_overview']->count() === 1 ? 'categoria' : 'categorias' }} · {{ $catIncomeCount }} {{ $catIncomeCount === 1 ? 'de receita' : 'de receita' }}</span>
+            <button class="btn-primary btn-primary--sm" type="button" data-modal-open="categoria"><i class="fa-solid fa-plus" aria-hidden="true"></i>Nova categoria</button>
+          </div>
+
+          <div class="grid-cards">
+            @foreach($dashboard['categories_overview'] as $category)
+              <article class="cat-card" data-enter>
+                <div class="cat-card__head">
+                  <span class="cat-chip" style="background: {{ $category->color }}"><i class="{{ $category->icon }}" aria-hidden="true"></i></span>
+                  <span class="cat-card__body">
+                    <span class="cat-card__name">{{ $category->name }}</span>
+                    <span class="tx-badge {{ $category->type === \App\Enums\CategoryType::Income ? 'is-done' : 'is-void' }}"><i class="fa-solid {{ $category->type === \App\Enums\CategoryType::Income ? 'fa-arrow-down' : 'fa-arrow-up' }}" aria-hidden="true"></i>{{ $category->type->label() }}</span>
+                  </span>
+                  <div class="menu" data-menu>
+                    <button class="btn-icon btn-icon--sm" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Ações" data-menu-btn><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+                    <div class="menu__list" role="menu" hidden data-menu-list>
+                      <a class="menu__item" role="menuitem" href="{{ route('dashboard', array_merge($filters, ['edit_category' => $category->id])) }}#categorias"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i>Editar categoria</a>
+                      <a class="menu__item" role="menuitem" href="{{ route('dashboard', array_merge($filters, ['tx_category' => $category->id])) }}#transacoes"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i>Ver lançamentos</a>
+                      <form method="POST" action="{{ route('categories.destroy', $category) }}">
+                        @csrf @method('DELETE')
+                        <button class="menu__item menu__item--danger menu__item--sep" type="submit" role="menuitem"><i class="fa-regular fa-trash-can" aria-hidden="true"></i>Excluir categoria</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+                <div class="cat-card__foot">{{ $category->transactions_count }} {{ $category->transactions_count === 1 ? 'lançamento' : 'lançamentos' }}</div>
+              </article>
+            @endforeach
+            <button class="add-card" type="button" data-enter data-modal-open="categoria">
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>
+              <span>Nova categoria</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- ============ Orçamentos ============ -->
+        <section class="page stack" data-page="orcamentos" hidden>
+          @php
+              $budMonthDate = \Illuminate\Support\Carbon::create($budgetYear, $budgetMonth)->startOfMonth();
+              $budOrcado = $budgetsPage->reduce(fn ($t, $b) => bcadd($t, $b['budget']->limit_amount, 2), '0.00');
+              $budGasto = $budgetsPage->reduce(fn ($t, $b) => bcadd($t, $b['metrics']['used'], 2), '0.00');
+              $budDisponivel = bcsub($budOrcado, $budGasto, 2);
+          @endphp
+          <div class="page-bar" data-enter>
+            <span class="month-nav">
+              <a class="btn-icon btn-icon--sm" aria-label="Mês anterior" href="{{ route('dashboard', array_merge($filters, ['bud_month' => $budMonthDate->copy()->subMonth()->month, 'bud_year' => $budMonthDate->copy()->subMonth()->year])) }}#orcamentos"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a>
+              <span class="month-nav__label">{{ ucfirst($budMonthDate->translatedFormat('F Y')) }}</span>
+              <a class="btn-icon btn-icon--sm" aria-label="Próximo mês" href="{{ route('dashboard', array_merge($filters, ['bud_month' => $budMonthDate->copy()->addMonth()->month, 'bud_year' => $budMonthDate->copy()->addMonth()->year])) }}#orcamentos"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
+            </span>
+            <span class="page-bar__actions">
+              <form method="POST" action="{{ route('budgets.copy') }}">
+                @csrf
+                <input type="hidden" name="month" value="{{ $budgetMonth }}">
+                <input type="hidden" name="year" value="{{ $budgetYear }}">
+                <button class="btn-outline-hard btn-outline--sm" type="submit"><i class="fa-regular fa-copy" aria-hidden="true"></i>Copiar mês anterior</button>
+              </form>
+              <button class="btn-primary btn-primary--sm" type="button" data-modal-open="orcamento"><i class="fa-solid fa-plus" aria-hidden="true"></i>Novo orçamento</button>
+            </span>
+          </div>
+
+          <div class="grid-3">
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Orçado no mês</div>
+              <div class="kpi__value" data-money>{{ Money::format($budOrcado, $hide) }}</div>
+              <div class="kpi__note">{{ $budgetsPage->count() }} {{ $budgetsPage->count() === 1 ? 'categoria com limite' : 'categorias com limite' }}</div>
+            </article>
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-receipt" aria-hidden="true"></i>Gasto até agora</div>
+              <div class="kpi__value" data-money>{{ Money::format($budGasto, $hide) }}</div>
+              <div class="kpi__note">{{ Money::percentage($budGasto, $budOrcado) }}% do orçamento</div>
+            </article>
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-wallet" aria-hidden="true"></i>Ainda disponível</div>
+              <div class="kpi__value {{ bccomp($budDisponivel, '0', 2) >= 0 ? 'is-positive' : 'is-negative' }}" data-money>{{ Money::format($budDisponivel, $hide) }}</div>
+              <div class="kpi__note">Se o ritmo continuar, {{ bccomp($budDisponivel, '0', 2) >= 0 ? 'sobra' : 'falta' }} no mês</div>
+            </article>
+          </div>
+
+          @if($budgetsPage->isEmpty())
+            <section class="empty-state" data-enter>
+              <p>Nenhum orçamento neste mês. <button class="link-btn" type="button" data-modal-open="orcamento">Criar o primeiro.</button></p>
+            </section>
+          @else
+            <section class="panel budget" data-enter>
+              @foreach($budgetsPage as $row)
+                @php $level = $row['metrics']['level']; @endphp
+                <div class="budget__row">
+                  <div class="budget__head">
+                    <span class="cat-chip cat-chip--sm" style="background: {{ $row['budget']->category->color }}"><i class="{{ $row['budget']->category->icon }}" aria-hidden="true"></i></span>
+                    <span class="budget__name">{{ $row['budget']->category->name }}</span>
+                    @if($level === 'danger')
+                      <span class="tx-badge is-over"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>Estourou o limite</span>
+                    @elseif($level === 'warning')
+                      <span class="tx-badge is-pending"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>Perto do limite</span>
+                    @endif
+                    <span class="budget__figures">
+                      <span class="budget__spent" data-money>{{ Money::format($row['metrics']['used'], $hide) }}</span>
+                      <span class="budget__limit">de <span data-money>{{ Money::format($row['budget']->limit_amount, $hide) }}</span></span>
+                    </span>
+                    <div class="menu" data-menu>
+                      <button class="btn-icon btn-icon--sm" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Ações" data-menu-btn><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+                      <div class="menu__list" role="menu" hidden data-menu-list>
+                        <a class="menu__item" role="menuitem" href="{{ route('dashboard', array_merge($filters, ['edit_budget' => $row['budget']->id])) }}#orcamentos"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i>Editar limite</a>
+                        <a class="menu__item" role="menuitem" href="{{ route('dashboard', array_merge($filters, ['tx_category' => $row['budget']->category_id])) }}#transacoes"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i>Ver lançamentos</a>
+                        <form method="POST" action="{{ route('budgets.destroy', $row['budget']) }}">
+                          @csrf @method('DELETE')
+                          <button class="menu__item menu__item--danger menu__item--sep" type="submit" role="menuitem"><i class="fa-regular fa-trash-can" aria-hidden="true"></i>Remover limite</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="budget__bar-row">
+                    <span class="track"><span class="track__fill {{ $level === 'danger' ? 'is-over' : ($level === 'warning' || $level === 'attention' ? 'is-near' : '') }}" style="width: {{ min(100, $row['metrics']['percentage']) }}%"></span></span>
+                    <span class="budget__pct {{ $level === 'danger' ? 'is-over' : ($level === 'warning' || $level === 'attention' ? 'is-near' : '') }}">{{ str_replace('.', ',', $row['metrics']['percentage']) }}%</span>
+                    <span class="budget__left">{{ bccomp($row['metrics']['remaining'], '0', 2) >= 0 ? 'Faltam' : 'Excedeu' }} <span data-money>{{ Money::format($row['metrics']['remaining'] < 0 ? bcmul($row['metrics']['remaining'], '-1', 2) : $row['metrics']['remaining'], $hide) }}</span></span>
+                  </div>
+                </div>
+              @endforeach
+            </section>
+          @endif
+        </section>
+
+        <!-- ============ Dívidas ============ -->
+        <section class="page stack" data-page="dividas" hidden>
+          @php
+              $debtInstallmentsThisMonth = $dashboard['debts_overview']->flatMap(fn ($row) => $row['debt']->installments)
+                  ->whereIn('status', [\App\Enums\DebtInstallmentStatus::Pending, \App\Enums\DebtInstallmentStatus::Overdue])
+                  ->filter(fn ($installment) => $installment->due_date->isSameMonth(now()))
+                  ->reduce(fn ($t, $installment) => bcadd($t, $installment->amount, 2), '0.00');
+              $defaultPayAccount = $dashboard['accounts']->first()['account'] ?? null;
+          @endphp
+          <div class="grid-3">
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i>Total em aberto</div>
+              <div class="kpi__value" data-money>{{ Money::format($dashboard['debt_summary']['total'], $hide) }}</div>
+              <div class="kpi__note">Parcelas restantes + faturas em aberto</div>
+            </article>
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-regular fa-calendar-days" aria-hidden="true"></i>Parcelas do mês</div>
+              <div class="kpi__value" data-money>{{ Money::format($debtInstallmentsThisMonth, $hide) }}</div>
+              <div class="kpi__note">{{ $dashboard['debts_overview']->count() }} {{ $dashboard['debts_overview']->count() === 1 ? 'dívida ativa' : 'dívidas ativas' }}</div>
+            </article>
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-regular fa-credit-card" aria-hidden="true"></i>Faturas de cartão</div>
+              <div class="kpi__value" data-money>{{ Money::format($dashboard['debt_summary']['cards'], $hide) }}</div>
+              <div class="kpi__note">Cartões em aberto</div>
+            </article>
+          </div>
+
+          <div class="page-bar" data-enter>
+            <span class="page-bar__note">Parcelas são geradas automaticamente na criação da dívida.</span>
+            <button class="btn-primary btn-primary--sm" type="button" data-modal-open="divida"><i class="fa-solid fa-plus" aria-hidden="true"></i>Nova dívida</button>
+          </div>
+
+          @if($dashboard['debts_overview']->isEmpty())
+            <section class="empty-state" data-enter>
+              <p>Nenhuma dívida cadastrada. <button class="link-btn" type="button" data-modal-open="divida">Cadastrar a primeira.</button></p>
+            </section>
+          @else
+            <div class="grid-cards">
+              @foreach($dashboard['debts_overview'] as $row)
+                @php $nextInstallment = $row['summary']['next']; @endphp
+                <article class="goal-card" data-enter data-debt="{{ $row['debt']->id }}">
+                  <div class="goal-card__head">
+                    <span class="row__icon row__icon--lg"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i></span>
+                    <span class="goal-card__body">
+                      <span class="goal-card__name">{{ $row['debt']->name }}</span>
+                      <span class="goal-card__sub">{{ $row['debt']->creditor }} · {{ $row['debt']->installment_count }}x</span>
+                    </span>
+                    <div class="menu" data-menu>
+                      <button class="btn-icon btn-icon--sm" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Ações" data-menu-btn><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+                      <div class="menu__list" role="menu" hidden data-menu-list>
+                        <button class="menu__item" type="button" role="menuitem" data-debt-open="{{ $row['debt']->id }}"><i class="fa-solid fa-list-ol" aria-hidden="true"></i>Ver parcelas</button>
+                        <a class="menu__item" role="menuitem" href="{{ route('dashboard', array_merge($filters, ['edit_debt' => $row['debt']->id])) }}#dividas"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i>Editar dívida</a>
+                        <form method="POST" action="{{ route('debts.destroy', $row['debt']) }}">
+                          @csrf @method('DELETE')
+                          <button class="menu__item menu__item--danger menu__item--sep" type="submit" role="menuitem"><i class="fa-regular fa-circle-check" aria-hidden="true"></i>Encerrar dívida</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="goal-card__value" data-money>{{ Money::format($row['summary']['remaining'], $hide) }}</div>
+                  <div class="goal-card__caption">Restante · parcela de <span data-money>{{ Money::format($nextInstallment->amount ?? '0.00', $hide) }}</span></div>
+                  <div class="goal-card__bar">
+                    <span class="track"><span class="track__fill" style="width: {{ min(100, $row['summary']['percentage']) }}%"></span></span>
+                    <span class="goal-card__pct">{{ str_replace('.', ',', $row['summary']['percentage']) }}%</span>
+                  </div>
+                  <div class="goal-card__foot"><span>{{ $row['summary']['paid_count'] }} de {{ $row['debt']->installment_count }} parcelas</span><span>{{ $nextInstallment ? 'Próxima em '.$nextInstallment->due_date->format('d/m/Y') : 'Quitada' }}</span></div>
+                </article>
+              @endforeach
+            </div>
+
+            @foreach($dashboard['debts_overview'] as $row)
+              <section class="panel history" data-enter hidden data-debt-panel="{{ $row['debt']->id }}">
+                <div class="history__head">
+                  <span class="history__title-wrap">
+                    <span class="history__title">Parcelas · {{ $row['debt']->name }}</span>
+                    <span class="history__sub">{{ $row['debt']->creditor }} · {{ $row['debt']->installment_count }}x · total de <span data-money>{{ Money::format($row['debt']->expected_total_amount, $hide) }}</span></span>
+                  </span>
+                  <button class="btn-icon btn-icon--sm" type="button" aria-label="Fechar parcelas" data-debt-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                </div>
+                @foreach($row['debt']->installments as $installment)
+                  <div class="inst__row">
+                    <span class="inst__num">{{ $installment->number }}/{{ $row['debt']->installment_count }}</span>
+                    <span class="inst__link">
+                      @if($installment->transaction_id)
+                        <i class="fa-solid fa-link" aria-hidden="true"></i>Despesa vinculada em {{ $installment->transaction?->account?->name ?? 'conta' }}
+                      @endif
+                    </span>
+                    <span class="inst__due">{{ $installment->due_date->format('d/m/Y') }}</span>
+                    <span class="inst__value" data-money>{{ Money::format($installment->amount, $hide) }}</span>
+                    <span class="inst__state">
+                      @if($installment->status === \App\Enums\DebtInstallmentStatus::Paid)
+                        <span class="tx-badge is-done"><i class="fa-solid fa-check" aria-hidden="true"></i>Paga</span>
+                      @elseif($installment->status === \App\Enums\DebtInstallmentStatus::Cancelled)
+                        <span class="tx-badge is-void"><i class="fa-solid fa-ban" aria-hidden="true"></i>Cancelada</span>
+                      @else
+                        <span class="tx-badge is-pending"><i class="fa-regular fa-clock" aria-hidden="true"></i>{{ $installment->status->label() }}</span>
+                        @if($defaultPayAccount)
+                          <form method="POST" action="{{ route('debts.installments.pay', $installment) }}">
+                            @csrf
+                            <input type="hidden" name="account_id" value="{{ $defaultPayAccount->id }}">
+                            <button class="btn-outline-hard btn-outline--xs" type="submit">Baixar</button>
+                          </form>
+                        @endif
+                      @endif
+                    </span>
+                  </div>
+                @endforeach
+              </section>
+            @endforeach
+          @endif
+        </section>
+
+        <!-- ============ Investimentos ============ -->
+        <section class="page stack" data-page="investimentos" hidden>
+          @php
+              $investAplicado = $dashboard['investments_overview']->reduce(fn ($t, $r) => bcadd($t, $r['investment']->invested_amount, 2), '0.00');
+              $investAtual = $dashboard['investments_overview']->reduce(fn ($t, $r) => bcadd($t, $r['investment']->current_amount, 2), '0.00');
+              $investRendimento = bcsub($investAtual, $investAplicado, 2);
+          @endphp
+          <div class="grid-3">
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-seedling" aria-hidden="true"></i>Valor atual</div>
+              <div class="kpi__value" data-money>{{ Money::format($investAtual, $hide) }}</div>
+              <div class="kpi__note">{{ $dashboard['investments_overview']->count() }} {{ $dashboard['investments_overview']->count() === 1 ? 'aplicação na carteira' : 'aplicações na carteira' }}</div>
+            </article>
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i>Total aplicado</div>
+              <div class="kpi__value" data-money>{{ Money::format($investAplicado, $hide) }}</div>
+              <div class="kpi__note">Soma dos aportes menos resgates</div>
+            </article>
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-chart-line" aria-hidden="true"></i>Rendimento</div>
+              <div class="kpi__value {{ bccomp($investRendimento, '0', 2) >= 0 ? 'is-positive' : 'is-negative' }}" data-money>{{ Money::format($investRendimento, $hide) }}</div>
+              <div class="kpi__note">{{ Money::percentage($investRendimento, $investAplicado) }}% sobre o aplicado</div>
+            </article>
+          </div>
+
+          <div class="page-bar" data-enter>
+            <span class="page-bar__note">Rendimentos entram no histórico e não contam como aporte.</span>
+            <button class="btn-primary btn-primary--sm" type="button" data-modal-open="investimento"><i class="fa-solid fa-plus" aria-hidden="true"></i>Nova aplicação</button>
+          </div>
+
+          @if($dashboard['investments_overview']->isEmpty())
+            <section class="empty-state" data-enter>
+              <p>Nenhum investimento cadastrado. <button class="link-btn" type="button" data-modal-open="investimento">Cadastrar o primeiro.</button></p>
+            </section>
+          @else
+            <div class="grid-cards">
+              @foreach($dashboard['investments_overview'] as $row)
+                <article class="account-card" data-enter data-invest="{{ $row['investment']->id }}">
+                  <div class="account-card__head">
+                    <span class="row__icon row__icon--lg"><i class="fa-solid fa-seedling" aria-hidden="true"></i></span>
+                    <span class="account-card__info">
+                      <span class="account-card__name">{{ $row['investment']->name }}</span>
+                      <span class="account-card__type">{{ $row['investment']->type->label() }} · {{ $row['investment']->institution }}</span>
+                    </span>
+                    <div class="menu" data-menu>
+                      <button class="btn-icon btn-icon--sm" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Ações" data-menu-btn><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+                      <div class="menu__list" role="menu" hidden data-menu-list>
+                        <button class="menu__item" type="button" role="menuitem" data-invest-open="{{ $row['investment']->id }}"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>Ver histórico</button>
+                        <button class="menu__item" type="button" role="menuitem" data-modal-open="aporte" data-aporte-nome="{{ $row['investment']->name }}" data-aporte-url="{{ route('investments.operations.store', $row['investment']) }}" data-aporte-tipo="contribution"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i>Registrar aporte</button>
+                        <button class="menu__item" type="button" role="menuitem" data-modal-open="aporte" data-aporte-nome="{{ $row['investment']->name }}" data-aporte-url="{{ route('investments.operations.store', $row['investment']) }}" data-aporte-tipo="withdrawal"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i>Registrar resgate</button>
+                        <a class="menu__item menu__item--sep" role="menuitem" href="{{ route('dashboard', array_merge($filters, ['edit_investment' => $row['investment']->id])) }}#investimentos"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i>Editar aplicação</a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="account-card__balance" data-money>{{ Money::format($row['investment']->current_amount, $hide) }}</div>
+                  <div class="account-card__caption">Valor atual</div>
+                  <div class="account-card__split">
+                    <span class="account-card__figure">
+                      <span class="account-card__figure-label">Aplicado</span>
+                      <span class="account-card__figure-value" data-money>{{ Money::format($row['investment']->invested_amount, $hide) }}</span>
+                    </span>
+                    <span class="account-card__figure account-card__figure--right">
+                      <span class="account-card__figure-label">Rendimento</span>
+                      <span class="account-card__figure-value {{ bccomp($row['metrics']['profit'], '0', 2) >= 0 ? 'is-positive' : 'is-negative' }}" data-money>{{ bccomp($row['metrics']['profit'], '0', 2) >= 0 ? '+' : '' }}{{ Money::format($row['metrics']['profit'], $hide) }} · {{ $row['metrics']['return_percentage'] }}%</span>
+                    </span>
+                  </div>
+                </article>
+              @endforeach
+            </div>
+
+            @foreach($dashboard['investments_overview'] as $row)
+              <section class="panel history" data-enter hidden data-invest-panel="{{ $row['investment']->id }}">
+                <div class="history__head">
+                  <span class="history__title-wrap">
+                    <span class="history__title">Histórico · {{ $row['investment']->name }}</span>
+                    <span class="history__sub">{{ $row['investment']->type->label() }} · {{ $row['investment']->institution }} · {{ $row['investment']->operations->count() }} {{ $row['investment']->operations->count() === 1 ? 'movimentação' : 'movimentações' }}</span>
+                  </span>
+                  <span class="history__figures">
+                    <span class="account-card__figure">
+                      <span class="account-card__figure-label">Aplicado</span>
+                      <span class="account-card__figure-value" data-money>{{ Money::format($row['investment']->invested_amount, $hide) }}</span>
+                    </span>
+                    <span class="account-card__figure">
+                      <span class="account-card__figure-label">Atual</span>
+                      <span class="account-card__figure-value" data-money>{{ Money::format($row['investment']->current_amount, $hide) }}</span>
+                    </span>
+                    <button class="btn-icon btn-icon--sm" type="button" aria-label="Fechar histórico" data-invest-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                  </span>
+                </div>
+                @forelse($row['investment']->operations as $operation)
+                  <div class="inv__row">
+                    <span class="history__date">{{ $operation->operation_date->format('d/m') }}</span>
+                    <span class="history__desc">{{ $operation->type->label() }}</span>
+                    <span><span class="tx-badge {{ in_array($operation->type, [\App\Enums\InvestmentOperationType::Yield, \App\Enums\InvestmentOperationType::Dividend], true) ? 'is-done' : 'is-void' }}">{{ $operation->type->label() }}</span></span>
+                    <span class="history__value {{ in_array($operation->type, [\App\Enums\InvestmentOperationType::Contribution, \App\Enums\InvestmentOperationType::Yield, \App\Enums\InvestmentOperationType::Dividend, \App\Enums\InvestmentOperationType::Buy], true) ? 'is-in' : '' }}" data-money>{{ in_array($operation->type, [\App\Enums\InvestmentOperationType::Withdrawal, \App\Enums\InvestmentOperationType::Sell], true) ? '− ' : '+ ' }}{{ Money::format($operation->amount, $hide) }}</span>
+                  </div>
+                @empty
+                  <p class="history__empty">Nenhuma movimentação ainda.</p>
+                @endforelse
+              </section>
+            @endforeach
+          @endif
+        </section>
+
+        <!-- ============ Metas ============ -->
+        <section class="page stack" data-page="metas" hidden>
+          @php
+              $goalsAtivas = $dashboard['goals_overview']->filter(fn ($r) => $r['goal']->status->value === 'active');
+              $metaGuardado = $goalsAtivas->reduce(fn ($t, $r) => bcadd($t, $r['current'], 2), '0.00');
+              $metaAlvo = $goalsAtivas->reduce(fn ($t, $r) => bcadd($t, $r['goal']->target_amount, 2), '0.00');
+              $metaFalta = bcsub($metaAlvo, $metaGuardado, 2);
+          @endphp
+          <div class="grid-3">
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-bullseye" aria-hidden="true"></i>Guardado nas metas</div>
+              <div class="kpi__value" data-money>{{ Money::format($metaGuardado, $hide) }}</div>
+              <div class="kpi__note">{{ $goalsAtivas->count() }} {{ $goalsAtivas->count() === 1 ? 'meta ativa' : 'metas ativas' }}</div>
+            </article>
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>Somatório dos alvos</div>
+              <div class="kpi__value" data-money>{{ Money::format($metaAlvo, $hide) }}</div>
+              <div class="kpi__note">{{ Money::percentage($metaGuardado, $metaAlvo) }}% do total planejado</div>
+            </article>
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-piggy-bank" aria-hidden="true"></i>Falta guardar</div>
+              <div class="kpi__value" data-money>{{ Money::format($metaFalta, $hide) }}</div>
+              <div class="kpi__note">Considerando todas as metas em aberto</div>
+            </article>
+          </div>
+
+          <div class="page-bar" data-enter>
+            <span class="page-bar__note">O aporte sai de uma conta e entra no progresso da meta.</span>
+            <button class="btn-primary btn-primary--sm" type="button" data-modal-open="meta"><i class="fa-solid fa-plus" aria-hidden="true"></i>Nova meta</button>
+          </div>
+
+          @if($dashboard['goals_overview']->isEmpty())
+            <section class="empty-state" data-enter>
+              <p>Nenhuma meta cadastrada. <button class="link-btn" type="button" data-modal-open="meta">Criar a primeira.</button></p>
+            </section>
+          @else
+            <div class="grid-cards">
+              @foreach($dashboard['goals_overview'] as $row)
+                @php
+                    $goalState = $row['goal']->status->value === 'completed' ? 'Concluída' : (bccomp($row['percentage'], '80', 2) >= 0 ? 'Quase lá' : 'Em andamento');
+                @endphp
+                <article class="goal-card" data-enter data-goal="{{ $row['goal']->id }}">
+                  <div class="goal-card__head">
+                    <span class="row__icon row__icon--lg" style="background: {{ $row['goal']->color }}"><i class="fa-solid fa-bullseye" aria-hidden="true"></i></span>
+                    <span class="goal-card__body">
+                      <span class="goal-card__name">{{ $row['goal']->name }}</span>
+                      <span class="tx-badge {{ $goalState === 'Concluída' ? 'is-done' : 'is-void' }}">{{ $goalState }}</span>
+                    </span>
+                    <div class="menu" data-menu>
+                      <button class="btn-icon btn-icon--sm" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Ações" data-menu-btn><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+                      <div class="menu__list" role="menu" hidden data-menu-list>
+                        <button class="menu__item" type="button" role="menuitem" data-modal-open="aporte-meta" data-meta-goal="{{ $row['goal']->id }}" data-meta-nome="{{ $row['goal']->name }}" data-meta-url="{{ route('goals.contribute', $row['goal']) }}"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i>Registrar aporte</button>
+                        <a class="menu__item menu__item--sep" role="menuitem" href="{{ route('dashboard', array_merge($filters, ['edit_goal' => $row['goal']->id])) }}#metas"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i>Editar meta</a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="goal-card__value" data-money>{{ Money::format($row['current'], $hide) }}</div>
+                  <div class="goal-card__caption">de <span data-money>{{ Money::format($row['goal']->target_amount, $hide) }}</span>{{ $row['goal']->deadline ? ' · '.ucfirst($row['goal']->deadline->translatedFormat('F Y')) : '' }}</div>
+                  <div class="goal-card__bar">
+                    <span class="track"><span class="track__fill" style="width: {{ min(100, $row['percentage']) }}%"></span></span>
+                    <span class="goal-card__pct">{{ str_replace('.', ',', $row['percentage']) }}%</span>
+                  </div>
+                  <div class="goal-card__foot"><span>{{ bccomp($row['remaining'], '0', 2) > 0 ? 'Faltam '.Money::format($row['remaining'], $hide) : 'Meta atingida' }}</span></div>
+                </article>
+              @endforeach
+            </div>
+          @endif
+        </section>
+
+        <!-- ============ Relatórios ============ -->
+        <section class="page stack" data-page="relatorios" hidden>
+          @php
+              $repIncomeTotal = collect($dashboard['charts']['income'])->reduce(fn ($t, $v) => bcadd($t, $v, 2), '0.00');
+              $repExpenseTotal = collect($dashboard['charts']['expense'])->reduce(fn ($t, $v) => bcadd($t, $v, 2), '0.00');
+              $repResult = bcsub($repIncomeTotal, $repExpenseTotal, 2);
+              $repMaxBar = max(1, ...array_map('floatval', array_merge($dashboard['charts']['income'], $dashboard['charts']['expense'])));
+              $repCategoryLabels = $dashboard['charts']['expense_categories']['labels'];
+              $repCategoryValues = $dashboard['charts']['expense_categories']['values'];
+              $repMaxCategory = max(1, ...array_map('floatval', $repCategoryValues->all() ?: [0]));
+              $repCategoryColors = $dashboard['categories_overview']->pluck('color', 'name');
+              $repCategoryIcons = $dashboard['categories_overview']->pluck('icon', 'name');
+          @endphp
+          <div class="filters" data-enter>
+            <span class="page-bar__note">Últimos 6 meses · {{ $dashboard['period']['start']->translatedFormat('M/Y') }} a {{ $dashboard['period']['end']->translatedFormat('M/Y') }}</span>
+            <span class="filters__spacer"></span>
+            <a class="btn-outline-hard btn-outline--sm" href="{{ route('reports.export', ['start_date' => $dashboard['period']['start']->toDateString(), 'end_date' => $dashboard['period']['end']->toDateString()]) }}"><i class="fa-solid fa-file-csv" aria-hidden="true"></i>Exportar CSV</a>
+          </div>
+
+          <div class="grid-3">
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i>Receitas no período</div>
+              <div class="kpi__value is-positive" data-money>{{ Money::format($repIncomeTotal, $hide) }}</div>
+              <div class="kpi__note">6 meses considerados</div>
+            </article>
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i>Despesas no período</div>
+              <div class="kpi__value" data-money>{{ Money::format($repExpenseTotal, $hide) }}</div>
+              <div class="kpi__note">Média de {{ Money::format(bcdiv($repExpenseTotal, '6', 2), $hide) }} por mês</div>
+            </article>
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>Resultado</div>
+              <div class="kpi__value {{ bccomp($repResult, '0', 2) >= 0 ? 'is-positive' : 'is-negative' }}" data-money>{{ Money::format($repResult, $hide) }}</div>
+              <div class="kpi__note">{{ Money::percentage($repResult, $repIncomeTotal) }}% das receitas sobraram</div>
+            </article>
+          </div>
+
+          <section class="panel chart" data-enter>
+            <div class="chart__head">
+              <span class="chart__title">Receitas e despesas por mês</span>
+              <span class="chart__legend">
+                <span><span class="chart__key chart__key--in" aria-hidden="true"></span>Receitas</span>
+                <span><span class="chart__key chart__key--out" aria-hidden="true"></span>Despesas</span>
+              </span>
+            </div>
+            <div class="chart__plot">
+              @foreach($dashboard['charts']['labels'] as $i => $label)
+                <span class="chart__col">
+                  <span class="chart__bars">
+                    <span class="chart__bar chart__bar--in bar" style="height: {{ max(4, (float) $dashboard['charts']['income'][$i] / $repMaxBar * 100) }}%" title="Receitas {{ Money::format($dashboard['charts']['income'][$i], false) }}"></span>
+                    <span class="chart__bar chart__bar--out bar" style="height: {{ max(4, (float) $dashboard['charts']['expense'][$i] / $repMaxBar * 100) }}%" title="Despesas {{ Money::format($dashboard['charts']['expense'][$i], false) }}"></span>
+                  </span>
+                  <span class="chart__label">{{ ucfirst($label) }}</span>
+                </span>
+              @endforeach
+            </div>
+          </section>
+
+          <section class="panel chart" data-enter>
+            <div class="chart__title">Gastos por categoria no mês</div>
+            @if($repCategoryLabels->isEmpty())
+              <p class="history__empty">Nenhuma despesa categorizada neste período.</p>
+            @else
+              <div class="rank">
+                @foreach($repCategoryLabels as $i => $label)
+                  <span class="rank__row">
+                    <span class="cat-chip cat-chip--sm" style="background: {{ $repCategoryColors[$label] ?? '#5B5A54' }}"><i class="{{ $repCategoryIcons[$label] ?? 'fa-solid fa-tag' }}" aria-hidden="true"></i></span>
+                    <span class="rank__name">{{ $label }}</span>
+                    <span class="track"><span class="track__fill" style="width: {{ max(4, (float) $repCategoryValues[$i] / $repMaxCategory * 100) }}%; background: {{ $repCategoryColors[$label] ?? '#5B5A54' }}"></span></span>
+                    <span class="rank__value" data-money>{{ Money::format($repCategoryValues[$i], $hide) }}</span>
+                  </span>
+                @endforeach
+              </div>
+            @endif
+          </section>
+        </section>
+
+        <!-- ============ Previsão ============ -->
+        <section class="page stack" data-page="previsao" hidden>
+          @php
+              $prevReceitaPlanejada = auth()->user()->transactions()
+                  ->where('type', 'income')
+                  ->whereNotNull('recurrence_group_id')
+                  ->whereIn('status', ['completed', 'planned', 'overdue'])
+                  ->get()->unique('recurrence_group_id')
+                  ->reduce(fn ($t, $i) => bcadd($t, $i->amount, 2), '0.00');
+              $prevReceitaPrevista = collect($dashboard['forecast_detailed'])->take(3)->reduce(fn ($t, $m) => bcadd($t, $m['income'], 2), '0.00');
+              $prevDespesaPrevista = collect($dashboard['forecast_detailed'])->take(3)->reduce(fn ($t, $m) => bcadd($t, $m['expense'], 2), '0.00');
+              $prevResultado = bcsub($prevReceitaPrevista, $prevDespesaPrevista, 2);
+          @endphp
+          <div class="grid-3">
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-regular fa-calendar-check" aria-hidden="true"></i>Receita planejada</div>
+              <div class="kpi__value" data-money>{{ Money::format($prevReceitaPlanejada, $hide) }}</div>
+              <div class="kpi__note">Lançamentos recorrentes já confirmados</div>
+            </article>
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-chart-line" aria-hidden="true"></i>Receita prevista</div>
+              <div class="kpi__value" data-money>{{ Money::format($prevReceitaPrevista, $hide) }}</div>
+              <div class="kpi__note">Inclui ganhos futuros informados por você</div>
+            </article>
+            <article class="kpi" data-enter>
+              <div class="kpi__label"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>Resultado previsto</div>
+              <div class="kpi__value {{ bccomp($prevResultado, '0', 2) >= 0 ? 'is-positive' : 'is-negative' }}" data-money>{{ Money::format($prevResultado, $hide) }}</div>
+              <div class="kpi__note">Sobra estimada nos próximos 3 meses</div>
+            </article>
+          </div>
+
+          <div class="page-bar" data-enter>
+            <span class="page-bar__note">A projeção usa lançamentos recorrentes e ganhos futuros que você informar.</span>
+            <button class="btn-primary btn-primary--sm" type="button" data-modal-open="ganho"><i class="fa-solid fa-plus" aria-hidden="true"></i>Adicionar ganho futuro</button>
+          </div>
+
+          @foreach($dashboard['forecast_detailed'] as $mes)
+            <section class="panel history" data-enter>
+              <div class="history__head">
+                <span class="history__title">{{ ucfirst($mes['month']->translatedFormat('F Y')) }}</span>
+                <span class="history__figures">
+                  <span class="account-card__figure">
+                    <span class="account-card__figure-label">Receitas</span>
+                    <span class="account-card__figure-value" data-money>{{ Money::format($mes['income'], $hide) }}</span>
+                  </span>
+                  <span class="account-card__figure">
+                    <span class="account-card__figure-label">Despesas</span>
+                    <span class="account-card__figure-value" data-money>{{ Money::format($mes['expense'], $hide) }}</span>
+                  </span>
+                  <span class="account-card__figure">
+                    <span class="account-card__figure-label">Resultado</span>
+                    <span class="account-card__figure-value {{ bccomp($mes['result'], '0', 2) >= 0 ? 'is-positive' : 'is-negative' }}" data-money>{{ Money::format($mes['result'], $hide) }}</span>
+                  </span>
+                </span>
+              </div>
+              @forelse($mes['transactions'] as $t)
+                <div class="forecast__row">
+                  <span class="history__date">{{ $t->competence_date->format('d/m') }}</span>
+                  <span class="history__desc">{{ $t->description }}</span>
+                  <span><span class="tx-badge {{ $t->type->value === 'income' ? 'is-done' : 'is-void' }}">{{ $t->type->label() }}</span></span>
+                  <span class="history__value {{ $t->type->value === 'income' ? 'is-in' : '' }}" data-money>{{ $t->type->value === 'income' ? '+ ' : '− ' }}{{ Money::format($t->amount, $hide) }}</span>
+                </div>
+              @empty
+                <p class="history__empty">Nenhum lançamento planejado neste mês.</p>
+              @endforelse
+            </section>
+          @endforeach
+        </section>
+
         <!-- ============ Nova conta manual ============ -->
         <section class="page" data-page="novaConta" hidden>
           @php
@@ -1165,6 +1724,17 @@
                       <x-dropdown name="financial_month_start_day" icon="fa-regular fa-calendar" :selected="$userSettings->financial_month_start_day" :options="$monthStartDayOptions->map(fn ($day) => ['value' => $day, 'label' => 'Dia '.$day])" />
                     </div>
                   </div>
+
+                  <div class="pref-row">
+                    <div class="pref-row__body">
+                      <button class="switch {{ $userSettings->hide_values ? 'is-on' : '' }}" type="button" role="switch" aria-checked="{{ $userSettings->hide_values ? 'true' : 'false' }}" data-pref-hide data-toggle-url="{{ route('settings.toggle-values') }}"><span class="switch__pin"></span></button>
+                      <span class="pref-row__text">
+                        <span class="pref-row__title">Ocultar valores por padrão</span>
+                        <span class="pref-row__sub" data-hide-hint>{{ $userSettings->hide_values ? 'Valores ocultos ao abrir o painel.' : 'Valores visíveis ao abrir o painel.' }}</span>
+                      </span>
+                    </div>
+                  </div>
+
                   <div class="form-foot form-foot--bare">
                     <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar preferências</button>
                   </div>
@@ -1482,6 +2052,422 @@
       <div class="modal__foot">
         <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
         <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Confirmar pagamento</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: categoria ============ -->
+<div class="modal" data-modal="categoria" @unless($editCategory) hidden @endunless>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-categoria-titulo">
+    @php
+        $catCores = ['#137A4A', '#2E9E5B', '#38C172', '#1F6F8B', '#3C6E9F', '#6B4FA8', '#B03A6E', '#C0392B', '#D68910', '#5B5A54'];
+        $catIcones = ['fa-solid fa-tag', 'fa-solid fa-cart-shopping', 'fa-solid fa-house', 'fa-solid fa-car', 'fa-solid fa-utensils', 'fa-solid fa-heart-pulse', 'fa-solid fa-graduation-cap', 'fa-solid fa-plane', 'fa-solid fa-film', 'fa-solid fa-shirt', 'fa-solid fa-paw', 'fa-solid fa-briefcase', 'fa-solid fa-piggy-bank', 'fa-solid fa-bolt', 'fa-solid fa-wifi', 'fa-solid fa-dumbbell'];
+        $catCorAtual = old('color', $editCategory?->color ?? $catCores[0]);
+        $catIconeAtual = old('icon', $editCategory?->icon ?? $catIcones[0]);
+        $catTipoAtual = old('type', $editCategory?->type->value ?? 'expense');
+    @endphp
+    <form method="POST" action="{{ $editCategory ? route('categories.update', $editCategory) : route('categories.store') }}">
+      @csrf
+      @if($editCategory) @method('PATCH') @endif
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-categoria-titulo">{{ $editCategory ? 'Editar categoria' : 'Nova categoria' }}</h2>
+          <p class="modal__sub">Cor e ícone identificam a categoria nas listas e nos gráficos.</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <div class="cat-preview">
+          <span class="cat-chip" data-cat-preview style="background: {{ $catCorAtual }}"><i class="{{ $catIconeAtual }}" data-cat-preview-icon aria-hidden="true"></i></span>
+          <span class="cat-preview__body">
+            <span class="cat-preview__name" data-cat-preview-name>{{ $editCategory?->name ?? 'Nome da categoria' }}</span>
+            <span class="cat-preview__text">Prévia de como a categoria aparece nas listas.</span>
+          </span>
+        </div>
+
+        <label class="field">
+          <span class="field__label">Nome</span>
+          <input class="input" type="text" name="name" value="{{ old('name', $editCategory?->name ?? '') }}" placeholder="Ex.: Educação">
+          @error('name')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+
+        <div class="field">
+          <span class="field__label">Tipo</span>
+          <div class="seg" data-seg>
+            <button class="seg__opt {{ $catTipoAtual === 'expense' ? 'is-on' : '' }}" type="button" data-seg-opt data-value="expense">Despesa</button>
+            <button class="seg__opt {{ $catTipoAtual === 'income' ? 'is-on' : '' }}" type="button" data-seg-opt data-value="income">Receita</button>
+          </div>
+          <input type="hidden" name="type" value="{{ $catTipoAtual }}">
+        </div>
+
+        <div class="field">
+          <span class="field__label">Cor</span>
+          <div class="color-picks" data-swatches>
+            @foreach($catCores as $cor)
+              <button class="color-pick {{ $catCorAtual === $cor ? 'is-on' : '' }}" type="button" aria-label="Escolher cor" data-color="{{ $cor }}"><span class="color-pick__dot" style="background: {{ $cor }}"></span></button>
+            @endforeach
+          </div>
+          <input type="hidden" name="color" value="{{ $catCorAtual }}">
+          @error('color')<span class="field-error">{{ $message }}</span>@enderror
+        </div>
+
+        <div class="field">
+          <span class="field__label">Ícone</span>
+          <div class="icon-grid" data-icons>
+            @foreach($catIcones as $icone)
+              <button class="icon-opt {{ $catIconeAtual === $icone ? 'is-on' : '' }}" type="button" aria-label="Escolher ícone" data-icon="{{ $icone }}"><i class="{{ $icone }}" aria-hidden="true"></i></button>
+            @endforeach
+          </div>
+          <input type="hidden" name="icon" value="{{ $catIconeAtual }}">
+          @error('icon')<span class="field-error">{{ $message }}</span>@enderror
+        </div>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ $editCategory ? 'Salvar alterações' : 'Criar categoria' }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: orçamento ============ -->
+<div class="modal" data-modal="orcamento" @unless($editBudget) hidden @endunless>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-orcamento-titulo">
+    <form method="POST" action="{{ $editBudget ? route('budgets.update', $editBudget) : route('budgets.store') }}">
+      @csrf
+      @if($editBudget) @method('PATCH') @endif
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-orcamento-titulo">{{ $editBudget ? 'Editar orçamento' : 'Novo orçamento' }}</h2>
+          <p class="modal__sub">Defina quanto essa categoria pode consumir por mês.</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <div class="field">
+          <span class="field__label">Categoria</span>
+          <x-dropdown name="category_id" icon="fa-solid fa-tag" :selected="old('category_id', $editBudget?->category_id ?? null)"
+              :options="$categories->where('type', \App\Enums\CategoryType::Expense)->map(fn ($c) => ['value' => $c->id, 'label' => $c->name])" />
+          @error('category_id')<span class="field-error">{{ $message }}</span>@enderror
+        </div>
+
+        <label class="field">
+          <span class="field__label">Limite mensal</span>
+          <span class="input-money">
+            <span class="input-money__prefix">R$</span>
+            <input class="input-money__input" type="text" inputmode="decimal" name="limit_amount" value="{{ old('limit_amount', $editBudget ? number_format((float) $editBudget?->limit_amount, 2, ',', '.') : '') }}" placeholder="0,00">
+          </span>
+          @error('limit_amount')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+
+        <input type="hidden" name="month" value="{{ old('month', $editBudget?->month ?? $budgetMonth) }}">
+        <input type="hidden" name="year" value="{{ old('year', $editBudget?->year ?? $budgetYear) }}">
+        <p class="field__hint">O aviso de consumo aparece a partir de 80% do limite, e o estouro fica marcado em vermelho na lista.</p>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ $editBudget ? 'Salvar alterações' : 'Criar orçamento' }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: dívida ============ -->
+<div class="modal" data-modal="divida" @unless($editDebt) hidden @endunless>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-divida-titulo">
+    <form method="POST" action="{{ $editDebt ? route('debts.update', $editDebt) : route('debts.store') }}">
+      @csrf
+      @if($editDebt) @method('PATCH') @endif
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-divida-titulo">{{ $editDebt ? 'Editar dívida' : 'Nova dívida' }}</h2>
+          <p class="modal__sub">As parcelas são geradas automaticamente e cada baixa vira uma despesa vinculada.</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <label class="field">
+          <span class="field__label">Nome da dívida</span>
+          <input class="input" type="text" name="name" value="{{ old('name', $editDebt?->name ?? '') }}" placeholder="Ex.: Empréstimo pessoal">
+          @error('name')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+        <label class="field">
+          <span class="field__label">Credor</span>
+          <input class="input" type="text" name="creditor" value="{{ old('creditor', $editDebt?->creditor ?? '') }}" placeholder="Ex.: Banco, cartão ou pessoa">
+          @error('creditor')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Valor total</span>
+            <span class="input-money">
+              <span class="input-money__prefix">R$</span>
+              <input class="input-money__input" type="text" inputmode="decimal" name="original_amount" value="{{ old('original_amount', $editDebt ? number_format((float) $editDebt?->original_amount, 2, ',', '.') : '') }}" placeholder="0,00">
+            </span>
+            @error('original_amount')<span class="field-error">{{ $message }}</span>@enderror
+          </label>
+          <label class="field">
+            <span class="field__label">Número de parcelas</span>
+            <input class="input" type="text" inputmode="numeric" name="installment_count" value="{{ old('installment_count', $editDebt?->installment_count ?? 12) }}">
+            @error('installment_count')<span class="field-error">{{ $message }}</span>@enderror
+          </label>
+        </div>
+        <input type="hidden" name="expected_total_amount" value="{{ old('original_amount', $editDebt ? number_format((float) $editDebt?->original_amount, 2, ',', '.') : '') }}">
+        <input type="hidden" name="kind" value="{{ old('kind', $editDebt?->kind ?? 'other') }}">
+        <input type="hidden" name="status" value="{{ old('status', $editDebt?->status->value ?? 'active') }}">
+        <input type="hidden" name="started_at" value="{{ old('started_at', $editDebt?->started_at?->toDateString() ?? now()->toDateString()) }}">
+        <input type="hidden" name="first_due_date" value="{{ old('first_due_date', $editDebt?->due_date?->toDateString() ?? now()->addMonthNoOverflow()->toDateString()) }}">
+        <p class="field__hint"><i class="fa-solid fa-list-ol" aria-hidden="true"></i> As parcelas são criadas a partir do próximo mês, com vencimento no mesmo dia.</p>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ $editDebt ? 'Salvar alterações' : 'Criar dívida' }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: investimento ============ -->
+<div class="modal" data-modal="investimento" @unless($editInvestment) hidden @endunless>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-investimento-titulo">
+    <form method="POST" action="{{ $editInvestment ? route('investments.update', $editInvestment) : route('investments.store') }}">
+      @csrf
+      @if($editInvestment) @method('PATCH') @endif
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-investimento-titulo">{{ $editInvestment ? 'Editar aplicação' : 'Nova aplicação' }}</h2>
+          <p class="modal__sub">Informe onde o dinheiro está aplicado e quanto já foi investido.</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <label class="field">
+          <span class="field__label">Nome da aplicação</span>
+          <input class="input" type="text" name="name" value="{{ old('name', $editInvestment?->name ?? '') }}" placeholder="Ex.: Tesouro Selic 2029">
+          @error('name')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+        <div class="field-row">
+          <div class="field">
+            <span class="field__label">Tipo</span>
+            <x-dropdown name="type" icon="fa-solid fa-seedling" :selected="old('type', $editInvestment?->type->value ?? 'fixed_income')" :options="\App\Enums\InvestmentType::options()" />
+          </div>
+          <label class="field">
+            <span class="field__label">Instituição</span>
+            <input class="input" type="text" name="institution" value="{{ old('institution', $editInvestment?->institution ?? '') }}" placeholder="Ex.: Tesouro Direto, corretora">
+            @error('institution')<span class="field-error">{{ $message }}</span>@enderror
+          </label>
+        </div>
+        <label class="field">
+          <span class="field__label">Valor aplicado</span>
+          <span class="input-money">
+            <span class="input-money__prefix">R$</span>
+            <input class="input-money__input" type="text" inputmode="decimal" name="invested_amount" value="{{ old('invested_amount', $editInvestment ? number_format((float) $editInvestment?->invested_amount, 2, ',', '.') : '') }}" placeholder="0,00">
+          </span>
+          @error('invested_amount')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+        <input type="hidden" name="current_amount" value="{{ old('current_amount', $editInvestment ? number_format((float) $editInvestment?->current_amount, 2, ',', '.') : old('invested_amount')) }}" data-investimento-current>
+        <input type="hidden" name="last_updated_at" value="{{ old('last_updated_at', $editInvestment?->last_updated_at?->toDateString() ?? now()->toDateString()) }}">
+        <input type="hidden" name="status" value="{{ old('status', $editInvestment?->status->value ?? 'active') }}">
+        <p class="field__hint">Os rendimentos entram no histórico e não contam como aporte no total aplicado.</p>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ $editInvestment ? 'Salvar alterações' : 'Salvar aplicação' }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: aporte/resgate de investimento ============ -->
+<div class="modal" data-modal="aporte" hidden>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-aporte-titulo">
+    <form method="POST" action="" data-aporte-form>
+      @csrf
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-aporte-titulo">Registrar movimentação</h2>
+          <p class="modal__sub" data-aporte-sub>—</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <div class="field">
+          <span class="field__label">Tipo de movimentação</span>
+          <div class="seg" data-seg>
+            <button class="seg__opt is-on" type="button" data-seg-opt data-value="contribution">Aporte</button>
+            <button class="seg__opt" type="button" data-seg-opt data-value="withdrawal">Resgate</button>
+          </div>
+          <input type="hidden" name="type" value="contribution" data-aporte-tipo-input>
+        </div>
+        <label class="field">
+          <span class="field__label">Valor</span>
+          <span class="input-money">
+            <span class="input-money__prefix">R$</span>
+            <input class="input-money__input" type="text" inputmode="decimal" name="amount" placeholder="0,00">
+          </span>
+          @error('amount')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+        <div class="field-row">
+          <div class="field">
+            <span class="field__label">Data</span>
+            <x-datepicker name="operation_date" :value="now()->toDateString()" />
+          </div>
+          <div class="field">
+            <span class="field__label">Conta <span class="field__hint">· opcional</span></span>
+            <x-dropdown name="account_id" icon="fa-solid fa-building-columns"
+                :options="collect([['value' => '', 'label' => 'Nenhuma']])->concat($dashboard['accounts']->map(fn ($row) => ['value' => $row['account']->id, 'label' => $row['account']->name]))" />
+          </div>
+        </div>
+        <p class="field__hint">Os rendimentos entram no histórico e não contam como aporte no total aplicado.</p>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar movimentação</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: meta ============ -->
+<div class="modal" data-modal="meta" @unless($editGoal) hidden @endunless>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-meta-titulo">
+    <form method="POST" action="{{ $editGoal ? route('goals.update', $editGoal) : route('goals.store') }}">
+      @csrf
+      @if($editGoal) @method('PATCH') @endif
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-meta-titulo">{{ $editGoal ? 'Editar meta' : 'Nova meta' }}</h2>
+          <p class="modal__sub">Defina o valor alvo e, se quiser, um prazo para acompanhar o ritmo.</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <label class="field">
+          <span class="field__label">Nome da meta</span>
+          <input class="input" type="text" name="name" value="{{ old('name', $editGoal?->name ?? '') }}" placeholder="Ex.: Viagem ao Chile">
+          @error('name')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Valor alvo</span>
+            <span class="input-money">
+              <span class="input-money__prefix">R$</span>
+              <input class="input-money__input" type="text" inputmode="decimal" name="target_amount" value="{{ old('target_amount', $editGoal ? number_format((float) $editGoal?->target_amount, 2, ',', '.') : '') }}" placeholder="0,00">
+            </span>
+            @error('target_amount')<span class="field-error">{{ $message }}</span>@enderror
+          </label>
+          <div class="field">
+            <span class="field__label">Prazo <span class="field__hint">· opcional</span></span>
+            <x-datepicker name="deadline" :value="old('deadline', $editGoal?->deadline?->toDateString())" up />
+          </div>
+        </div>
+        <input type="hidden" name="current_amount" value="{{ old('current_amount', $editGoal?->current_amount ?? '0.00') }}">
+        <input type="hidden" name="color" value="{{ old('color', $editGoal?->color ?? '#137A4A') }}">
+        <input type="hidden" name="status" value="{{ old('status', $editGoal?->status->value ?? 'active') }}">
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ $editGoal ? 'Salvar alterações' : 'Criar meta' }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: aporte de meta ============ -->
+<div class="modal" data-modal="aporte-meta" hidden>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-aporte-meta-titulo">
+    <form method="POST" action="" data-meta-form>
+      @csrf
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-aporte-meta-titulo">Registrar aporte</h2>
+          <p class="modal__sub" data-meta-sub>—</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <label class="field">
+          <span class="field__label">Valor do aporte</span>
+          <span class="input-money">
+            <span class="input-money__prefix">R$</span>
+            <input class="input-money__input" type="text" inputmode="decimal" name="amount" placeholder="0,00">
+          </span>
+          @error('amount')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+        <p class="field__hint">O valor entra direto no progresso da meta.</p>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Registrar aporte</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Modal: ganho futuro ============ -->
+<div class="modal" data-modal="ganho" hidden>
+  <div class="modal__veil" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-ganho-titulo">
+    <form method="POST" action="{{ route('transactions.store') }}">
+      @csrf
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title" id="modal-ganho-titulo">Adicionar ganho futuro</h2>
+          <p class="modal__sub">Entra na previsão dos próximos meses, sem afetar o saldo atual.</p>
+        </div>
+        <button class="modal__close" type="button" aria-label="Fechar" data-modal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </div>
+
+      <div class="modal__body">
+        <label class="field">
+          <span class="field__label">Descrição</span>
+          <input class="input" type="text" name="description" placeholder="Ex.: Bônus, 13º, freelance combinado" required>
+          @error('description')<span class="field-error">{{ $message }}</span>@enderror
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Valor</span>
+            <span class="input-group">
+              <span class="input-group__prefix">R$</span>
+              <input class="input-group__input input-group__input--num" type="text" inputmode="decimal" name="amount" placeholder="0,00" required>
+            </span>
+            @error('amount')<span class="field-error">{{ $message }}</span>@enderror
+          </label>
+          <div class="field">
+            <span class="field__label">Data prevista</span>
+            <x-datepicker name="competence_date" :value="now()->addMonthNoOverflow()->toDateString()" up />
+          </div>
+        </div>
+        <input type="hidden" name="type" value="income">
+        <input type="hidden" name="status" value="planned">
+        <input type="hidden" name="payment_channel" value="account">
+        <input type="hidden" name="account_id" value="{{ $dashboard['accounts']->first()['account']->id ?? '' }}">
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn-ghost" type="button" data-modal-close>Cancelar</button>
+        <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Adicionar ganho</button>
       </div>
     </form>
   </div>

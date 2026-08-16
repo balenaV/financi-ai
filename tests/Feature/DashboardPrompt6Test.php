@@ -1,0 +1,172 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Account;
+use App\Models\Budget;
+use App\Models\Debt;
+use App\Models\DebtInstallment;
+use App\Models\FinancialGoal;
+use App\Models\Investment;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class DashboardPrompt6Test extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_category_rejects_a_color_outside_the_allowed_palette(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('categories.store'), [
+            'name' => 'Mascote',
+            'type' => 'expense',
+            'color' => '#D68A3C',
+            'icon' => 'fa-solid fa-tag',
+        ])->assertSessionHasErrors('color');
+    }
+
+    public function test_category_rejects_an_arbitrary_icon_class(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('categories.store'), [
+            'name' => 'Ícone livre',
+            'type' => 'expense',
+            'color' => '#137A4A',
+            'icon' => 'fa-solid fa-skull-crossbones',
+        ])->assertSessionHasErrors('icon');
+    }
+
+    public function test_dashboard_budgets_tab_respects_month_navigation(): void
+    {
+        $user = User::factory()->create();
+        $category = $user->categories()->where('type', 'expense')->first();
+        $current = Budget::factory()->for($user)->for($category)->create([
+            'month' => now()->month,
+            'year' => now()->year,
+            'limit_amount' => '900.00',
+        ]);
+        $previousMonth = now()->subMonth();
+        $other = Budget::factory()->for($user)->for($category)->create([
+            'month' => $previousMonth->month,
+            'year' => $previousMonth->year,
+            'limit_amount' => '450.00',
+        ]);
+
+        $currentResponse = $this->actingAs($user)->get('/dashboard');
+        $currentResponse->assertSee('900,00');
+        $currentResponse->assertDontSee('450,00');
+
+        $pastResponse = $this->actingAs($user)->get('/dashboard?bud_month='.$previousMonth->month.'&bud_year='.$previousMonth->year);
+        $pastResponse->assertSee('450,00');
+        $pastResponse->assertDontSee('900,00');
+    }
+
+    public function test_debt_installment_baixar_route_registers_payment(): void
+    {
+        $user = User::factory()->create();
+        $account = Account::factory()->for($user)->create(['initial_balance' => '1000.00']);
+        $debt = Debt::factory()->for($user)->create(['installment_count' => 1]);
+        $installment = DebtInstallment::factory()->for($user)->for($debt)->create(['amount' => '250.00']);
+
+        $this->actingAs($user)->post(route('debts.installments.pay', $installment), [
+            'account_id' => $account->id,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('debt_installments', ['id' => $installment->id, 'status' => 'paid']);
+        $this->assertDatabaseHas('transactions', ['source_type' => 'debt_installment', 'amount' => '250.00']);
+    }
+
+    public function test_debt_installment_baixar_route_is_blocked_for_another_users_installment(): void
+    {
+        $owner = User::factory()->create();
+        $attacker = User::factory()->create();
+        $attackerAccount = Account::factory()->for($attacker)->create();
+        $debt = Debt::factory()->for($owner)->create(['installment_count' => 1]);
+        $installment = DebtInstallment::factory()->for($owner)->for($debt)->create();
+
+        $this->actingAs($attacker)->post(route('debts.installments.pay', $installment), [
+            'account_id' => $attackerAccount->id,
+        ])->assertForbidden();
+
+        $this->assertDatabaseHas('debt_installments', ['id' => $installment->id, 'status' => 'pending']);
+    }
+
+    public function test_investment_operation_route_updates_metrics_without_duplicating_expense(): void
+    {
+        $user = User::factory()->create();
+        $account = Account::factory()->for($user)->create(['initial_balance' => '2000.00']);
+        $investment = Investment::factory()->for($user)->create([
+            'invested_amount' => '1000.00',
+            'current_amount' => '1000.00',
+        ]);
+
+        $this->actingAs($user)->post(route('investments.operations.store', $investment), [
+            'type' => 'contribution',
+            'amount' => '300.00',
+            'operation_date' => today()->toDateString(),
+            'account_id' => $account->id,
+        ])->assertRedirect();
+
+        $this->assertDatabaseCount('transactions', 1);
+        $this->assertDatabaseMissing('transactions', ['type' => 'expense']);
+        $this->assertDatabaseHas('investment_operations', [
+            'investment_id' => $investment->id,
+            'amount' => '300.00',
+            'type' => 'contribution',
+        ]);
+    }
+
+    public function test_goal_contribute_route_increases_current_amount(): void
+    {
+        $user = User::factory()->create();
+        $goal = FinancialGoal::factory()->for($user)->create(['current_amount' => '500.00']);
+
+        $this->actingAs($user)->post(route('goals.contribute', $goal), [
+            'amount' => '150,00',
+        ])->assertRedirect();
+
+        $this->assertSame('650.00', $goal->refresh()->current_amount);
+    }
+
+    public function test_goal_contribute_route_is_blocked_for_another_users_goal(): void
+    {
+        $owner = User::factory()->create();
+        $attacker = User::factory()->create();
+        $goal = FinancialGoal::factory()->for($owner)->create(['current_amount' => '500.00']);
+
+        $this->actingAs($attacker)->post(route('goals.contribute', $goal), [
+            'amount' => '150,00',
+        ])->assertForbidden();
+
+        $this->assertSame('500.00', $goal->refresh()->current_amount);
+    }
+
+    public function test_dashboard_edit_query_params_never_resolve_another_users_resources(): void
+    {
+        $victim = User::factory()->create();
+        $victimCategory = $victim->categories()->where('type', 'expense')->first();
+        $victimBudget = Budget::factory()->for($victim)->for($victimCategory)->create();
+        $victimDebt = Debt::factory()->for($victim)->create(['name' => 'Dívida secreta']);
+        $victimInvestment = Investment::factory()->for($victim)->create(['name' => 'Investimento secreto']);
+        $victimGoal = FinancialGoal::factory()->for($victim)->create(['name' => 'Meta secreta']);
+
+        $attacker = User::factory()->create();
+
+        $response = $this->actingAs($attacker)->get('/dashboard?'.http_build_query([
+            'edit_category' => $victimCategory->id,
+            'edit_budget' => $victimBudget->id,
+            'edit_debt' => $victimDebt->id,
+            'edit_investment' => $victimInvestment->id,
+            'edit_goal' => $victimGoal->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertDontSee('Dívida secreta');
+        $response->assertDontSee('Investimento secreto');
+        $response->assertDontSee('Meta secreta');
+    }
+}

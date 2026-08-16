@@ -49,7 +49,7 @@ class FinancialGoalController extends Controller
         $data['use_account_balance'] = $request->boolean('use_account_balance');
         $request->user()->financialGoals()->create($data);
 
-        return to_route('goals.index')->with('success', 'Meta criada.');
+        return redirect(route('dashboard').'#metas')->with('success', 'Meta criada.');
     }
 
     public function edit(Request $request, FinancialGoal $goal): View
@@ -72,7 +72,7 @@ class FinancialGoalController extends Controller
         $data['use_account_balance'] = $request->boolean('use_account_balance');
         $goal->update($data);
 
-        return to_route('goals.index')->with('success', 'Meta atualizada.');
+        return redirect(route('dashboard').'#metas')->with('success', 'Meta atualizada.');
     }
 
     public function destroy(FinancialGoal $goal): RedirectResponse
@@ -81,5 +81,22 @@ class FinancialGoalController extends Controller
         $goal->delete();
 
         return back()->with('success', 'Meta excluída.');
+    }
+
+    /**
+     * Aporte simplificado: soma direto no progresso da meta. Sem lançamento
+     * nem conta de origem — diferente dos investimentos, a meta não tem um
+     * livro-razão de operações, só um valor acumulado.
+     */
+    public function contribute(Request $request, FinancialGoal $goal): RedirectResponse
+    {
+        $this->authorize('update', $goal);
+        $data = $request->validate([
+            'amount' => ['required', 'regex:/^[\d.,\s]+$/'],
+        ]);
+
+        $goal->update(['current_amount' => bcadd((string) $goal->current_amount, Money::normalize($data['amount']), 2)]);
+
+        return back()->with('success', 'Aporte registrado.');
     }
 }

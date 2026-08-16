@@ -55,7 +55,7 @@ class BudgetController extends Controller
         $data['limit_amount'] = Money::normalize($data['limit_amount']);
         $budget->update($data);
 
-        return to_route('budgets.index', ['month' => $budget->month, 'year' => $budget->year])->with('success', 'Orçamento atualizado.');
+        return redirect(route('dashboard').'#orcamentos')->with('success', 'Orçamento atualizado.');
     }
 
     public function copy(Request $request, BudgetService $service): RedirectResponse

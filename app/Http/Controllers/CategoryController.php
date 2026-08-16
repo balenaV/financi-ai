@@ -49,7 +49,7 @@ class CategoryController extends Controller
             'active' => $request->boolean('active'),
         ]);
 
-        return to_route('categories.index')->with('success', 'Categoria atualizada.');
+        return redirect(route('dashboard').'#categorias')->with('success', 'Categoria atualizada.');
     }
 
     public function destroy(Category $category): RedirectResponse

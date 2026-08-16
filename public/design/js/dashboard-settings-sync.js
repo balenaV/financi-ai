@@ -27,7 +27,38 @@
   var eyeBtn = document.querySelector('[data-toggle-money]');
   if (eyeBtn) {
     var url = eyeBtn.getAttribute('data-toggle-url');
-    if (url) eyeBtn.addEventListener('click', function () { persist(url); });
+    if (url && eyeBtn.hasAttribute('data-money-reload-on-reveal')) {
+      /* A página carregou com os valores já mascarados (preferência salva)
+         — o texto real nunca chegou ao navegador, então dashboard.js não
+         tem o que revelar sem recarregar. Espera o PATCH terminar antes de
+         recarregar, senão a navegação cancela o fetch e a preferência não
+         chega a ser salva. */
+      eyeBtn.addEventListener('click', function () {
+        fetch(url, {
+          method: 'PATCH',
+          headers: { 'X-CSRF-TOKEN': token, Accept: 'application/json' },
+        }).finally(function () { location.reload(); });
+      });
+    } else if (url) {
+      eyeBtn.addEventListener('click', function () { persist(url); });
+    }
+  }
+
+  /* Switch "Ocultar valores por padrão" em Configurações › Preferências —
+     mesma preferência do olho no topo. Recarrega ao confirmar: mais simples
+     e mais seguro que replicar a mesma malabarismo de "capturar o valor
+     original" numa tela que nem mostra valores monetários por perto. */
+  var prefHide = document.querySelector('[data-pref-hide]');
+  if (prefHide) {
+    var prefHideUrl = prefHide.getAttribute('data-toggle-url');
+    if (prefHideUrl) {
+      prefHide.addEventListener('click', function () {
+        fetch(prefHideUrl, {
+          method: 'PATCH',
+          headers: { 'X-CSRF-TOKEN': token, Accept: 'application/json' },
+        }).finally(function () { location.reload(); });
+      });
+    }
   }
 
   /* Abre a aba certa quando chega de outra página com #aba na URL

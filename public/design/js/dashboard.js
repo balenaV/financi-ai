@@ -85,17 +85,25 @@
   /* ---------- Ocultar valores ---------- */
   var btnOlho = document.querySelector('[data-toggle-money]');
   if (btnOlho) {
-    var oculto = false;
-    btnOlho.addEventListener('click', function () {
-      oculto = !oculto;
-      document.querySelectorAll('[data-money]').forEach(function (el) {
-        if (!el.dataset.moneyOriginal) el.dataset.moneyOriginal = el.textContent;
-        el.textContent = oculto ? '••••••' : el.dataset.moneyOriginal;
+    /* Parte de aria-pressed (renderizado pelo servidor a partir da
+       preferência salva) em vez de sempre false — senão, para quem já
+       salvou "ocultar por padrão", o primeiro clique capturava o texto
+       já mascarado como "original" e a tela nunca mais revelava os valores
+       reais. Quando já carrega oculto, quem mascara/revela de verdade é o
+       reload feito em dashboard-settings-sync.js (só ele tem o valor real). */
+    var oculto = btnOlho.getAttribute('aria-pressed') === 'true';
+    if (!btnOlho.hasAttribute('data-money-reload-on-reveal')) {
+      btnOlho.addEventListener('click', function () {
+        oculto = !oculto;
+        document.querySelectorAll('[data-money]').forEach(function (el) {
+          if (!el.dataset.moneyOriginal) el.dataset.moneyOriginal = el.textContent;
+          el.textContent = oculto ? '••••••' : el.dataset.moneyOriginal;
+        });
+        var i = btnOlho.querySelector('i');
+        if (i) i.className = oculto ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+        btnOlho.setAttribute('aria-pressed', String(oculto));
       });
-      var i = btnOlho.querySelector('i');
-      if (i) i.className = oculto ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
-      btnOlho.setAttribute('aria-pressed', String(oculto));
-    });
+    }
   }
 
   /* ---------- Notificações ---------- */
@@ -740,4 +748,102 @@
       if (ev.key === 'Enter') { ev.preventDefault(); form.submit(); }
     });
   }
+})();
+
+/* ======================================================================
+   Fase 4 — painéis (parcelas de dívida, histórico de investimento,
+   aportes de meta) e seletores de cor/ícone/segmento. Genérico e
+   orientado a DOM — sem os dados de exemplo do protótipo.
+   ====================================================================== */
+(function () {
+  var PAINEIS = [
+    ['data-debt-open', 'data-debt-panel', 'data-debt-close', 'data-debt'],
+    ['data-invest-open', 'data-invest-panel', 'data-invest-close', 'data-invest'],
+    ['data-goal-open', 'data-goal-panel', 'data-goal-close', 'data-goal'],
+  ];
+
+  document.addEventListener('click', function (ev) {
+    PAINEIS.forEach(function (p) {
+      var abrir = ev.target.closest('[' + p[0] + ']');
+      if (abrir) {
+        var id = abrir.getAttribute(p[0]);
+        document.querySelectorAll('[' + p[1] + ']').forEach(function (painel) {
+          painel.hidden = painel.getAttribute(p[1]) !== id;
+        });
+        document.querySelectorAll('[' + p[3] + ']').forEach(function (card) {
+          card.classList.toggle('is-selected', card.getAttribute(p[3]) === id);
+        });
+      }
+      if (ev.target.closest('[' + p[2] + ']')) {
+        document.querySelectorAll('[' + p[1] + ']').forEach(function (painel) { painel.hidden = true; });
+        document.querySelectorAll('[' + p[3] + ']').forEach(function (card) { card.classList.remove('is-selected'); });
+      }
+    });
+  });
+
+  /* Seletores de cor, ícone e segmentos (modais de categoria e investimento) */
+  document.addEventListener('click', function (ev) {
+    var cor = ev.target.closest('[data-color]');
+    if (cor) {
+      cor.parentElement.querySelectorAll('[data-color]').forEach(function (b) { b.classList.toggle('is-on', b === cor); });
+      var chip = document.querySelector('[data-cat-preview]');
+      if (chip) chip.style.background = cor.dataset.color;
+      var input = document.querySelector('[data-modal="categoria"] input[name="color"]');
+      if (input) input.value = cor.dataset.color;
+    }
+    var icone = ev.target.closest('[data-icon]');
+    if (icone) {
+      icone.parentElement.querySelectorAll('[data-icon]').forEach(function (b) { b.classList.toggle('is-on', b === icone); });
+      var prev = document.querySelector('[data-cat-preview-icon]');
+      if (prev) prev.className = icone.dataset.icon;
+      var iconInput = document.querySelector('[data-modal="categoria"] input[name="icon"]');
+      if (iconInput) iconInput.value = icone.dataset.icon;
+    }
+    var seg = ev.target.closest('[data-seg-opt]');
+    if (seg) {
+      seg.parentElement.querySelectorAll('[data-seg-opt]').forEach(function (b) { b.classList.toggle('is-on', b === seg); });
+      var campo = seg.closest('.field');
+      var segInput = campo ? campo.querySelector('input[type="hidden"]') : null;
+      if (segInput && seg.dataset.value) segInput.value = seg.dataset.value;
+    }
+  });
+
+  var nome = document.querySelector('[data-modal="categoria"] input[name="name"]');
+  if (nome) {
+    nome.addEventListener('input', function () {
+      var preview = document.querySelector('[data-cat-preview-name]');
+      if (preview) preview.textContent = nome.value.trim() || 'Nome da categoria';
+    });
+  }
+})();
+
+/* ======================================================================
+   Modais de aporte/resgate (investimento e meta) — o botão que abre
+   carrega para onde o form deve postar e o nome da aplicação/meta; o JS
+   só copia isso para dentro do modal compartilhado.
+   ====================================================================== */
+(function () {
+  document.addEventListener('click', function (ev) {
+    var gatilhoAporte = ev.target.closest('[data-aporte-url]');
+    if (gatilhoAporte) {
+      var form = document.querySelector('[data-aporte-form]');
+      var sub = document.querySelector('[data-aporte-sub]');
+      var tipoInput = document.querySelector('[data-aporte-tipo-input]');
+      if (form) form.action = gatilhoAporte.getAttribute('data-aporte-url');
+      if (sub) sub.textContent = gatilhoAporte.getAttribute('data-aporte-nome') || '—';
+      var tipo = gatilhoAporte.getAttribute('data-aporte-tipo') || 'contribution';
+      if (tipoInput) tipoInput.value = tipo;
+      document.querySelectorAll('[data-modal="aporte"] [data-seg-opt]').forEach(function (b) {
+        b.classList.toggle('is-on', b.dataset.value === tipo);
+      });
+    }
+
+    var gatilhoMeta = ev.target.closest('[data-meta-url]');
+    if (gatilhoMeta) {
+      var formMeta = document.querySelector('[data-meta-form]');
+      var subMeta = document.querySelector('[data-meta-sub]');
+      if (formMeta) formMeta.action = gatilhoMeta.getAttribute('data-meta-url');
+      if (subMeta) subMeta.textContent = gatilhoMeta.getAttribute('data-meta-nome') || '—';
+    }
+  });
 })();

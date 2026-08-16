@@ -110,7 +110,7 @@ class DebtInvestmentBudgetGoalTest extends TestCase
             'color' => '#1d9e75',
             'status' => GoalStatus::Active->value,
             'use_account_balance' => '0',
-        ])->assertRedirect(route('goals.index'));
+        ])->assertRedirect(route('dashboard').'#metas');
 
         $this->assertDatabaseHas('financial_goals', ['user_id' => $user->id, 'target_amount' => '5000.00']);
     }

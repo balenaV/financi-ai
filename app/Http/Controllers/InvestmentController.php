@@ -43,7 +43,7 @@ class InvestmentController extends Controller
         $data['current_amount'] = Money::normalize($data['current_amount']);
         $request->user()->investments()->create($data);
 
-        return to_route('investments.index')->with('success', 'Investimento criado.');
+        return redirect(route('dashboard').'#investimentos')->with('success', 'Investimento criado.');
     }
 
     public function show(Request $request, Investment $investment, InvestmentService $service): View
@@ -77,7 +77,7 @@ class InvestmentController extends Controller
         $data['current_amount'] = Money::normalize($data['current_amount']);
         $investment->update($data);
 
-        return to_route('investments.show', $investment)->with('success', 'Investimento atualizado.');
+        return redirect(route('dashboard').'#investimentos')->with('success', 'Investimento atualizado.');
     }
 
     public function operation(

@@ -18,6 +18,8 @@ class DashboardService
         private readonly AccountBalanceService $balances,
         private readonly BudgetService $budgets,
         private readonly CreditCardService $creditCards,
+        private readonly DebtService $debts,
+        private readonly InvestmentService $investments,
     ) {}
 
     public function build(User $user, array $filters = []): array
@@ -115,8 +117,48 @@ class DashboardService
             'credit_cards' => $this->creditCardsOverview($user),
             'transactions_by_day' => $this->transactionsByDay($user),
             'forecast_months' => $this->forecastMonths($user),
+            'forecast_detailed' => $this->forecastDetailed($user),
             'subscriptions' => $this->subscriptions($user),
+            'categories_overview' => $this->categoriesOverview($user),
+            'debt_summary' => $debtSummary,
+            'debts_overview' => $this->debtsOverview($user),
+            'investments_overview' => $this->investmentsOverview($user),
+            'goals_overview' => $this->goalsOverview($user),
         ];
+    }
+
+    private function categoriesOverview(User $user): Collection
+    {
+        return $user->categories()->withCount('transactions')->orderBy('type')->orderBy('name')->get();
+    }
+
+    private function debtsOverview(User $user): Collection
+    {
+        return $user->debts()->with('installments')->where('status', '!=', 'cancelled')->latest()->get()
+            ->map(fn ($debt) => ['debt' => $debt, 'summary' => $this->debts->summary($debt)]);
+    }
+
+    private function investmentsOverview(User $user): Collection
+    {
+        return $user->investments()->with('operations')->where('status', 'active')->latest()->get()
+            ->map(fn ($investment) => ['investment' => $investment, 'metrics' => $this->investments->metrics($investment)]);
+    }
+
+    private function goalsOverview(User $user): Collection
+    {
+        return $user->financialGoals()->with('account')->whereIn('status', ['active', 'completed'])->latest()->get()
+            ->map(function ($goal) {
+                $current = $goal->use_account_balance && $goal->account
+                    ? $this->balances->current($goal->account)
+                    : $goal->current_amount;
+
+                return [
+                    'goal' => $goal,
+                    'current' => $current,
+                    'remaining' => bcsub($goal->target_amount, $current, 2),
+                    'percentage' => Money::percentage($current, $goal->target_amount),
+                ];
+            });
     }
 
     private function subscriptions(User $user): Collection
@@ -181,6 +223,40 @@ class DashboardService
                 'income' => $income,
                 'expense' => $expense,
                 'result' => bcsub($income, $expense, 2),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Previsão: mesma base do ForecastController (lançamentos planejados ou
+     * vencidos a partir de hoje), mas já agrupados por mês com os
+     * lançamentos de cada um — é o que a aba do painel precisa renderizar.
+     */
+    private function forecastDetailed(User $user, int $months = 6): array
+    {
+        $transactions = $user->transactions()
+            ->with(['account', 'category'])
+            ->whereIn('status', [TransactionStatus::Planned->value, TransactionStatus::Overdue->value])
+            ->whereBetween('competence_date', [today(), today()->addMonthsNoOverflow($months)->endOfMonth()])
+            ->orderBy('competence_date')
+            ->get()
+            ->groupBy(fn ($transaction) => $transaction->competence_date->format('Y-m'));
+
+        $rows = [];
+        for ($offset = 0; $offset < $months; $offset++) {
+            $month = today()->addMonthsNoOverflow($offset)->startOfMonth();
+            $items = $transactions->get($month->format('Y-m'), collect());
+            $income = $items->where('type', TransactionType::Income)->reduce(fn ($t, $i) => bcadd($t, $i->amount, 2), '0.00');
+            $expense = $items->where('type', TransactionType::Expense)->reduce(fn ($t, $i) => bcadd($t, $i->amount, 2), '0.00');
+
+            $rows[] = [
+                'month' => $month,
+                'income' => $income,
+                'expense' => $expense,
+                'result' => bcsub($income, $expense, 2),
+                'transactions' => $items->sortBy('competence_date')->values(),
             ];
         }
 
