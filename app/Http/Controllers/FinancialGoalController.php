@@ -81,7 +81,7 @@ class FinancialGoalController extends Controller
         $this->authorize('delete', $goal);
         $goal->delete();
 
-        return back()->with('success', 'Meta excluída.');
+        return redirect(route('dashboard').'#metas')->with('success', 'Meta excluída.');
     }
 
     /**
@@ -106,6 +106,6 @@ class FinancialGoalController extends Controller
             ]);
         });
 
-        return back()->with('success', 'Aporte registrado.');
+        return redirect(route('dashboard').'#metas')->with('success', 'Aporte registrado.');
     }
 }

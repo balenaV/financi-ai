@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Account;
 use App\Models\Budget;
+use App\Models\Category;
 use App\Models\Debt;
 use App\Models\DebtInstallment;
 use App\Models\FinancialGoal;
@@ -74,7 +75,7 @@ class DashboardPrompt6Test extends TestCase
 
         $this->actingAs($user)->post(route('debts.installments.pay', $installment), [
             'account_id' => $account->id,
-        ])->assertRedirect();
+        ])->assertRedirect(route('dashboard').'#dividas');
 
         $this->assertDatabaseHas('debt_installments', ['id' => $installment->id, 'status' => 'paid']);
         $this->assertDatabaseHas('transactions', ['source_type' => 'debt_installment', 'amount' => '250.00']);
@@ -140,7 +141,7 @@ class DashboardPrompt6Test extends TestCase
 
         $this->actingAs($user)->post(route('goals.contribute', $goal), [
             'amount' => '150,00',
-        ])->assertRedirect();
+        ])->assertRedirect(route('dashboard').'#metas');
 
         $this->assertSame('650.00', $goal->refresh()->current_amount);
         $this->assertDatabaseHas('goal_contributions', [
@@ -202,5 +203,36 @@ class DashboardPrompt6Test extends TestCase
         $response->assertDontSee('Dívida secreta');
         $response->assertDontSee('Investimento secreto');
         $response->assertDontSee('Meta secreta');
+    }
+
+    /**
+     * O fragmento de URL (#categorias, #dividas, #metas) nunca chega ao
+     * servidor — back() sempre devolve /dashboard sem hash, o que reabre a
+     * aba "Visão geral" e fecha qualquer painel que estivesse aberto. Todo
+     * redirect de ação dentro de uma aba precisa apontar o hash explicitamente,
+     * como já fazem os store/update dessas mesmas controllers.
+     */
+    public function test_category_and_debt_and_goal_actions_redirect_back_to_their_own_tab(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('categories.store'), [
+            'name' => 'Categoria nova',
+            'type' => 'expense',
+            'color' => '#137A4A',
+            'icon' => 'fa-solid fa-tag',
+        ])->assertRedirect(route('dashboard').'#categorias');
+
+        $category = Category::factory()->for($user)->create();
+        $this->actingAs($user)->delete(route('categories.destroy', $category))
+            ->assertRedirect(route('dashboard').'#categorias');
+
+        $debt = Debt::factory()->for($user)->create(['installment_count' => 1]);
+        $this->actingAs($user)->delete(route('debts.destroy', $debt))
+            ->assertRedirect(route('dashboard').'#dividas');
+
+        $goal = FinancialGoal::factory()->for($user)->create();
+        $this->actingAs($user)->delete(route('goals.destroy', $goal))
+            ->assertRedirect(route('dashboard').'#metas');
     }
 }

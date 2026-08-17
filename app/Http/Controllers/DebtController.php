@@ -81,7 +81,7 @@ class DebtController extends Controller
         $account = $request->user()->accounts()->findOrFail($data['account_id']);
         $service->pay($request->user(), $installment, $account, $data['paid_at'] ?? null);
 
-        return back()->with('success', 'Parcela paga e despesa registrada.');
+        return redirect(route('dashboard').'#dividas')->with('success', 'Parcela paga e despesa registrada.');
     }
 
     public function destroy(Debt $debt): RedirectResponse
@@ -89,11 +89,11 @@ class DebtController extends Controller
         $this->authorize('delete', $debt);
 
         if ($debt->installments()->whereNotNull('transaction_id')->exists()) {
-            return back()->with('error', 'A dívida possui pagamentos. Marque-a como cancelada em vez de excluir.');
+            return redirect(route('dashboard').'#dividas')->with('error', 'A dívida possui pagamentos. Marque-a como cancelada em vez de excluir.');
         }
 
         $debt->delete();
 
-        return to_route('debts.index')->with('success', 'Dívida excluída.');
+        return redirect(route('dashboard').'#dividas')->with('success', 'Dívida excluída.');
     }
 }

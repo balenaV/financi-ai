@@ -27,7 +27,7 @@ class CategoryController extends Controller
             'active' => $request->boolean('active', true),
         ]);
 
-        return back()->with('success', 'Categoria criada com sucesso.');
+        return redirect(route('dashboard').'#categorias')->with('success', 'Categoria criada com sucesso.');
     }
 
     public function edit(Category $category): View
@@ -57,11 +57,11 @@ class CategoryController extends Controller
         $this->authorize('delete', $category);
 
         if ($category->transactions()->exists() || $category->children()->exists()) {
-            return back()->with('error', 'A categoria está em uso. Desative-a ou reorganize os registros primeiro.');
+            return redirect(route('dashboard').'#categorias')->with('error', 'A categoria está em uso. Desative-a ou reorganize os registros primeiro.');
         }
 
         $category->delete();
 
-        return back()->with('success', 'Categoria excluída.');
+        return redirect(route('dashboard').'#categorias')->with('success', 'Categoria excluída.');
     }
 }
