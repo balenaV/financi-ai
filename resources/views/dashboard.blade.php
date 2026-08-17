@@ -1065,6 +1065,8 @@
                             <input type="hidden" name="account_id" value="{{ $defaultPayAccount->id }}">
                             <button class="btn-outline-hard btn-outline--xs" type="submit">Baixar</button>
                           </form>
+                        @else
+                          <a class="btn-outline-hard btn-outline--xs" href="{{ route('dashboard') }}#contas" title="Pagar uma parcela registra uma despesa numa conta — cadastre uma conta ativa primeiro">Cadastrar conta</a>
                         @endif
                       @endif
                     </span>
@@ -1230,6 +1232,7 @@
                     <div class="menu" data-menu>
                       <button class="btn-icon btn-icon--sm" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Ações" data-menu-btn><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
                       <div class="menu__list" role="menu" hidden data-menu-list>
+                        <button class="menu__item" type="button" role="menuitem" data-goal-open="{{ $row['goal']->id }}"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>Ver aportes</button>
                         <button class="menu__item" type="button" role="menuitem" data-modal-open="aporte-meta" data-meta-goal="{{ $row['goal']->id }}" data-meta-nome="{{ $row['goal']->name }}" data-meta-url="{{ route('goals.contribute', $row['goal']) }}"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i>Registrar aporte</button>
                         <a class="menu__item menu__item--sep" role="menuitem" href="{{ route('dashboard', array_merge($filters, ['edit_goal' => $row['goal']->id])) }}#metas"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i>Editar meta</a>
                       </div>
@@ -1245,6 +1248,29 @@
                 </article>
               @endforeach
             </div>
+
+            @foreach($dashboard['goals_overview'] as $row)
+              <section class="panel history" data-enter hidden data-goal-panel="{{ $row['goal']->id }}">
+                <div class="history__head">
+                  <span class="history__title-wrap">
+                    <span class="history__title">Aportes · {{ $row['goal']->name }}</span>
+                    <span class="history__sub">Guardado até agora: <span data-money>{{ Money::format($row['current'], $hide) }}</span></span>
+                  </span>
+                  <button class="btn-icon btn-icon--sm" type="button" aria-label="Fechar aportes" data-goal-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                </div>
+                @forelse($row['goal']->contributions as $contribution)
+                  <div class="inst__row">
+                    <span class="inst__num">{{ $loop->count - $loop->iteration + 1 }}º aporte</span>
+                    <span class="inst__link"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i>Somado ao progresso</span>
+                    <span class="inst__due">{{ $contribution->contributed_at->format('d/m/Y') }}</span>
+                    <span class="inst__value" data-money>{{ Money::format($contribution->amount, $hide) }}</span>
+                    <span class="inst__state"></span>
+                  </div>
+                @empty
+                  <p class="card__text card__text--flush">Nenhum aporte registrado ainda além do valor inicial da meta.</p>
+                @endforelse
+              </section>
+            @endforeach
           @endif
         </section>
 

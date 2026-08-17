@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['account_id', 'name', 'description', 'target_amount', 'current_amount', 'deadline', 'color', 'status', 'use_account_balance'])]
@@ -33,5 +34,10 @@ class FinancialGoal extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function contributions(): HasMany
+    {
+        return $this->hasMany(GoalContribution::class);
     }
 }

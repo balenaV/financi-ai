@@ -80,6 +80,19 @@ class DashboardPrompt6Test extends TestCase
         $this->assertDatabaseHas('transactions', ['source_type' => 'debt_installment', 'amount' => '250.00']);
     }
 
+    public function test_debt_panel_shows_a_create_account_prompt_instead_of_baixar_when_user_has_no_active_account(): void
+    {
+        $user = User::factory()->create();
+        $debt = Debt::factory()->for($user)->create(['installment_count' => 1]);
+        DebtInstallment::factory()->for($user)->for($debt)->create();
+
+        $response = $this->actingAs($user)->get('/dashboard');
+
+        $response->assertOk();
+        $response->assertDontSee('>Baixar<', false);
+        $response->assertSee('Cadastrar conta');
+    }
+
     public function test_debt_installment_baixar_route_is_blocked_for_another_users_installment(): void
     {
         $owner = User::factory()->create();
@@ -130,6 +143,27 @@ class DashboardPrompt6Test extends TestCase
         ])->assertRedirect();
 
         $this->assertSame('650.00', $goal->refresh()->current_amount);
+        $this->assertDatabaseHas('goal_contributions', [
+            'user_id' => $user->id,
+            'financial_goal_id' => $goal->id,
+            'amount' => '150.00',
+        ]);
+    }
+
+    public function test_goal_contributions_history_is_isolated_per_user(): void
+    {
+        $owner = User::factory()->create();
+        $attacker = User::factory()->create();
+        $goal = FinancialGoal::factory()->for($owner)->create(['current_amount' => '0.00']);
+
+        $this->actingAs($owner)->post(route('goals.contribute', $goal), ['amount' => '100,00'])->assertRedirect();
+
+        $this->assertCount(1, $owner->goalContributions()->get());
+        $this->assertCount(0, $attacker->goalContributions()->get());
+
+        $response = $this->actingAs($attacker)->get('/dashboard');
+        $response->assertOk();
+        $response->assertDontSee($goal->name);
     }
 
     public function test_goal_contribute_route_is_blocked_for_another_users_goal(): void

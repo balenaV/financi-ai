@@ -146,7 +146,9 @@ class DashboardService
 
     private function goalsOverview(User $user): Collection
     {
-        return $user->financialGoals()->with('account')->whereIn('status', ['active', 'completed'])->latest()->get()
+        return $user->financialGoals()
+            ->with(['account', 'contributions' => fn ($q) => $q->latest('contributed_at')->latest('id')])
+            ->whereIn('status', ['active', 'completed'])->latest()->get()
             ->map(function ($goal) {
                 $current = $goal->use_account_balance && $goal->account
                     ? $this->balances->current($goal->account)

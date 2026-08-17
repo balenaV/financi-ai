@@ -9,6 +9,7 @@ use App\Services\AccountBalanceService;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class FinancialGoalController extends Controller
@@ -94,8 +95,16 @@ class FinancialGoalController extends Controller
         $data = $request->validate([
             'amount' => ['required', 'regex:/^[\d.,\s]+$/'],
         ]);
+        $amount = Money::normalize($data['amount']);
 
-        $goal->update(['current_amount' => bcadd((string) $goal->current_amount, Money::normalize($data['amount']), 2)]);
+        DB::transaction(function () use ($request, $goal, $amount) {
+            $goal->update(['current_amount' => bcadd((string) $goal->current_amount, $amount, 2)]);
+            $request->user()->goalContributions()->create([
+                'financial_goal_id' => $goal->id,
+                'amount' => $amount,
+                'contributed_at' => today(),
+            ]);
+        });
 
         return back()->with('success', 'Aporte registrado.');
     }
