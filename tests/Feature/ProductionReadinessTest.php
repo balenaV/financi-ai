@@ -138,7 +138,7 @@ class ProductionReadinessTest extends TestCase
         $this->assertDatabaseCount('transactions', 1);
 
         $this->actingAs($user)->post(route('transactions.import.revert', $batchId))
-            ->assertRedirect(route('transactions.index'));
+            ->assertRedirect(route('dashboard').'#transacoes');
 
         // Transaction uses SoftDeletes like every other financial record — revert
         // preserves the audit trail rather than hard-deleting the row.
@@ -373,7 +373,7 @@ class ProductionReadinessTest extends TestCase
         $this->assertSame('2500.00', $dashboard['summary']['forecast_income']);
         $this->assertSame('2500.00', $dashboard['summary']['forecast_result']);
 
-        $this->actingAs($user)->get(route('forecast.index'))
+        $this->actingAs($user)->get('/dashboard')
             ->assertSuccessful()
             ->assertSee('Bônus futuro')
             ->assertSee('Adicionar ganho futuro');

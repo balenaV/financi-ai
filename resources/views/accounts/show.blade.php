@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="title">{{ $account->name }}</x-slot>
     <x-page-header :title="$account->name" :description="$account->institution ?: $account->type->label()">
-        <a href="{{ route('accounts.edit', $account) }}" class="btn-secondary">Editar conta</a>
+        <a href="{{ route('dashboard', ['edit_account' => $account->id]) }}#contas" class="btn-secondary">Editar conta</a>
         <a href="{{ route('dashboard') }}" class="btn-primary">Nova transação</a>
     </x-page-header>
     <div class="grid gap-4 sm:grid-cols-2"><x-financial-card label="Saldo atual" :value="$current" tone="primary" /><x-financial-card label="Saldo projetado" :value="$projected" /></div>

@@ -247,7 +247,6 @@
                     <button class="btn-outline-hard" type="submit">Sair da conta</button>
                   </form>
                 </div>
-                <p class="auth__note">E-mail errado? <a href="{{ route('profile.edit') }}">Corrigir cadastro</a>.</p>
               </div>
           @endif
 

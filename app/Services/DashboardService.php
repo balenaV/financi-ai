@@ -232,9 +232,9 @@ class DashboardService
     }
 
     /**
-     * Previsão: mesma base do ForecastController (lançamentos planejados ou
-     * vencidos a partir de hoje), mas já agrupados por mês com os
-     * lançamentos de cada um — é o que a aba do painel precisa renderizar.
+     * Previsão: lançamentos planejados ou vencidos a partir de hoje,
+     * agrupados por mês com os lançamentos de cada um — é o que a aba
+     * Previsão do painel precisa renderizar.
      */
     private function forecastDetailed(User $user, int $months = 6): array
     {

@@ -81,7 +81,7 @@ class AccountController extends Controller
 
         $account->delete();
 
-        return to_route('accounts.index')->with('success', 'Conta excluída.');
+        return redirect(route('dashboard').'#contas')->with('success', 'Conta excluída.');
     }
 
     public function archive(Account $account): RedirectResponse

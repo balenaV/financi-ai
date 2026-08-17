@@ -1,16 +1,12 @@
 @php
     $userSettings = auth()->user()->settings()->firstOrCreate();
+    // A maioria das páginas que este layout servia virou aba do dashboard novo
+    // (Prompt 6) — só sobram aqui detalhes/edições sem equivalente na aba
+    // ainda (conta, investimento, cartão, fatura aberta, relatórios
+    // detalhados, histórico de segurança), sempre acessados por link direto,
+    // nunca por essa barra. Por isso a navegação encolheu pra só isto.
     $nav = [
         ['route' => 'dashboard', 'match' => 'dashboard', 'label' => 'Visão geral', 'icon' => 'fa-chart-pie'],
-        ['route' => 'transactions.index', 'match' => 'transactions.*', 'label' => 'Transações', 'icon' => 'fa-arrow-right-arrow-left'],
-        ['route' => 'forecast.index', 'match' => 'forecast.*', 'label' => 'Planejamento', 'icon' => 'fa-calendar-days'],
-        ['route' => 'accounts.index', 'match' => 'accounts.*', 'label' => 'Contas', 'icon' => 'fa-wallet'],
-        ['route' => 'categories.index', 'match' => 'categories.*', 'label' => 'Categorias', 'icon' => 'fa-tags'],
-        ['route' => 'credit-cards.index', 'match' => 'credit-cards.*', 'label' => 'Cartões', 'icon' => 'fa-credit-card'],
-        ['route' => 'debts.index', 'match' => 'debts.*', 'label' => 'Empréstimos', 'icon' => 'fa-building-columns'],
-        ['route' => 'investments.index', 'match' => 'investments.*', 'label' => 'Investimentos', 'icon' => 'fa-chart-line'],
-        ['route' => 'budgets.index', 'match' => 'budgets.*', 'label' => 'Orçamentos', 'icon' => 'fa-bullseye'],
-        ['route' => 'goals.index', 'match' => 'goals.*', 'label' => 'Metas', 'icon' => 'fa-flag-checkered'],
         ['route' => 'reports.index', 'match' => 'reports.*', 'label' => 'Relatórios', 'icon' => 'fa-chart-column'],
     ];
     $primaryNav = array_slice($nav, 0, 6);
@@ -79,7 +75,7 @@
         </section>
 
         <div class="sidebar-user-area">
-            <a href="{{ route('settings.edit') }}" title="Configurações" class="sidebar-user-profile">
+            <a href="{{ route('dashboard').'#config' }}" title="Configurações" class="sidebar-user-profile">
                 <span class="sidebar-avatar">{{ $userInitials }}</span>
                 <span data-sidebar-label class="min-w-0 flex-1">
                     <span class="block truncate text-sm font-bold">{{ auth()->user()->name }}</span>
@@ -209,7 +205,7 @@
                 </div>
             </section>
             <div class="sidebar-user-area">
-                <a href="{{ route('settings.edit') }}" class="sidebar-user-profile">
+                <a href="{{ route('dashboard').'#config' }}" class="sidebar-user-profile">
                     <span class="sidebar-avatar">{{ $userInitials }}</span>
                     <span class="min-w-0 flex-1">
                         <span class="block truncate text-sm font-bold">{{ auth()->user()->name }}</span>
@@ -230,9 +226,9 @@
 
     <nav class="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-surface px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden" aria-label="Navegação móvel">
         <a href="{{ route('dashboard') }}" class="flex min-h-12 flex-col items-center justify-center gap-1 text-[11px] font-semibold {{ request()->routeIs('dashboard') ? 'text-primary-600' : 'text-foreground-tertiary' }}"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Início</span></a>
-        <a href="{{ route('transactions.index') }}" class="flex min-h-12 flex-col items-center justify-center gap-1 text-[11px] font-semibold {{ request()->routeIs('transactions.index') ? 'text-primary-600' : 'text-foreground-tertiary' }}"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i><span>Transações</span></a>
+        <a href="{{ route('dashboard').'#transacoes' }}" class="flex min-h-12 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-foreground-tertiary"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i><span>Transações</span></a>
         <a href="{{ route('dashboard') }}" class="mx-auto grid size-12 place-items-center rounded-full border border-border-strong bg-primary-500 text-xl text-foreground shadow-[2px_2px_0_var(--text-primary)]" aria-label="Nova transação"><i class="fa-solid fa-plus" aria-hidden="true"></i></a>
-        <a href="{{ route('credit-cards.index') }}" class="flex min-h-12 flex-col items-center justify-center gap-1 text-[11px] font-semibold {{ request()->routeIs('credit-cards.*') ? 'text-primary-600' : 'text-foreground-tertiary' }}"><i class="fa-solid fa-credit-card" aria-hidden="true"></i><span>Cartões</span></a>
+        <a href="{{ route('dashboard').'#cartoes' }}" class="flex min-h-12 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-foreground-tertiary"><i class="fa-solid fa-credit-card" aria-hidden="true"></i><span>Cartões</span></a>
         <button type="button" data-sidebar-open class="flex min-h-12 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-foreground-tertiary"><i class="fa-regular fa-message" aria-hidden="true"></i><span>Conversas</span></button>
     </nav>
 </div>

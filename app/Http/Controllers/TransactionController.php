@@ -3,32 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Enums\TransactionStatus;
-use App\Enums\TransactionType;
 use App\Http\Requests\TransactionRequest;
 use App\Models\Transaction;
 use App\Services\TransactionService;
 use App\Support\Csv;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TransactionController extends Controller
 {
-    public function index(Request $request, TransactionService $service): View
-    {
-        $filters = $request->only(['start_date', 'end_date', 'type', 'status', 'category_id', 'account_id', 'min_amount', 'max_amount', 'search', 'sort']);
-
-        return view('transactions.index', [
-            'transactions' => $service->filtered($request->user(), $filters, perPage: 8),
-            'accounts' => $request->user()->accounts()->orderBy('name')->get(),
-            'categories' => $request->user()->categories()->orderBy('name')->get(),
-            'filters' => $filters,
-            'types' => TransactionType::cases(),
-            'statuses' => TransactionStatus::cases(),
-        ]);
-    }
-
     public function store(TransactionRequest $request, TransactionService $service): RedirectResponse
     {
         $created = $service->create($request->user(), $request->validated());

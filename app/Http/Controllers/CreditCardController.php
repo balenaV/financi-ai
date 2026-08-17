@@ -12,29 +12,6 @@ use Illuminate\View\View;
 
 class CreditCardController extends Controller
 {
-    public function index(Request $request, CreditCardService $service): View
-    {
-        $service->refreshOverdue($request->user());
-        $cards = $request->user()->creditCards()
-            ->with('bills')
-            ->orderByDesc('active')
-            ->orderBy('name')
-            ->paginate(12);
-        $summaries = $cards->getCollection()
-            ->mapWithKeys(fn (CreditCard $card) => [$card->id => $service->cardSummary($card)]);
-
-        return view('credit-cards.index', [
-            'cards' => $cards,
-            'summaries' => $summaries,
-            'debtSummary' => $service->debtSummary($request->user()),
-        ]);
-    }
-
-    public function create(): View
-    {
-        return view('credit-cards.form', ['creditCard' => new CreditCard]);
-    }
-
     public function store(CreditCardRequest $request): RedirectResponse
     {
         $data = $request->validated();
@@ -61,13 +38,6 @@ class CreditCardController extends Controller
         ]);
     }
 
-    public function edit(CreditCard $creditCard): View
-    {
-        $this->authorize('update', $creditCard);
-
-        return view('credit-cards.form', compact('creditCard'));
-    }
-
     public function update(CreditCardRequest $request, CreditCard $creditCard): RedirectResponse
     {
         $this->authorize('update', $creditCard);
@@ -89,6 +59,6 @@ class CreditCardController extends Controller
 
         $creditCard->delete();
 
-        return to_route('credit-cards.index')->with('success', 'Cartão excluído.');
+        return redirect(route('dashboard').'#cartoes')->with('success', 'Cartão excluído.');
     }
 }

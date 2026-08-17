@@ -2,7 +2,7 @@
     <x-slot name="title">{{ $creditCard->name }}</x-slot>
 
     <x-page-header :title="$creditCard->name" :description="$creditCard->issuer.' · fechamento dia '.$creditCard->closing_day.' · vencimento dia '.$creditCard->due_day">
-        <a href="{{ route('credit-cards.edit', $creditCard) }}" class="btn-secondary"><i class="fa-solid fa-pen" aria-hidden="true"></i> Editar cartão</a>
+        <a href="{{ route('dashboard', ['edit_card' => $creditCard->id]) }}#cartoes" class="btn-secondary"><i class="fa-solid fa-pen" aria-hidden="true"></i> Editar cartão</a>
     </x-page-header>
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

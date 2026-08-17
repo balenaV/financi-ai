@@ -19,18 +19,16 @@ class SecurityIsolationTest extends TestCase
     public function test_guests_are_redirected_from_financial_pages(): void
     {
         $this->get(route('dashboard'))->assertRedirect(route('login'));
-        $this->get(route('accounts.index'))->assertRedirect(route('login'));
         $this->get(route('reports.index'))->assertRedirect(route('login'));
     }
 
-    public function test_user_cannot_view_edit_or_delete_another_users_account(): void
+    public function test_user_cannot_view_or_delete_another_users_account(): void
     {
         $owner = User::factory()->create();
         $attacker = User::factory()->create();
         $account = Account::factory()->for($owner)->create();
 
         $this->actingAs($attacker)->get(route('accounts.show', $account))->assertForbidden();
-        $this->actingAs($attacker)->get(route('accounts.edit', $account))->assertForbidden();
         $this->actingAs($attacker)->delete(route('accounts.destroy', $account))->assertForbidden();
         $this->assertDatabaseHas('accounts', ['id' => $account->id, 'deleted_at' => null]);
     }

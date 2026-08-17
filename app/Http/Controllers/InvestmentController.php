@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Enums\InvestmentOperationType;
-use App\Enums\InvestmentStatus;
-use App\Enums\InvestmentType;
 use App\Http\Requests\InvestmentOperationRequest;
 use App\Http\Requests\InvestmentRequest;
 use App\Models\Investment;
@@ -16,26 +14,6 @@ use Illuminate\View\View;
 
 class InvestmentController extends Controller
 {
-    public function index(Request $request, InvestmentService $service): View
-    {
-        $investments = $request->user()->investments()->with('operations')->latest()->paginate(12);
-        $investments->setCollection($investments->getCollection()->map(fn (Investment $investment) => [
-            'investment' => $investment,
-            'metrics' => $service->metrics($investment),
-        ]));
-
-        return view('investments.index', compact('investments'));
-    }
-
-    public function create(): View
-    {
-        return view('investments.form', [
-            'investment' => new Investment,
-            'types' => InvestmentType::cases(),
-            'statuses' => InvestmentStatus::cases(),
-        ]);
-    }
-
     public function store(InvestmentRequest $request): RedirectResponse
     {
         $data = $request->validated();
@@ -55,17 +33,6 @@ class InvestmentController extends Controller
             'metrics' => $service->metrics($investment),
             'operationTypes' => InvestmentOperationType::cases(),
             'accounts' => $request->user()->accounts()->active()->orderBy('name')->get(),
-        ]);
-    }
-
-    public function edit(Investment $investment): View
-    {
-        $this->authorize('update', $investment);
-
-        return view('investments.form', [
-            'investment' => $investment,
-            'types' => InvestmentType::cases(),
-            'statuses' => InvestmentStatus::cases(),
         ]);
     }
 
@@ -101,6 +68,6 @@ class InvestmentController extends Controller
 
         $investment->delete();
 
-        return to_route('investments.index')->with('success', 'Investimento excluído.');
+        return redirect(route('dashboard').'#investimentos')->with('success', 'Investimento excluído.');
     }
 }

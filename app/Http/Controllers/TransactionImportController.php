@@ -90,6 +90,6 @@ class TransactionImportController extends Controller
 
         $service->revert($batch);
 
-        return to_route('transactions.index')->with('success', 'Importação desfeita — os lançamentos foram removidos.');
+        return redirect(route('dashboard').'#transacoes')->with('success', 'Importação desfeita — os lançamentos foram removidos.');
     }
 }

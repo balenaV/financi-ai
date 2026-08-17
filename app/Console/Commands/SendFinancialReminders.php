@@ -37,7 +37,7 @@ class SendFinancialReminders extends Command
                             'loan-installment',
                             "Parcela {$installment->number} de {$installment->debt->name}",
                             'Vence em '.$installment->due_date->format('d/m/Y').' · R$ '.number_format((float) $installment->amount, 2, ',', '.'),
-                            route('debts.show', $installment->debt, absolute: false),
+                            route('dashboard', absolute: false).'#dividas',
                         );
                     });
 

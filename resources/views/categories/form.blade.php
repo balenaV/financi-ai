@@ -1,8 +1,0 @@
-<x-app-layout>
-    <x-slot name="title">Editar categoria</x-slot>
-    <x-page-header title="Editar categoria" />
-    <form method="POST" action="{{ route('categories.update', $category) }}" class="surface mx-auto max-w-2xl p-6">@csrf @method('PUT')
-        <div class="grid gap-5 sm:grid-cols-2"><x-form.input label="Nome" name="name" :value="$category->name" required /><x-form.select label="Tipo" name="type" required>@foreach($types as $type)<option value="{{ $type->value }}" @selected(old('type', $category->type->value) === $type->value)>{{ $type->label() }}</option>@endforeach</x-form.select><x-form.select label="Categoria pai" name="parent_id"><option value="">Nenhuma</option>@foreach($parents as $parent)<option value="{{ $parent->id }}" @selected(old('parent_id', $category->parent_id) == $parent->id)>{{ $parent->name }}</option>@endforeach</x-form.select><x-form.input label="Cor" name="color" type="color" :value="$category->color" required /><x-form.select label="Ícone" name="icon" required>@foreach(['tag'=>'Etiqueta','home'=>'Casa','food'=>'Alimentação','car'=>'Transporte','heart'=>'Saúde'] as $value=>$label)<option value="{{ $value }}" @selected(old('icon', $category->icon) === $value)>{{ $label }}</option>@endforeach</x-form.select><label class="flex items-center gap-3 pt-7"><input type="hidden" name="active" value="0"><input type="checkbox" name="active" value="1" class="size-5 rounded" @checked(old('active', $category->active))><span class="text-sm font-medium">Ativa</span></label></div>
-        <div class="mt-7 flex justify-end gap-2"><a href="{{ route('categories.index') }}" class="btn-secondary">Cancelar</a><x-button type="submit">Salvar</x-button></div>
-    </form>
-</x-app-layout>
