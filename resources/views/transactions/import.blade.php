@@ -226,13 +226,19 @@
       <span class="entry__source" data-entry-source></span>
     </span>
     <span class="entry__category">
-      <select aria-label="Categoria" data-entry-category>
-        <option value="">Sem categoria</option>
-        @foreach($categories as $category)
-          <option value="{{ $category->id }}">{{ $category->name }}</option>
-        @endforeach
-      </select>
-      <i class="fa-solid fa-chevron-down"></i>
+      <div class="dropdown" data-dropdown data-dropdown-fixed data-entry-category>
+        <button class="dropdown__btn dropdown__btn--sm" type="button" aria-haspopup="listbox" aria-expanded="false" data-dropdown-btn>
+          <span data-dropdown-label>Sem categoria</span>
+          <i class="fa-solid fa-chevron-down dropdown__chevron"></i>
+        </button>
+        <div class="dropdown__menu dropdown__menu--right" role="listbox" hidden>
+          <button class="dropdown__opt is-selected" type="button" role="option" data-value="">Sem categoria<i class="fa-solid fa-check"></i></button>
+          @foreach($categories as $category)
+            <button class="dropdown__opt" type="button" role="option" data-value="{{ $category->id }}">{{ $category->name }}<i class="fa-solid fa-check"></i></button>
+          @endforeach
+        </div>
+        <input type="hidden" data-dropdown-input value="">
+      </div>
     </span>
     <span class="entry__value" data-entry-value></span>
   </div>

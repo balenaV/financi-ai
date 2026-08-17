@@ -7,21 +7,23 @@
    visual do dashboard.js. */
 
 (function () {
-  /* ---------- Dropdowns genéricos: valor escolhido -> input oculto ---------- */
-  document.querySelectorAll('[data-dropdown]').forEach(function (drop) {
-    if (drop.hasAttribute('data-account-or-card')) return;
+  /* ---------- Dropdowns genéricos: valor escolhido -> input oculto ----------
+     Delegado (não um forEach de addEventListener no load) porque alguns
+     dropdowns — ex.: categoria de cada linha na revisão de importação — são
+     clonados dinamicamente por JS depois do carregamento da página. */
+  document.addEventListener('click', function (e) {
+    var opt = e.target.closest('.dropdown__opt');
+    if (!opt) return;
+    var drop = opt.closest('[data-dropdown]');
+    if (!drop || drop.hasAttribute('data-account-or-card')) return;
     var hidden = drop.querySelector('[data-dropdown-input]');
     if (!hidden) return;
-    drop.querySelectorAll('.dropdown__opt').forEach(function (opt) {
-      opt.addEventListener('click', function () {
-        hidden.value = opt.getAttribute('data-value') || '';
-        // Um <select> nativo dispara "change" sozinho; um <input type="hidden">
-        // não dispara nada só por ter o .value trocado via JS. Sem isso, quem
-        // escuta "change" nesse campo (ex.: o tutorial por banco da importação)
-        // nunca é avisado da troca.
-        hidden.dispatchEvent(new Event('change', { bubbles: true }));
-      });
-    });
+    hidden.value = opt.getAttribute('data-value') || '';
+    // Um <select> nativo dispara "change" sozinho; um <input type="hidden">
+    // não dispara nada só por ter o .value trocado via JS. Sem isso, quem
+    // escuta "change" nesse campo (ex.: o tutorial por banco da importação)
+    // nunca é avisado da troca.
+    hidden.dispatchEvent(new Event('change', { bubbles: true }));
   });
 
   /* ---------- Dropdown misto "conta ou cartão" (modal de transação) ---------- */

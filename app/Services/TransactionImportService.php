@@ -338,11 +338,24 @@ class TransactionImportService
                 ? trim($match[1])
                 : '';
             $rawDate = preg_replace('/\D/', '', $field('DTPOSTED'));
+            $amount = $field('TRNAMT');
+
+            // O tipo (receita/despesa) na etapa seguinte é decidido só pelo sinal
+            // do valor. A maioria dos bancos assina TRNAMT corretamente, mas
+            // algumas exportações mandam débitos com valor positivo — sem essa
+            // correção a transação vira "receita" e nunca bate com o dicionário
+            // de despesas na categorização automática. Lista conservadora: só
+            // tipos inequivocamente de débito por spec OFX (evita forçar sinal
+            // em tipos ambíguos como XFER/CASH/OTHER, que podem ser crédito).
+            $debitTypes = ['DEBIT', 'POS', 'ATM', 'FEE', 'SRVCHG', 'PAYMENT', 'DIRECTDEBIT', 'CHECK'];
+            if ($amount !== '' && ! str_starts_with($amount, '-') && in_array(strtoupper($field('TRNTYPE')), $debitTypes, true)) {
+                $amount = '-'.$amount;
+            }
 
             return [
                 'date' => strlen((string) $rawDate) >= 8 ? substr((string) $rawDate, 0, 8) : '',
                 'description' => $field('MEMO') ?: $field('NAME'),
-                'amount' => $field('TRNAMT'),
+                'amount' => $amount,
                 'external_id' => $field('FITID'),
             ];
         }, $matches[1]);

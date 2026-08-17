@@ -145,36 +145,71 @@
     });
   }
 
-  document.querySelectorAll('[data-dropdown]').forEach(function (drop) {
-    var btn = drop.querySelector('[data-dropdown-btn]');
-    var menu = drop.querySelector('.dropdown__menu');
-    var rotulo = drop.querySelector('[data-dropdown-label]');
-    if (!btn || !menu) return;
-
-    btn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      var aberto = drop.getAttribute('data-open') === 'true';
-      fecharDropdowns(drop);
-      drop.setAttribute('data-open', String(!aberto));
-      menu.hidden = aberto;
-      btn.setAttribute('aria-expanded', String(!aberto));
-    });
-
-    menu.querySelectorAll('.dropdown__opt').forEach(function (opt) {
-      opt.addEventListener('click', function (e) {
-        e.stopPropagation();
-        menu.querySelectorAll('.dropdown__opt').forEach(function (o) {
-          o.classList.toggle('is-selected', o === opt);
-        });
-        if (rotulo) rotulo.textContent = opt.textContent.trim();
-        drop.setAttribute('data-open', 'false');
-        menu.hidden = true;
-        btn.setAttribute('aria-expanded', 'false');
+  /* Delegado (em vez de attachar por elemento no load) porque alguns
+     dropdowns — ex.: categoria de cada linha na revisão de importação —
+     são clonados dinamicamente por JS depois do carregamento da página. */
+  document.addEventListener('click', function (e) {
+    var opt = e.target.closest('.dropdown__opt');
+    if (opt) {
+      var dropOpt = opt.closest('[data-dropdown]');
+      var menuOpt = dropOpt && dropOpt.querySelector('.dropdown__menu');
+      if (!dropOpt || !menuOpt) return;
+      var btnOpt = dropOpt.querySelector('[data-dropdown-btn]');
+      var rotuloOpt = dropOpt.querySelector('[data-dropdown-label]');
+      menuOpt.querySelectorAll('.dropdown__opt').forEach(function (o) {
+        o.classList.toggle('is-selected', o === opt);
       });
-    });
+      if (rotuloOpt) rotuloOpt.textContent = opt.textContent.trim();
+      dropOpt.setAttribute('data-open', 'false');
+      menuOpt.hidden = true;
+      if (btnOpt) btnOpt.setAttribute('aria-expanded', 'false');
+      return;
+    }
+
+    var btn = e.target.closest('[data-dropdown-btn]');
+    if (btn) {
+      var drop = btn.closest('[data-dropdown]');
+      var menu = drop && drop.querySelector('.dropdown__menu');
+      if (drop && menu) {
+        var aberto = drop.getAttribute('data-open') === 'true';
+        fecharDropdowns(drop);
+        drop.setAttribute('data-open', String(!aberto));
+        menu.hidden = aberto;
+        btn.setAttribute('aria-expanded', String(!aberto));
+        // Dropdowns dentro de um container com overflow:hidden (ex.: a lista
+        // de linhas na revisão de importação) teriam o menu cortado — nesses
+        // casos ele é posicionado em coordenadas fixas, fora do fluxo do card.
+        if (!aberto && drop.hasAttribute('data-dropdown-fixed')) {
+          var rect = btn.getBoundingClientRect();
+          menu.style.position = 'fixed';
+          menu.style.top = (rect.bottom + 6) + 'px';
+          menu.style.right = (window.innerWidth - rect.right) + 'px';
+          menu.style.left = 'auto';
+        }
+      }
+      return;
+    }
+
+    fecharDropdowns(null);
   });
 
-  document.addEventListener('click', function () { fecharDropdowns(null); });
+  /* Dropdowns com data-dropdown-fixed são posicionados em coordenadas fixas
+     no momento em que abrem (ver acima) e não acompanham scroll/resize —
+     sem fechar aqui, o menu fica "flutuando" sobre outra linha enquanto a
+     página rola, com o risco real de escolher a categoria errada. Escuta em
+     fase de captura porque scroll não borbulha (importa se algum dia esse
+     dropdown viver dentro de um container com scroll próprio). */
+  function fecharDropdownsFixos() {
+    document.querySelectorAll('[data-dropdown-fixed][data-open="true"]').forEach(function (d) {
+      d.setAttribute('data-open', 'false');
+      var menu = d.querySelector('.dropdown__menu');
+      var btn = d.querySelector('[data-dropdown-btn]');
+      if (menu) menu.hidden = true;
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+  window.addEventListener('scroll', fecharDropdownsFixos, { capture: true, passive: true });
+  window.addEventListener('resize', fecharDropdownsFixos);
 
   /* ---------- Modais (cartão / assinatura) ---------- */
   function abrirModal(nome) {

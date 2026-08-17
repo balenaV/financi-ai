@@ -408,10 +408,21 @@
         flag.hidden = true;
       }
 
-      var select = node.querySelector('[data-entry-category]');
-      select.value = row.suggested_category_id || '';
-      select.addEventListener('change', function () {
-        state.rowState[row.id].categoryId = select.value || null;
+      var dropdown = node.querySelector('[data-entry-category]');
+      var dropdownLabel = dropdown.querySelector('[data-dropdown-label]');
+      var initialCategoryId = row.suggested_category_id ? String(row.suggested_category_id) : '';
+      dropdown.querySelectorAll('.dropdown__opt').forEach(function (opt) {
+        var selected = opt.getAttribute('data-value') === initialCategoryId;
+        opt.classList.toggle('is-selected', selected);
+        if (selected && dropdownLabel) dropdownLabel.textContent = opt.textContent.trim();
+      });
+      // A troca visual (fechar menu, marcar .is-selected, atualizar o rótulo)
+      // já é feita pelo listener delegado genérico em dashboard.js — aqui só
+      // precisamos guardar a categoria escolhida no estado da linha.
+      dropdown.addEventListener('click', function (e) {
+        var opt = e.target.closest('.dropdown__opt');
+        if (!opt) return;
+        state.rowState[row.id].categoryId = opt.getAttribute('data-value') || null;
       });
 
       var valueEl = node.querySelector('[data-entry-value]');
