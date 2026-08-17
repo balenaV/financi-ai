@@ -640,9 +640,12 @@
 
 .entry__flag i { font-size: 10px; }
 
+/* Mesmo amber de .tx-badge.is-pending (dashboard.css) — o valor antigo aqui
+   era rgba(208,122,42,...), exatamente o caramelo reservado ao mascote Capí
+   (nunca a estados/badges de UI, ver docs/design-system.md). */
 .entry__flag--dup {
-  color: var(--warn);
-  background: rgba(208, 122, 42, 0.14);
+  color: #8A6D1F;
+  background: rgba(212, 168, 58, 0.16);
 }
 
 .entry__source { font-size: 12.5px; color: var(--muted); }

@@ -2088,8 +2088,8 @@
   <div class="modal__veil" data-modal-close></div>
   <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-categoria-titulo">
     @php
-        $catCores = ['#137A4A', '#2E9E5B', '#38C172', '#1F6F8B', '#3C6E9F', '#6B4FA8', '#B03A6E', '#C0392B', '#D68910', '#5B5A54'];
-        $catIcones = ['fa-solid fa-tag', 'fa-solid fa-cart-shopping', 'fa-solid fa-house', 'fa-solid fa-car', 'fa-solid fa-utensils', 'fa-solid fa-heart-pulse', 'fa-solid fa-graduation-cap', 'fa-solid fa-plane', 'fa-solid fa-film', 'fa-solid fa-shirt', 'fa-solid fa-paw', 'fa-solid fa-briefcase', 'fa-solid fa-piggy-bank', 'fa-solid fa-bolt', 'fa-solid fa-wifi', 'fa-solid fa-dumbbell'];
+        $catCores = \App\Support\CategoryPalette::COLORS;
+        $catIcones = \App\Support\CategoryPalette::ICONS;
         $catCorAtual = old('color', $editCategory?->color ?? $catCores[0]);
         $catIconeAtual = old('icon', $editCategory?->icon ?? $catIcones[0]);
         $catTipoAtual = old('type', $editCategory?->type->value ?? 'expense');

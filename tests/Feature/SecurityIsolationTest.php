@@ -45,6 +45,16 @@ class SecurityIsolationTest extends TestCase
         $this->actingAs($attacker)->delete(route('goals.destroy', $goal))->assertForbidden();
     }
 
+    public function test_user_cannot_contribute_to_another_users_goal(): void
+    {
+        $owner = User::factory()->create();
+        $attacker = User::factory()->create();
+        $goal = FinancialGoal::factory()->for($owner)->create();
+
+        $this->actingAs($attacker)->post(route('goals.contribute', $goal), ['amount' => '10,00'])->assertForbidden();
+        $this->assertDatabaseCount('goal_contributions', 0);
+    }
+
     public function test_foreign_category_cannot_be_attached_to_transaction(): void
     {
         $user = User::factory()->create();

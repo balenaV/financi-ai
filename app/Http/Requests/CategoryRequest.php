@@ -29,7 +29,9 @@ class CategoryRequest extends FormRequest
             'type' => ['required', Rule::enum(CategoryType::class)],
             'parent_id' => [
                 'nullable',
-                Rule::exists('categories', 'id')->where(fn ($query) => $query->where('user_id', $this->user()->id)),
+                Rule::exists('categories', 'id')->where(fn ($query) => $query
+                    ->where('user_id', $this->user()->id)
+                    ->whereNull('deleted_at')),
                 Rule::notIn(array_filter([$categoryId])),
             ],
             'color' => ['required', Rule::in(CategoryPalette::COLORS)],

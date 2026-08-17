@@ -151,6 +151,19 @@ class DashboardPrompt6Test extends TestCase
         ]);
     }
 
+    public function test_goal_contribute_rejects_an_amount_long_enough_to_overflow_the_decimal_column(): void
+    {
+        $user = User::factory()->create();
+        $goal = FinancialGoal::factory()->for($user)->create(['current_amount' => '500.00']);
+
+        $this->actingAs($user)->post(route('goals.contribute', $goal), [
+            'amount' => '999999999999999999,00',
+        ])->assertSessionHasErrors('amount');
+
+        $this->assertSame('500.00', $goal->refresh()->current_amount);
+        $this->assertDatabaseCount('goal_contributions', 0);
+    }
+
     public function test_goal_contributions_history_is_isolated_per_user(): void
     {
         $owner = User::factory()->create();
@@ -178,6 +191,7 @@ class DashboardPrompt6Test extends TestCase
         ])->assertForbidden();
 
         $this->assertSame('500.00', $goal->refresh()->current_amount);
+        $this->assertDatabaseCount('goal_contributions', 0);
     }
 
     public function test_dashboard_edit_query_params_never_resolve_another_users_resources(): void

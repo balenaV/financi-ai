@@ -93,7 +93,7 @@ class FinancialGoalController extends Controller
     {
         $this->authorize('update', $goal);
         $data = $request->validate([
-            'amount' => ['required', 'regex:/^[\d.,\s]+$/'],
+            'amount' => ['required', 'max:15', 'regex:/^[\d.,\s]+$/'],
         ]);
         $amount = Money::normalize($data['amount']);
 
