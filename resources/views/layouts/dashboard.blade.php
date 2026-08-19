@@ -22,9 +22,28 @@
 
 {{ $slot }}
 
+<div id="toast-container" class="fixed right-4 top-20 z-[70] space-y-2" aria-live="polite">
+    @foreach(['success', 'error'] as $kind)
+        @if(session($kind))
+            <div class="toast max-w-sm rounded-xl border {{ $kind === 'success' ? 'border-accent-400/30 bg-accent-50 text-accent-800' : 'border-red-200 bg-red-50 text-red-800' }} px-4 py-3 text-sm font-medium shadow-lg">
+                {{ session($kind) }}
+            </div>
+        @endif
+    @endforeach
+</div>
+
 <script src="{{ asset('design/js/theme.js') }}"></script>
 <script src="{{ asset('design/js/dashboard.js') }}"></script>
 <script src="{{ asset('design/js/dashboard-settings-sync.js') }}"></script>
 <script src="{{ asset('design/js/form-widgets-sync.js') }}"></script>
+<script>
+    setTimeout(() => {
+        document.querySelectorAll('#toast-container .toast').forEach((el) => {
+            el.style.transition = 'opacity .25s';
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 250);
+        });
+    }, 4500);
+</script>
 </body>
 </html>

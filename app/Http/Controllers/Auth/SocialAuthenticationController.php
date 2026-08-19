@@ -92,7 +92,9 @@ class SocialAuthenticationController extends Controller
             ]);
         }
 
-        $user = DB::transaction(function () use ($user, $email, $provider, $providerUser, $providerUserId): User {
+        $wasCreated = false;
+
+        $user = DB::transaction(function () use ($user, $email, $provider, $providerUser, $providerUserId, &$wasCreated): User {
             $user ??= User::where('email', $email)->first();
 
             if (! $user) {
@@ -104,6 +106,8 @@ class SocialAuthenticationController extends Controller
                     'email' => $email,
                     'password' => Hash::make(Str::random(64)),
                 ]);
+
+                $wasCreated = true;
             }
 
             if (! $user->hasVerifiedEmail()) {
@@ -123,6 +127,10 @@ class SocialAuthenticationController extends Controller
 
         Auth::login($user, remember: true);
         $request->session()->regenerate();
+
+        if ($wasCreated) {
+            $request->session()->flash('success', 'Bem-vindo(a) ao financiaí! Sua conta foi criada com sucesso.');
+        }
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

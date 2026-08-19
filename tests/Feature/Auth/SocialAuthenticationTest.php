@@ -76,6 +76,49 @@ class SocialAuthenticationTest extends TestCase
             'provider' => 'google',
             'provider_user_id' => 'google-user-123',
         ]);
+        $response->assertSessionHas('success', 'Bem-vindo(a) ao financiaí! Sua conta foi criada com sucesso.');
+
+        $this->get(route('dashboard'))->assertSee('Bem-vindo(a) ao financiaí! Sua conta foi criada com sucesso.');
+    }
+
+    public function test_returning_oauth_user_does_not_see_the_welcome_message(): void
+    {
+        $user = User::factory()->create(['email' => 'victor@example.com']);
+        $user->socialAccounts()->create([
+            'provider' => 'google',
+            'provider_user_id' => 'google-user-123',
+        ]);
+
+        $this->configureProvider('google');
+        $this->fakeProvider('google', [
+            'id' => 'google-user-123',
+            'name' => 'Victor Balena',
+            'email' => 'victor@example.com',
+        ]);
+
+        $response = $this->get('/auth/google/callback');
+
+        $response->assertRedirect(route('dashboard', absolute: false));
+        $this->assertAuthenticatedAs($user);
+        $response->assertSessionMissing('success');
+    }
+
+    public function test_linking_an_existing_user_by_email_does_not_show_the_welcome_message(): void
+    {
+        $user = User::factory()->unverified()->create(['email' => 'victor@example.com']);
+
+        $this->configureProvider('github');
+        $this->fakeProvider('github', [
+            'id' => 'github-user-456',
+            'name' => 'Victor',
+            'email' => 'VICTOR@example.com',
+        ]);
+
+        $response = $this->get('/auth/github/callback');
+
+        $response->assertRedirect(route('dashboard', absolute: false));
+        $this->assertAuthenticatedAs($user);
+        $response->assertSessionMissing('success');
     }
 
     public function test_github_callback_links_an_existing_user_without_duplicating_it(): void

@@ -228,7 +228,13 @@
                 <div class="notice">
                   <span class="notice__icon" aria-hidden="true">&#9993;</span>
                   <span class="notice__body">
-                    <span class="notice__title">Confirmação enviada para <span data-email-echo>{{ auth()->user()->email }}</span></span>
+                    <span class="notice__title">
+                      @if(session('registered'))
+                        Conta criada com sucesso! Confirmação enviada para <span data-email-echo>{{ auth()->user()->email }}</span>
+                      @else
+                        Confirmação enviada para <span data-email-echo>{{ auth()->user()->email }}</span>
+                      @endif
+                    </span>
                     <span class="notice__text">O link expira em 24 horas. Enquanto isso, sua conta fica com acesso limitado.</span>
                   </span>
                 </div>
