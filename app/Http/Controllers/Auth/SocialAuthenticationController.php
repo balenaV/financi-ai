@@ -92,6 +92,20 @@ class SocialAuthenticationController extends Controller
             ]);
         }
 
+        // Um e-mail com conta local ainda não verificada pode ter sido registrado
+        // por outra pessoa (occupation/pre-hijacking). Vincular e verificar à força
+        // nesse momento daria a quem chegou primeiro com login social acesso a uma
+        // conta que talvez não seja dele — então não logamos nem vinculamos aqui.
+        if (! $user) {
+            $existingUserByEmail = User::where('email', $email)->first();
+
+            if ($existingUserByEmail && ! $existingUserByEmail->hasVerifiedEmail()) {
+                return redirect()->route('login')->withErrors([
+                    'social' => 'Já existe uma conta com este e-mail aguardando verificação. Verifique o e-mail dela ou entre com sua senha antes de usar o login social.',
+                ]);
+            }
+        }
+
         $wasCreated = false;
 
         $user = DB::transaction(function () use ($user, $email, $provider, $providerUser, $providerUserId, &$wasCreated): User {
@@ -110,7 +124,12 @@ class SocialAuthenticationController extends Controller
                 $wasCreated = true;
             }
 
-            if (! $user->hasVerifiedEmail()) {
+            // Só marcamos como verificado o e-mail que o provedor acabou de confirmar.
+            // Se a conta local (já vinculada por um login social anterior) teve o
+            // e-mail trocado depois — ex.: em /profile — sem ainda provar posse do
+            // endereço novo, esse endereço novo não deve ser verificado por tabela
+            // (pre-hijacking via troca de e-mail pós-vínculo).
+            if ($user->email === $email && ! $user->hasVerifiedEmail()) {
                 $user->forceFill(['email_verified_at' => now()])->save();
             }
 
