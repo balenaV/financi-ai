@@ -1666,6 +1666,11 @@
                       @error('email')<span class="field-error">{{ $message }}</span>@enderror
                     </label>
                   </div>
+                  <label class="field">
+                    <span class="field__label">Senha atual</span>
+                    <input class="input" type="password" name="current_password" autocomplete="current-password" placeholder="Necessária apenas se você alterar o e-mail">
+                    @error('current_password')<span class="field-error">{{ $message }}</span>@enderror
+                  </label>
                   <div class="form-foot form-foot--bare">
                     <button class="btn-primary btn-primary--sm" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>Salvar perfil</button>
                   </div>
