@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AccountController;
-use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CreditCardBillController;
@@ -16,6 +15,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransactionImportController;
+use App\Http\Controllers\TwoFactorAuthenticationController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -63,10 +63,13 @@ Route::middleware(['auth', 'verified', 'audit'])->group(function () {
     Route::get('reports/export/csv', [ReportController::class, 'export'])->name('reports.export');
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
 
-    Route::get('/profile/security-history', [AuditLogController::class, 'index'])->name('profile.audit-log');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->middleware('throttle:5,1')->name('profile.destroy');
     Route::patch('/profile/sessions/logout-other', [ProfileController::class, 'logoutOtherSessions'])->middleware('throttle:5,1')->name('profile.logout-other-sessions');
+    Route::post('/settings/two-factor', [TwoFactorAuthenticationController::class, 'store'])->middleware('throttle:10,1')->name('two-factor.enable');
+    Route::post('/settings/two-factor/confirm', [TwoFactorAuthenticationController::class, 'confirm'])->middleware('throttle:10,1')->name('two-factor.confirm');
+    Route::post('/settings/two-factor/recovery-codes', [TwoFactorAuthenticationController::class, 'regenerateRecoveryCodes'])->middleware('throttle:5,1')->name('two-factor.recovery-codes');
+    Route::delete('/settings/two-factor', [TwoFactorAuthenticationController::class, 'destroy'])->middleware('throttle:5,1')->name('two-factor.disable');
     Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
     Route::patch('/settings/sections', [SettingsController::class, 'updateSections'])->name('settings.sections');
     Route::patch('/settings/toggle-values', [SettingsController::class, 'toggleValues'])->name('settings.toggle-values');

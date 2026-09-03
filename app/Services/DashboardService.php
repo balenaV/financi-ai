@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Support\Money;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 class DashboardService
@@ -113,7 +114,22 @@ class DashboardService
             'upcoming' => $upcoming,
             'goals' => $goals,
             'budgets' => $budgetRows,
-            'charts' => $this->charts($user, $end, $start, $accountId),
+            'charts' => $charts = $this->charts($user, $end, $start, $accountId),
+            'report_deltas' => [
+                'income' => $this->delta($charts['income']),
+                'expense' => $this->delta($charts['expense']),
+                'result' => $this->delta(array_map(fn ($i, $e) => bcsub($i, $e, 2), $charts['income'], $charts['expense'])),
+            ],
+            'report_detail' => $this->reportDetail(
+                $user,
+                Carbon::parse($end)->subMonthsNoOverflow(5)->startOfMonth(),
+                $end,
+                $accountId,
+                $filters['rep_sort'] ?? 'data',
+                $filters['rep_dir'] ?? 'desc',
+                (int) ($filters['rep_page'] ?? 1),
+                $filters,
+            ),
             'credit_cards' => $this->creditCardsOverview($user),
             'transactions_by_day' => $this->transactionsByDay($user),
             'forecast_months' => $this->forecastMonths($user),
@@ -125,6 +141,80 @@ class DashboardService
             'investments_overview' => $this->investmentsOverview($user),
             'goals_overview' => $this->goalsOverview($user),
         ];
+    }
+
+    /**
+     * Lista detalhada de lançamentos da aba Relatórios: mesmo recorte de 6
+     * meses e mesma regra de soma dos KPIs/gráfico (só efetivadas, compras de
+     * cartão fora — já entram na fatura), ordenável por coluna e paginada em
+     * 8 por página. A base cabe em memória (recorte de 6 meses de um único
+     * usuário), então ordenar/paginar em coleção evita um join só para
+     * ordenar por nome de categoria/conta.
+     */
+    private function reportDetail(
+        User $user,
+        CarbonInterface $start,
+        CarbonInterface $end,
+        mixed $accountId,
+        string $sort,
+        string $dir,
+        int $page,
+        array $filters,
+    ): array {
+        $perPage = 8;
+
+        $items = $user->transactions()
+            ->with(['account', 'category', 'creditCard'])
+            ->when($accountId, fn ($q) => $q->where('account_id', $accountId))
+            ->where('status', TransactionStatus::Completed->value)
+            ->where(fn ($query) => $query->whereNull('source_type')->orWhere('source_type', '!=', 'credit_card_bill'))
+            ->whereBetween('competence_date', [$start, $end])
+            ->get();
+
+        $sorted = match ($sort) {
+            'desc' => $items->sortBy(fn ($t) => mb_strtolower($t->description)),
+            'categoria' => $items->sortBy(fn ($t) => mb_strtolower($t->category?->name ?? '')),
+            'conta' => $items->sortBy(fn ($t) => mb_strtolower($t->account?->name ?? $t->creditCard?->name ?? '')),
+            'valor' => $items->sortBy(fn ($t) => (float) $t->amount),
+            default => $items->sortBy(fn ($t) => $t->competence_date),
+        };
+
+        if ($dir === 'desc') {
+            $sorted = $sorted->reverse();
+        }
+        $sorted = $sorted->values();
+
+        $paginator = new LengthAwarePaginator(
+            $sorted->forPage($page, $perPage)->values(),
+            $sorted->count(),
+            $perPage,
+            $page,
+            ['pageName' => 'rep_page'],
+        );
+        $paginator->appends(array_merge($filters, ['rep_sort' => $sort, 'rep_dir' => $dir]));
+
+        return ['paginator' => $paginator, 'sort' => $sort, 'dir' => $dir];
+    }
+
+    /**
+     * Alta/baixa/estável do mês atual contra o mês anterior, a partir da
+     * mesma série de 6 meses do gráfico — sem consulta extra.
+     */
+    private function delta(array $series): array
+    {
+        $current = (float) ($series[count($series) - 1] ?? 0);
+        $previous = (float) ($series[count($series) - 2] ?? 0);
+        $diff = $current - $previous;
+
+        if (abs($diff) < 0.01) {
+            return ['state' => 'estavel', 'percentage' => null];
+        }
+
+        $percentage = $previous != 0.0
+            ? round(($diff / abs($previous)) * 100, 1)
+            : null;
+
+        return ['state' => $diff > 0 ? 'alta' : 'baixa', 'percentage' => $percentage];
     }
 
     private function categoriesOverview(User $user): Collection
@@ -320,6 +410,7 @@ class DashboardService
 
         return [
             'labels' => $months->map(fn ($month) => $month->translatedFormat('M/y'))->values(),
+            'labels_full' => $months->map(fn ($month) => mb_strtolower($month->translatedFormat('F')))->values(),
             'income' => $income,
             'expense' => $expense,
             'balances' => $balances,

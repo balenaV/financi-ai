@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\SocialAccount;
 use App\Models\User;
+use App\Support\SecurityAudit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -144,8 +145,17 @@ class SocialAuthenticationController extends Controller
             return $user;
         });
 
+        if ($user->hasTwoFactorEnabled()) {
+            $request->session()->regenerate();
+            $request->session()->put('two_factor.user_id', $user->id);
+            $request->session()->put('two_factor.remember', true);
+
+            return redirect()->route('two-factor.challenge');
+        }
+
         Auth::login($user, remember: true);
         $request->session()->regenerate();
+        SecurityAudit::log($user, 'acesso', 'Login com '.$this->providerLabel($provider), $request);
 
         if ($wasCreated) {
             $request->session()->flash('success', 'Bem-vindo(a) ao financiaí! Sua conta foi criada com sucesso.');

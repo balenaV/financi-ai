@@ -13,6 +13,8 @@
 <link rel="stylesheet" href="{{ asset('design/css/tokens.css') }}">
 <link rel="stylesheet" href="{{ asset('design/css/base.css') }}">
 <link rel="stylesheet" href="{{ asset('design/css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ asset('design/css/mfa.css') }}">
+<link rel="stylesheet" href="{{ asset('design/css/fase5.css') }}">
 <link rel="stylesheet" href="{{ asset('design/css/app-additions.css') }}">
 <script>
     try { localStorage.setItem('financiai:theme', document.documentElement.getAttribute('data-theme')); } catch (e) {}
@@ -36,6 +38,7 @@
 <script src="{{ asset('design/js/dashboard.js') }}"></script>
 <script src="{{ asset('design/js/dashboard-settings-sync.js') }}"></script>
 <script src="{{ asset('design/js/form-widgets-sync.js') }}"></script>
+<script src="{{ asset('design/js/mfa.js') }}"></script>
 <script>
     setTimeout(() => {
         document.querySelectorAll('#toast-container .toast').forEach((el) => {

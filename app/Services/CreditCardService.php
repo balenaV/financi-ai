@@ -86,6 +86,10 @@ class CreditCardService
         });
     }
 
+    /**
+     * O vencimento e o ajuste manual valem só para esta fatura — não mexem em
+     * closing_day/due_day do cartão, que continuam regendo as próximas.
+     */
     public function updateOpenBill(User $user, CreditCardBill $bill, array $data): CreditCardBill
     {
         if ($bill->user_id !== $user->id || ! $this->canEdit($bill)) {
@@ -94,20 +98,36 @@ class CreditCardService
             ]);
         }
 
-        $normalizedTotal = Money::normalize($data['total_amount']);
         $registeredPurchases = bcadd('0', (string) $bill->purchases()
             ->where('status', '!=', TransactionStatus::Cancelled->value)
             ->sum('amount'), 2);
 
-        if (bccomp($normalizedTotal, $registeredPurchases, 2) < 0) {
+        // array_key_exists (não filled()) para distinguir "campo não veio na
+        // requisição" (preserva o ajuste atual da fatura — ex.: um PATCH
+        // parcial via API) de "campo veio vazio" (usuário limpou o valor de
+        // propósito, zera o ajuste). O form da tela sempre envia os dois.
+        if (array_key_exists('adjustment_amount', $data)) {
+            $adjustmentAmount = filled($data['adjustment_amount']) ? Money::normalize($data['adjustment_amount']) : '0.00';
+            if (($data['adjustment_type'] ?? 'acrescimo') === 'desconto') {
+                $adjustmentAmount = bcmul($adjustmentAmount, '-1', 2);
+            }
+        } else {
+            $adjustmentAmount = (string) $bill->adjustment_amount;
+        }
+
+        $normalizedTotal = bcadd($registeredPurchases, $adjustmentAmount, 2);
+
+        if (bccomp($normalizedTotal, '0', 2) < 0) {
             throw ValidationException::withMessages([
-                'total_amount' => 'O total não pode ser menor que as compras já vinculadas à fatura.',
+                'adjustment_amount' => 'O desconto não pode deixar a fatura negativa.',
             ]);
         }
 
         $bill->update([
             'total_amount' => $normalizedTotal,
-            'notes' => $data['notes'] ?? null,
+            'adjustment_amount' => $adjustmentAmount,
+            'adjustment_reason' => array_key_exists('adjustment_reason', $data) ? $data['adjustment_reason'] : $bill->adjustment_reason,
+            'due_date' => filled($data['due_date'] ?? null) ? Carbon::parse($data['due_date']) : $bill->due_date,
         ]);
 
         return $bill->refresh();
